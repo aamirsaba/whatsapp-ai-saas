@@ -108,26 +108,26 @@ app.get('/api/tenants', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, async () => {
+app.listen(PORT, () => {
   console.log(`🚀 WhatsApp AI SaaS Backend is running!`);
   console.log(`🌐 Server running on http://localhost:${PORT}`);
   
-  // 🚀 AUTO-START: Load all active tenants from database
-  console.log("🔄 Loading active tenants from database...");
-  try {
-    const activeTenants = await prisma.tenant.findMany({
-      where: { isActive: true }
-    });
-    
-    console.log(`✅ Found ${activeTenants.length} active tenant(s)`);
-    
-    // Start WhatsApp session for each active tenant
-    for (const tenant of activeTenants) {
-      console.log(`📱 Starting session for: ${tenant.whatsappNumber} (${tenant.businessName})`);
-      startWhatsAppSession(tenant.id, tenant.whatsappNumber);
+  // 🚀 AUTO-START: Delay slightly to let Hostinger's environment stabilize
+  setTimeout(async () => {
+    console.log("🔄 Loading active tenants from database...");
+    try {
+      const activeTenants = await prisma.tenant.findMany({
+        where: { isActive: true }
+      });
+      
+      console.log(`✅ Found ${activeTenants.length} active tenant(s)`);
+      
+      for (const tenant of activeTenants) {
+        console.log(`📱 Starting session for: ${tenant.whatsappNumber} (${tenant.businessName})`);
+        startWhatsAppSession(tenant.id, tenant.whatsappNumber);
+      }
+    } catch (error) {
+      console.error("⚠️ Error loading tenants on boot (server will still run):", error.message);
     }
-    
-  } catch (error) {
-    console.error("❌ Error loading tenants:", error);
-  }
+  }, 2000); // 2-second delay prevents Prisma "timer has gone away" panic
 });
