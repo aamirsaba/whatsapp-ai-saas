@@ -1,0 +1,71 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-lead",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "77f4f3b4-c5f1-49b6-97c4-6e9f4909103c",
+      "name": "Webhook",
+      "webhookId": "89c982c4-9d3d-4d02-b353-cbd9aa3d821d"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://discord.com/api/webhooks/1535398625277120543/Gtv9Yxh8CjTmGTfdn70Uzzn8ZZ4dhUN9VvpajbZNhgy6_vYpEbkh3Tu7TVavH5y2tL6U",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "=🔥 **New Hot Lead!** 🔥  🏢 **Business:** {{ $json.body.businessName }} 📞 **Phone:** {{ $json.body.leadPhone }} 💬 **Customer:** \"{{ $json.body.leadMessage }}\"  🤖 **AI Replied:** \"{{ $json.body.aiReply }}\""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "59325044-a1f3-439c-9962-c76d028c0a64",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "460af097-1fd7-48ed-8b01-c765cfcf5b25",
+  "meta": {
+    "instanceId": "1b070b4bdfc0c947c039ad6316e7684dbcd0df495ec824b55d1f534e3d3c591d"
+  },
+  "id": "R5kW1EnaYYmhfmku",
+  "tags": []
+}

@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id               String   @id @default(uuid())
+  businessName     String
+  whatsappNumber   String   @unique
+  systemPrompt     String   @default("You are a helpful assistant for this business.")
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  messages         Message[]
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  fromNumber  String   
+  toNumber    String   
+  direction   String   
+  content     String
+  isAiReply   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}

@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# Environment variables (CRITICAL: Contains API keys & DB passwords)
+.env
+.env.local
+.env.production
+
+# WhatsApp session files (Baileys auth info)
+auth_info_*
+
+# Database files (SQLite)
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build outputs
+dist/
+build/
+
+# Prisma (keep schema, ignore client generated files if any)
+# Note: We keep prisma/schema.prisma!
