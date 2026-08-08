@@ -4,8 +4,14 @@ const { PrismaClient } = require('@prisma/client');
 const { startWhatsAppSession } = require('./whatsapp');
 
 const app = express();
-const prisma = new PrismaClient();
-
+   // 🚀 HOSTINGER FIX: Pass DB URL directly to bypass environment variable bugs
+   const prisma = new PrismaClient({
+     datasources: {
+       db: {
+         url: "postgresql://neondb_owner:npg_4Q1bSfHmKypd@ep-dark-salad-ayyygp0n.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require"
+       }
+     }
+   });
 app.use(express.json());
 
 // Health check
