@@ -26,9 +26,12 @@ async function startWhatsAppSession(tenantId, phoneNumber) {
   sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect, qr } = update;
 
-    if (qr) {
+        if (qr) {
       console.log(`\n📱 SCAN THIS QR CODE WITH WHATSAPP FOR: ${phoneNumber}`);
       qrcode.generate(qr, { small: true });
+      
+      // 🚀 ADD THIS LINE: Prints a link to a scannable image!
+      console.log(`\n🔗 OR CLICK THIS LINK TO SEE A SCANNABLE IMAGE: https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qr)}\n`);
     }
 
     if (connection === 'close') {
