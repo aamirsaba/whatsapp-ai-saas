@@ -8,7 +8,7 @@ const { getAIResponse } = require('./ai');
 const prisma = new PrismaClient();
 const activeSockets = new Map();
 
-async function startWhatsAppSession(tenantId, phoneNumber) {
+async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConnected) {  
   console.log(`🔄 Starting WhatsApp session for: ${phoneNumber}`);
 
   const { state, saveCreds } = await useMultiFileAuthState(`./auth_info_${phoneNumber}`);
@@ -26,22 +26,30 @@ async function startWhatsAppSession(tenantId, phoneNumber) {
   sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect, qr } = update;
 
-        if (qr) {
+    if (qr) {
       console.log(`\n📱 SCAN THIS QR CODE WITH WHATSAPP FOR: ${phoneNumber}`);
       qrcode.generate(qr, { small: true });
       
-      // 🚀 ADD THIS LINE: Prints a link to a scannable image!
-      console.log(`\n🔗 OR CLICK THIS LINK TO SEE A SCANNABLE IMAGE: https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qr)}\n`);
+      // 🚀 TRIGGER WEBSOCKET: Send raw QR string to the browser
+      if (onQrGenerated) {
+        onQrGenerated(phoneNumber, qr);
+      }
     }
 
     if (connection === 'close') {
       const shouldReconnect = (lastDisconnect.error instanceof Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
       console.log('⚠️ Connection closed. Reconnecting:', shouldReconnect);
       if (shouldReconnect) {
-        startWhatsAppSession(tenantId, phoneNumber);
+        // Pass callbacks again on reconnect
+        startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConnected);
       }
     } else if (connection === 'open') {
       console.log(`✅ SUCCESS! WhatsApp is connected and ready for: ${phoneNumber}`);
+      
+      // 🚀 TRIGGER WEBSOCKET: Tell browser it's connected
+      if (onConnected) {
+        onConnected(phoneNumber);
+      }
       
       await prisma.tenant.update({
         where: { id: tenantId },

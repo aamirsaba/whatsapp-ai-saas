@@ -1,10 +1,14 @@
 require('dotenv').config();
 const express = require('express');
+const http = require('http');
+const { WebSocketServer } = require('ws');
 const { PrismaClient } = require('@prisma/client');
 const { startWhatsAppSession } = require('./whatsapp');
 
 const app = express();
-// 🚀 HOSTINGER FIX: Direct Neon URL (No Pooler) to prevent Rust engine panic
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
+
 const prisma = new PrismaClient({
   datasources: {
     db: {
@@ -12,134 +16,154 @@ const prisma = new PrismaClient({
     }
   }
 });
+
 app.use(express.json());
 
-// Health check
+// 🌐 CUSTOMER-FACING QR CODE PAGE
+app.get('/connect/:phoneNumber', (req, res) => {
+  const { phoneNumber } = req.params;
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Connect WhatsApp</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #111; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { text-align: center; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 400px; width: 90%; }
+        h1 { font-size: 24px; margin-bottom: 10px; }
+        .phone { color: #00a884; font-size: 20px; font-weight: bold; margin-bottom: 20px; }
+        #qrcode { margin: 20px auto; padding: 15px; background: white; border: 1px solid #ddd; border-radius: 8px; display: inline-block; }
+        .instructions { text-align: left; line-height: 1.8; margin-top: 20px; font-size: 14px; color: #555; }
+        .status { margin-top: 20px; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 14px; }
+        .waiting { background: #e9edef; color: #54656f; }
+        .success { background: #d9fdd3; color: #1f7a2c; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>Link your WhatsApp</h1>
+        <div class="phone">${phoneNumber}</div>
+        <div id="qrcode"><p style="color: #888; padding: 50px;">Generating QR Code...</p></div>
+        <div class="instructions">
+          <strong>How to link:</strong><br>
+          1. Open WhatsApp on your phone<br>
+          2. Tap <strong>⋮</strong> or <strong>Settings</strong> > <strong>Linked Devices</strong><br>
+          3. Tap <strong>Link a Device</strong><br>
+          4. Point your phone at this screen to scan the code
+        </div>
+        <div id="status" class="status waiting">⏳ Waiting for QR code...</div>
+      </div>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+      <script>
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const ws = new WebSocket(\`\${protocol}//\${window.location.host}\`);
+        let qrCodeObj = null;
+
+        ws.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          if (data.type === 'qr' && data.phoneNumber === '${phoneNumber}') {
+            document.getElementById('qrcode').innerHTML = '';
+            qrCodeObj = new QRCode(document.getElementById('qrcode'), {
+              text: data.qr, width: 220, height: 220, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.L
+            });
+            document.getElementById('status').textContent = '📱 Scan the QR code now';
+          }
+          if (data.type === 'success' && data.phoneNumber === '${phoneNumber}') {
+            document.getElementById('status').className = 'status success';
+            document.getElementById('status').textContent = '✅ Connected successfully! Your AI is now active.';
+            document.getElementById('qrcode').innerHTML = '<div style="font-size: 60px; color: #00a884;">✓</div>';
+          }
+        };
+      </script>
+    </body>
+    </html>
+  `);
+});
+
 app.get('/', (req, res) => {
   res.send('🚀 WhatsApp AI SaaS Backend is running!');
 });
 
-// Endpoint to register a business and start the QR code flow
 app.post('/api/connect', async (req, res) => {
   try {
     const { businessName, whatsappNumber } = req.body;
-
-    // Format phone number to ensure it has country code (e.g., 968 for Oman)
     const formattedNumber = whatsappNumber.replace(/\D/g, ''); 
 
-    // 1. Create or Update Tenant in Database
     const tenant = await prisma.tenant.upsert({
       where: { whatsappNumber: formattedNumber },
       update: { businessName },
       create: { 
         businessName, 
         whatsappNumber: formattedNumber,
-        systemPrompt: "أنت مساعد ذكي ولطيف لـ " + businessName + ". رد باختصار وبشكل احترافي. يمكنك التحدث بالعربية أو الإنجليزية حسب لغة العميل. (You are a smart, polite AI assistant for " + businessName + ". Reply concisely and professionally. You can speak Arabic or English based on the customer's language.)"
+        systemPrompt: "أنت مساعد ذكي ولطيف لـ " + businessName + ". رد باختصار وبشكل احترافي. يمكنك التحدث بالعربية أو الإنجليزية حسب لغة العميل."
       }
     });
 
-    // 2. Start the WhatsApp Session (This will print QR to terminal)
-    startWhatsAppSession(tenant.id, formattedNumber);
+    startWhatsAppSession(tenant.id, formattedNumber, 
+      (num, qr) => {
+        wss.clients.forEach(client => { if (client.readyState === 1) client.send(JSON.stringify({ type: 'qr', qr, phoneNumber: num })); });
+      },
+      (num) => {
+        wss.clients.forEach(client => { if (client.readyState === 1) client.send(JSON.stringify({ type: 'success', phoneNumber: num })); });
+      }
+    );
 
-    res.json({ 
-      success: true, 
-      message: "Session started. Check your terminal for the QR code to scan.",
-      tenantId: tenant.id 
-    });
-
+    res.json({ success: true, message: "Session started. Visit /connect/" + formattedNumber + " to scan.", tenantId: tenant.id });
   } catch (error) {
     console.error("❌ Connection Error:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// 📝 API Endpoint: Register a new tenant and start their WhatsApp session
 app.post('/api/register-tenant', async (req, res) => {
   try {
     const { businessName, whatsappNumber, systemPrompt } = req.body;
+    if (!businessName || !whatsappNumber) return res.status(400).json({ error: 'businessName and whatsappNumber are required' });
     
-    // Validate required fields
-    if (!businessName || !whatsappNumber) {
-      return res.status(400).json({ error: 'businessName and whatsappNumber are required' });
-    }
-    
-    // Create new tenant in database
     const newTenant = await prisma.tenant.create({
-      data: {
-        businessName,
-        whatsappNumber,
-        systemPrompt: systemPrompt || 'You are a helpful AI assistant.',
-        isActive: true
-      }
+      data: { businessName, whatsappNumber, systemPrompt: systemPrompt || 'You are a helpful AI assistant.', isActive: true }
     });
     
-    console.log(`✅ New tenant registered: ${newTenant.businessName} (${newTenant.whatsappNumber})`);
+    startWhatsAppSession(newTenant.id, newTenant.whatsappNumber,
+      (num, qr) => { wss.clients.forEach(client => { if (client.readyState === 1) client.send(JSON.stringify({ type: 'qr', qr, phoneNumber: num })); }); },
+      (num) => { wss.clients.forEach(client => { if (client.readyState === 1) client.send(JSON.stringify({ type: 'success', phoneNumber: num })); }); }
+    );
     
-    // 🚀 FIX: Use newTenant.whatsappNumber (not the undefined variable)
-    console.log(`🔄 Starting WhatsApp session for new tenant...`);
-    startWhatsAppSession(newTenant.id, newTenant.whatsappNumber);
-    
-    res.status(201).json({
-      success: true,
-      message: 'Tenant registered successfully. Please scan the QR code in the logs.',
-      tenantId: newTenant.id,
-      whatsappNumber: newTenant.whatsappNumber
-    });
-    
+    res.status(201).json({ success: true, message: 'Tenant registered. Visit /connect/' + newTenant.whatsappNumber, tenantId: newTenant.id });
   } catch (error) {
-    // Print the REAL error to the console so we can see exactly what went wrong
     console.error('❌ Error registering tenant:', error); 
     res.status(500).json({ error: 'Failed to register tenant', details: error.message });
   }
 });
 
-// 📊 API Endpoint: Get all active tenants (for admin dashboard)
 app.get('/api/tenants', async (req, res) => {
   try {
-    const tenants = await prisma.tenant.findMany({
-      select: {
-        id: true,
-        businessName: true,
-        whatsappNumber: true,
-        isActive: true,
-        createdAt: true
-      }
-    });
-    
+    const tenants = await prisma.tenant.findMany({ select: { id: true, businessName: true, whatsappNumber: true, isActive: true, createdAt: true } });
     res.json({ success: true, count: tenants.length, tenants });
   } catch (error) {
-    console.error(' Error fetching tenants:', error);
     res.status(500).json({ error: 'Failed to fetch tenants' });
   }
 });
 
-
-const PORT = process.env.PORT || 3000;
-
-// 🚀 MANUAL TRIGGER: Start all WhatsApp sessions (Bypasses Hostinger boot panics)
 app.post('/api/start-sessions', async (req, res) => {
-  console.log("🔄 Manually loading active tenants from database...");
   try {
-    const activeTenants = await prisma.tenant.findMany({
-      where: { isActive: true }
-    });
-    
-    console.log(`✅ Found ${activeTenants.length} active tenant(s)`);
-    
+    const activeTenants = await prisma.tenant.findMany({ where: { isActive: true } });
     for (const tenant of activeTenants) {
-      console.log(`📱 Starting session for: ${tenant.whatsappNumber} (${tenant.businessName})`);
-      startWhatsAppSession(tenant.id, tenant.whatsappNumber);
+      startWhatsAppSession(tenant.id, tenant.whatsappNumber,
+        (num, qr) => { wss.clients.forEach(client => { if (client.readyState === 1) client.send(JSON.stringify({ type: 'qr', qr, phoneNumber: num })); }); },
+        (num) => { wss.clients.forEach(client => { if (client.readyState === 1) client.send(JSON.stringify({ type: 'success', phoneNumber: num })); }); }
+      );
     }
-    
-    res.json({ success: true, message: `Started ${activeTenants.length} session(s). Check logs for QR code.` });
+    res.json({ success: true, message: `Started ${activeTenants.length} session(s). Visit /connect/[number] to scan.` });
   } catch (error) {
-    console.error("⚠️ Error loading tenants:", error.message);
     res.status(500).json({ error: "Failed to start sessions", details: error.message });
   }
 });
 
-app.listen(PORT, () => {
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
   console.log(`🚀 WhatsApp AI SaaS Backend is running!`);
   console.log(`🌐 Server running on http://localhost:${PORT}`);
-  console.log(`⚡ Use the /api/start-sessions endpoint to initialize WhatsApp.`);
+  console.log(`⚡ Customer QR Page: http://localhost:${PORT}/connect/96891293119`);
 });
