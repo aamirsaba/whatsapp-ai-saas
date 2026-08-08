@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connect WhatsApp AI | Oman SaaS</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+    .container { max-width: 450px; width: 90%; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; }
+    h1 { color: #00a884; margin-bottom: 10px; font-size: 24px; }
+    p { color: #555; margin-bottom: 30px; font-size: 15px; }
+    input { width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+    input:focus { outline: none; border-color: #00a884; }
+    button { width: 100%; padding: 16px; background: #00a884; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+    button:hover { background: #008f6f; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    .error { color: #dc3545; font-size: 14px; margin-top: 10px; display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 Connect Your WhatsApp AI</h1>
+    <p>Enter your business details below to instantly generate your personal QR code.</p>
+    
+    <form id="connectForm">
+      <input type="text" id="businessName" placeholder="Business Name (e.g., Muscat Logistics)" required>
+      <input type="tel" id="whatsappNumber" placeholder="WhatsApp Number (e.g., 96891293119)" required>
+      <button type="submit" id="submitBtn">Connect WhatsApp</button>
+      <div class="error" id="errorMsg"></div>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById('connectForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const businessName = document.getElementById('businessName').value;
+      const whatsappNumber = document.getElementById('whatsappNumber').value.replace(/\D/g, ''); // Remove non-digits
+      const submitBtn = document.getElementById('submitBtn');
+      const errorMsg = document.getElementById('errorMsg');
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Setting up your AI...';
+      errorMsg.style.display = 'none';
+
+      try {
+        const response = await fetch('/api/register-tenant', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ businessName, whatsappNumber })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          // 🚀 AUTOMATICALLY REDIRECT TO THE BEAUTIFUL QR CODE PAGE!
+          window.location.href = `/connect/${whatsappNumber}`;
+        } else {
+          throw new Error(data.error || data.details || 'Failed to register');
+        }
+      } catch (error) {
+        errorMsg.textContent = error.message;
+        errorMsg.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Connect WhatsApp';
+      }
+    });
+  </script>
+</body>
+</html>

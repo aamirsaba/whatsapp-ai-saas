@@ -81,8 +81,11 @@ app.get('/connect/:phoneNumber', (req, res) => {
   `);
 });
 
+const path = require('path');
+
+// 🌐 Serve the beautiful customer portal
 app.get('/', (req, res) => {
-  res.send('🚀 WhatsApp AI SaaS Backend is running!');
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
 app.post('/api/connect', async (req, res) => {
