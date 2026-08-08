@@ -113,27 +113,33 @@ app.get('/api/tenants', async (req, res) => {
   }
 });
 
+
 const PORT = process.env.PORT || 3000;
+
+// 🚀 MANUAL TRIGGER: Start all WhatsApp sessions (Bypasses Hostinger boot panics)
+app.post('/api/start-sessions', async (req, res) => {
+  console.log("🔄 Manually loading active tenants from database...");
+  try {
+    const activeTenants = await prisma.tenant.findMany({
+      where: { isActive: true }
+    });
+    
+    console.log(`✅ Found ${activeTenants.length} active tenant(s)`);
+    
+    for (const tenant of activeTenants) {
+      console.log(`📱 Starting session for: ${tenant.whatsappNumber} (${tenant.businessName})`);
+      startWhatsAppSession(tenant.id, tenant.whatsappNumber);
+    }
+    
+    res.json({ success: true, message: `Started ${activeTenants.length} session(s). Check logs for QR code.` });
+  } catch (error) {
+    console.error("⚠️ Error loading tenants:", error.message);
+    res.status(500).json({ error: "Failed to start sessions", details: error.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 WhatsApp AI SaaS Backend is running!`);
   console.log(`🌐 Server running on http://localhost:${PORT}`);
-  
-  // 🚀 AUTO-START: Delay slightly to let Hostinger's environment stabilize
-  setTimeout(async () => {
-    console.log("🔄 Loading active tenants from database...");
-    try {
-      const activeTenants = await prisma.tenant.findMany({
-        where: { isActive: true }
-      });
-      
-      console.log(`✅ Found ${activeTenants.length} active tenant(s)`);
-      
-      for (const tenant of activeTenants) {
-        console.log(`📱 Starting session for: ${tenant.whatsappNumber} (${tenant.businessName})`);
-        startWhatsAppSession(tenant.id, tenant.whatsappNumber);
-      }
-    } catch (error) {
-      console.error("⚠️ Error loading tenants on boot (server will still run):", error.message);
-    }
-  }, 2000); // 2-second delay prevents Prisma "timer has gone away" panic
+  console.log(`⚡ Use the /api/start-sessions endpoint to initialize WhatsApp.`);
 });
