@@ -21,7 +21,22 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
 
   activeSockets.set(phoneNumber, sock);
 
-  sock.ev.on('creds.update', saveCreds);
+  // 🚨 SECURITY: Check if the scanned number matches the expected tenant number
+  sock.ev.on('creds.update', async () => {
+    await saveCreds();
+    
+    // If we have credentials, check the phone number
+    if (sock.authState?.creds?.me?.id) {
+      const scannedNumber = sock.authState.creds.me.id.split(':')[0];
+      
+      if (scannedNumber !== phoneNumber) {
+        console.error(`🚨 SECURITY ALERT: Mismatch detected! Expected ${phoneNumber}, but ${scannedNumber} scanned the QR.`);
+        
+        // Force logout to stop the infinite loop immediately
+        sock.logout(); 
+      }
+    }
+  });
 
   sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect, qr } = update;
@@ -36,10 +51,18 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
     }
 
     if (connection === 'close') {
-      const shouldReconnect = (lastDisconnect.error instanceof Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
-      console.log('⚠️ Connection closed. Reconnecting:', shouldReconnect);
-      if (shouldReconnect) {
+      const statusCode = (lastDisconnect.error instanceof Boom)?.output?.statusCode;
+      
+      // 🛑 STOP LOOPING: Do not reconnect if logged out, forbidden (mismatch), or replaced
+      const isLoggedOut = statusCode === DisconnectReason.loggedOut;
+      const isForbidden = statusCode === DisconnectReason.forbidden; 
+      
+      console.log('⚠️ Connection closed. Status:', statusCode, 'Reconnecting:', !isLoggedOut && !isForbidden);
+      
+      if (!isLoggedOut && !isForbidden) {
         startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConnected);
+      } else {
+        console.log('🛑 Session terminated permanently. Please generate a new QR code.');
       }
     } else if (connection === 'open') {
       console.log(`✅ SUCCESS! WhatsApp is connected and ready for: ${phoneNumber}`);
@@ -55,6 +78,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
     }
   });
 
+  // ✅ THIS IS NOW CORRECTLY INSIDE THE startWhatsAppSession FUNCTION
   sock.ev.on('messages.upsert', async ({ messages, type }) => {
     console.log("🔔 [DEBUG] Event fired! Type:", type);
     
@@ -81,7 +105,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
     
     const isIndividualChat = rawJid.endsWith('@s.whatsapp.net') || rawJid.endsWith('@lid');
     if (!isIndividualChat) {
-      console.log("️ [DEBUG] Ignored: Not an individual chat. JID:", rawJid);
+      console.log("⏭️ [DEBUG] Ignored: Not an individual chat. JID:", rawJid);
       return;
     }
 
@@ -104,7 +128,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       console.log("🔔 [DEBUG] Looking up tenant in DB for number:", phoneNumber);
       const tenant = await prisma.tenant.findUnique({ where: { whatsappNumber: phoneNumber } });
       if (!tenant) {
-        console.log(" [DEBUG] Tenant NOT FOUND in database for this number.");
+        console.log("❌ [DEBUG] Tenant NOT FOUND in database for this number.");
         return;
       }
       console.log("✅ [DEBUG] Tenant found:", tenant.businessName);
@@ -131,7 +155,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       const finalSystemPrompt = basePrompt + contextInstruction;
 
       // Pass the new smart prompt to the AI
-      const aiReply = await getAIResponse(text, finalSystemPrompt, tenant); // <-- Added 'tenant' here!
+      const aiReply = await getAIResponse(text, finalSystemPrompt, tenant);
       console.log(`🗣️ AI Reply: ${aiReply}`);
 
       await sock.sendMessage(msg.key.remoteJid, { text: aiReply });
@@ -154,15 +178,15 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            content: `🔥 **New WhatsApp Activity!**\n🏢 **Business:** ${tenant.businessName}\n📱 **Number:** ${fromNumber}\n💬 **Message:** ${text}\n **AI Reply:** ${aiReply}`
+            content: `🔥 **New WhatsApp Activity!**\n🏢 **Business:** ${tenant.businessName}\n📱 **Number:** ${fromNumber}\n💬 **Message:** ${text}\n🤖 **AI Reply:** ${aiReply}`
           })
         }).catch(err => console.error("❌ Failed to notify Discord:", err));
       }
 
     } catch (error) {
-      console.error(" Error processing message:", error);
+      console.error("❌ Error processing message:", error);
     }
   });
-}
+} // <-- This correctly closes the startWhatsAppSession function
 
 module.exports = { startWhatsAppSession, activeSockets };
