@@ -23,21 +23,8 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
 
   activeSockets.set(phoneNumber, sock);
 
-  let isMismatch = false; // 🚨 Track mismatch to prevent reconnect loops
-
-  sock.ev.on('creds.update', async () => {
-    await saveCreds();
-    
-    if (sock.authState?.creds?.me?.id) {
-      const scannedNumber = sock.authState.creds.me.id.split(':')[0];
-      
-      if (scannedNumber !== phoneNumber) {
-        console.error(`🚨 SECURITY ALERT: Mismatch detected! Expected ${phoneNumber}, but ${scannedNumber} scanned the QR.`);
-        isMismatch = true;
-        sock.logout(); 
-      }
-    }
-  });
+  // ✅ SAFE: Just save credentials. Do not interrupt the handshake here!
+  sock.ev.on('creds.update', saveCreds);
 
   sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect, qr } = update;
@@ -54,22 +41,35 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       const isLoggedOut = statusCode === DisconnectReason.loggedOut;
       const isForbidden = statusCode === DisconnectReason.forbidden; 
       
-      console.log('⚠️ Connection closed. Status:', statusCode, 'Reconnecting:', !isLoggedOut && !isForbidden && !isMismatch);
+      console.log('⚠️ Connection closed. Status:', statusCode, 'Reconnecting:', !isLoggedOut && !isForbidden);
       
-      // 🛑 STOP LOOPING: Do not reconnect if logged out, forbidden, mismatch, or undefined status
-      if (!isLoggedOut && !isForbidden && !isMismatch && statusCode !== undefined) {
+      // 🛑 STOP LOOPING: Do not reconnect if logged out, forbidden, or undefined status
+      if (!isLoggedOut && !isForbidden && statusCode !== undefined) {
         startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConnected);
       } else {
         console.log('🛑 Session terminated permanently. Cleaning up corrupted data...');
-        
-        // 🗑️ Clean up the corrupted auth folder so a fresh QR can be generated next time
         const authDir = path.join(process.cwd(), `auth_info_${phoneNumber}`);
         if (fs.existsSync(authDir)) {
             fs.rmSync(authDir, { recursive: true, force: true });
             console.log('✅ Corrupted auth folder deleted.');
         }
       }
-    } else if (connection === 'open') {
+    } 
+    else if (connection === 'open') {
+      // 🚨 SECURITY: Check for mismatch NOW that the connection is fully open
+      const scannedNumber = sock.authState?.creds?.me?.id?.split(':')[0];
+      
+      if (scannedNumber && scannedNumber !== phoneNumber) {
+        console.error(`🚨 SECURITY ALERT: Mismatch detected! Expected ${phoneNumber}, but ${scannedNumber} scanned the QR.`);
+        
+        // Tell frontend (if you want to show an error on the UI)
+        if (onConnected) onConnected(phoneNumber, false, `Mismatch: Scanned with ${scannedNumber}`);
+        
+        // Force logout safely
+        sock.logout();
+        return; 
+      }
+
       console.log(`✅ SUCCESS! WhatsApp is connected and ready for: ${phoneNumber}`);
       if (onConnected) onConnected(phoneNumber);
       
@@ -124,7 +124,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       });
 
     } catch (error) {
-      console.error("❌ Error processing message:", error);
+      console.error(" Error processing message:", error);
     }
   });
 }
