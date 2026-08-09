@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
 
 // 🚀 REGISTER A NEW USER
-async function registerUser(email, password, businessName, whatsappNumber) {
+async function registerUser(email, password, businessName, whatsappNumber, businessContext) {
   // 1. Check if user already exists
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) throw new Error('Email already registered');
@@ -25,18 +25,20 @@ async function registerUser(email, password, businessName, whatsappNumber) {
       data: {
         businessName,
         whatsappNumber,
-        systemPrompt: 'You are a helpful AI assistant.',
-        userId: newUser.id // Link tenant to user
+        systemPrompt: 'You are a helpful, professional AI assistant for this business.',
+        businessContext: businessContext, // 🚀 SAVES THE REQUIRED CONTEXT
+        userId: newUser.id
       }
     });
 
     return { user: newUser, tenant: newTenant };
-  }); // ⚠️ TRANSACTION ENDS HERE
+  });
 
-  // 4. Generate JWT Token (OUTSIDE the transaction)
-  const token = jwt.sign({ userId: result.user.id, role: result.user.role }, JWT_SECRET, { expiresIn: '7d' });
+  // 4. Generate JWT Token
+  const token = jwt.sign({ userId: result.user.id, role: result.user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-  // 5. 🚀 SEND WELCOME EMAIL (Non-blocking)
+  // 5. 🚀 SEND WELCOME EMAIL
+  const { sendWelcomeEmail } = require('./email');
   sendWelcomeEmail(email, businessName);
 
   return { 

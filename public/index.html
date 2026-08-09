@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WhatsApp AI SaaS - Get Started</title>
+  <title>WhatsApp AI SaaS - Register</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
@@ -12,43 +12,60 @@
   <nav class="bg-white shadow-sm">
     <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
       <h1 class="text-xl font-bold text-green-600">WhatsApp AI SaaS</h1>
-      <a href="/login" class="text-gray-600 hover:text-green-600 font-medium">Login</a>
+      <a href="/login" class="text-gray-600 hover:text-green-600 font-medium">Already have an account? Login</a>
     </div>
   </nav>
 
   <!-- Main Content -->
   <main class="flex-grow flex items-center justify-center p-4">
     <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg">
-      <h2 class="text-2xl font-bold text-gray-800 mb-2">Register Your Business</h2>
-      <p class="text-gray-500 mb-6 text-sm">Set up your AI assistant in seconds. You can update advanced settings later in your dashboard.</p>
+      <h2 class="text-2xl font-bold text-gray-800 mb-2">Create Your Account</h2>
+      <p class="text-gray-500 mb-6 text-sm">Set up your AI assistant and secure your dashboard in seconds.</p>
       
       <form id="registerForm" class="space-y-4">
         
+        <!-- Email -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+          <input type="email" id="email" required placeholder="you@company.com" 
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition">
+        </div>
+
+        <!-- Password -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+          <input type="password" id="password" required minlength="6" placeholder="At least 6 characters" 
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition">
+        </div>
+
         <!-- Business Name -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
-          <input type="text" id="businessName" required placeholder="e.g., Tabarak Solutions" 
+          <input type="text" id="businessName" required placeholder="e.g., AAMIRSABA LTD" 
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition">
         </div>
 
         <!-- WhatsApp Number -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number</label>
-          <input type="text" id="whatsappNumber" required placeholder="+96891293119" 
+          <input type="text" id="whatsappNumber" required placeholder="+447362046611" 
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition font-mono">
-          <p class="text-xs text-gray-500 mt-1">⚠️ Must include country code with the + sign (e.g., +968...)</p>
+          <p class="text-xs text-gray-500 mt-1">⚠️ Must include country code with the + sign (e.g., +44... or +968...)</p>
         </div>
 
-        <!-- Business Context (Optional but Recommended) -->
+                <!-- Business Context (REQUIRED) -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Business Context (Optional)</label>
-          <textarea id="businessContext" rows="3" placeholder="e.g., We are an IT company in Muscat specializing in web development. We do not sell hardware." 
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Business Context <span class="text-red-500">*</span>
+          </label>
+          <textarea id="businessContext" rows="4" required 
+            placeholder="e.g., We are an IT company providing software solutions and corporate training worldwide. We do NOT sell hardware or offer financial advice." 
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition text-sm"></textarea>
-          <p class="text-xs text-gray-500 mt-1">This ensures the AI only answers questions related to your specific services.</p>
+          <p class="text-xs text-red-600 font-semibold mt-1">⚠️ REQUIRED: This tells the AI exactly what you do so it never gives generic or incorrect answers.</p>
         </div>
 
         <button type="submit" class="w-full bg-green-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-green-700 transition duration-200 shadow-md">
-          Register & Generate QR Code
+          Create Account & Generate QR Code
         </button>
       </form>
 
@@ -62,48 +79,59 @@
       const btn = e.target.querySelector('button');
       const msg = document.getElementById('message');
       
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
       const businessName = document.getElementById('businessName').value;
       const whatsappNumber = document.getElementById('whatsappNumber').value;
       const businessContext = document.getElementById('businessContext').value;
 
       btn.disabled = true;
-      btn.textContent = 'Registering...';
+      btn.textContent = 'Creating Account...';
       msg.textContent = '';
       msg.className = 'mt-4 text-center text-sm text-gray-600';
 
       try {
-        const res = await fetch('/api/register-tenant', {
+        // 🚀 POINTING TO THE SECURE AUTH REGISTER ENDPOINT
+        const res = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
+            email,
+            password,
             businessName, 
             whatsappNumber, 
-            businessContext,
-            systemPrompt: "You are a helpful, professional AI assistant."
+            businessContext
           })
         });
         
         const data = await res.json();
 
         if (data.success) {
-          msg.textContent = '✅ Success! Redirecting to QR code scanner...';
+          // Save login state immediately
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('tenant', JSON.stringify(data.tenant));
+
+          msg.textContent = '✅ Account created! Check your email, then redirecting to QR scanner...';
           msg.className = 'mt-4 text-center text-sm text-green-600 font-bold';
           
-          // Redirect to the QR code page after 1.5 seconds
+          // Redirect to the QR code page after 2 seconds
           setTimeout(() => {
-            window.location.href = `/connect/${whatsappNumber.replace(/\D/g, '')}`;
-          }, 1500);
+            // Strip non-digits for the URL
+            const cleanNumber = whatsappNumber.replace(/\D/g, '');
+            window.location.href = `/connect/${cleanNumber}`;
+          }, 2000);
         } else {
           msg.textContent = `❌ Error: ${data.error}`;
           msg.className = 'mt-4 text-center text-sm text-red-600 font-bold';
           btn.disabled = false;
-          btn.textContent = 'Register & Generate QR Code';
+          btn.textContent = 'Create Account & Generate QR Code';
         }
       } catch (err) {
         msg.textContent = '❌ Server error. Please try again.';
         msg.className = 'mt-4 text-center text-sm text-red-600 font-bold';
         btn.disabled = false;
-        btn.textContent = 'Register & Generate QR Code';
+        btn.textContent = 'Create Account & Generate QR Code';
       }
     });
   </script>

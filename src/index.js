@@ -21,9 +21,11 @@ const { registerUser, loginUser } = require('./auth');
 // 🚀 AUTH ROUTES
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { email, password, businessName, whatsappNumber } = req.body;
-    if (!email || !password || !businessName || !whatsappNumber) {
-      return res.status(400).json({ error: 'All fields are required' });
+    const { email, password, businessName, whatsappNumber, businessContext } = req.body;
+    
+    // 🚀 ENFORCE BUSINESS CONTEXT
+    if (!email || !password || !businessName || !whatsappNumber || !businessContext) {
+      return res.status(400).json({ error: 'Email, password, business name, WhatsApp number, and Business Context are all required.' });
     }
     
     const result = await registerUser(email, password, businessName, whatsappNumber);
