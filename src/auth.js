@@ -8,14 +8,17 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-t
 
 // 🚀 REGISTER A NEW USER
 async function registerUser(email, password, businessName, whatsappNumber, businessContext) {
-  // 1. Check if user already exists
+  // 1. 🚨 CRITICAL FIX: Always remove '+', spaces, or dashes before saving
+  const cleanNumber = whatsappNumber.replace(/\D/g, '');
+
+  // 2. Check if user already exists
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) throw new Error('Email already registered');
 
-  // 2. Hash the password
+  // 3. Hash the password
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // 3. Create User and Tenant in a single transaction
+  // 4. Create User and Tenant in a single transaction
   const result = await prisma.$transaction(async (tx) => {
     const newUser = await tx.user.create({
       data: { email, password: hashedPassword, role: 'TENANT' }
@@ -24,9 +27,9 @@ async function registerUser(email, password, businessName, whatsappNumber, busin
     const newTenant = await tx.tenant.create({
       data: {
         businessName,
-        whatsappNumber,
+        whatsappNumber: cleanNumber, // 🚀 USE THE CLEANED NUMBER HERE!
         systemPrompt: 'You are a helpful, professional AI assistant for this business.',
-        businessContext: businessContext, // 🚀 SAVES THE REQUIRED CONTEXT
+        businessContext: businessContext,
         userId: newUser.id
       }
     });
@@ -34,10 +37,10 @@ async function registerUser(email, password, businessName, whatsappNumber, busin
     return { user: newUser, tenant: newTenant };
   });
 
-  // 4. Generate JWT Token
+  // 5. Generate JWT Token
   const token = jwt.sign({ userId: result.user.id, role: result.user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-  // 5. 🚀 SEND WELCOME EMAIL
+  // 6. 🚀 SEND WELCOME EMAIL
   const { sendWelcomeEmail } = require('./email');
   sendWelcomeEmail(email, businessName);
 
@@ -47,7 +50,6 @@ async function registerUser(email, password, businessName, whatsappNumber, busin
     tenant: result.tenant 
   };
 }
-
 // 🚀 LOGIN USER
 async function loginUser(email, password) {
   // 1. Find user

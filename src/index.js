@@ -27,12 +27,11 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ error: 'Email, password, business name, WhatsApp number, and Business Context are all required.' });
     }
     
-    const result = await registerUser(email, password, businessName, whatsappNumber, businessContext);
+    // 🚀 CLEAN THE NUMBER HERE TOO
+    const cleanNumber = whatsappNumber.replace(/\D/g, '');
     
-    // 🚀 FIX: Strip the "+" and any spaces so it matches the frontend URL perfectly
-    const cleanNumber = result.tenant.whatsappNumber.replace(/\D/g, '');
+    const result = await registerUser(email, password, businessName, cleanNumber, businessContext);
     
-    // Pass the CLEAN number to the WhatsApp session
     startWhatsAppSession(result.tenant.id, cleanNumber, handleQr, handleSuccess);
 
     res.status(201).json({ success: true, message: 'Account created!', ...result });
@@ -273,3 +272,4 @@ server.listen(PORT, () => {
   console.log(`🌐 Server running on http://localhost:${PORT}`);
   console.log(`⚡ Customer QR Page: https://bot.aamirsaba.com/connect/96891293119`);
 });
+
