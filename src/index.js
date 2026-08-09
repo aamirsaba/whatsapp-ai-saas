@@ -29,8 +29,11 @@ app.post('/api/auth/register', async (req, res) => {
     
     const result = await registerUser(email, password, businessName, whatsappNumber, businessContext);
     
-    // 🚀 NEW: START THE WHATSAPP SESSION FOR THIS NEW TENANT!
-    startWhatsAppSession(result.tenant.id, result.tenant.whatsappNumber, handleQr, handleSuccess);
+    // 🚀 FIX: Strip the "+" and any spaces so it matches the frontend URL perfectly
+    const cleanNumber = result.tenant.whatsappNumber.replace(/\D/g, '');
+    
+    // Pass the CLEAN number to the WhatsApp session
+    startWhatsAppSession(result.tenant.id, cleanNumber, handleQr, handleSuccess);
 
     res.status(201).json({ success: true, message: 'Account created!', ...result });
   } catch (error) {
