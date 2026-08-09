@@ -1,6 +1,5 @@
 generator client {
-  provider   = "prisma-client-js"
-  engineType = "binary" // 🚀 THIS FIXES THE HOSTINGER PANIC
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -8,24 +7,66 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Tenant {
-  id               String   @id @default(uuid())
-  businessName     String
-  whatsappNumber   String   @unique
-  systemPrompt     String   @default("You are a helpful assistant for this business.")
-  isActive         Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  messages         Message[]
+// 1. Define Roles for your SaaS
+enum Role {
+  ADMIN
+  TENANT
 }
 
+// 2. Define Supported AI Providers
+enum LLMProvider {
+  QWEN
+  OPENAI
+  ANTHROPIC
+  CUSTOM
+}
+
+// 3. The User Model (For Login & Admin)
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   // We will hash this with bcrypt in Phase 2
+  role      Role     @default(TENANT)
+  createdAt DateTime @default(now())
+
+  tenants   Tenant[]
+}
+
+// 4. The Upgraded Tenant Model
+model Tenant {
+  id             String      @id @default(cuid())
+  businessName   String
+  whatsappNumber String      @unique
+  systemPrompt   String      @default("You are a helpful AI assistant.")
+  
+  // 🌟 NEW: Business Context for Tailored AI Responses
+  // This tells the AI exactly what the business does so it doesn't hallucinate.
+  businessContext String?    @db.Text 
+
+  isActive       Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+
+  // 🧠 NEW: Bring Your Own LLM (BYOK) Fields
+  llmProvider    LLMProvider @default(QWEN)
+  llmApiKey      String?     // If empty, uses your server's default Qwen key
+  llmModel       String?     // e.g., "gpt-4o", "qwen-turbo", "claude-3-sonnet"
+
+  // 🔗 Relations
+  userId         String?
+  user           User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages       Message[]
+}
+
+// 5. The Message Model
 model Message {
-  id          String   @id @default(uuid())
-  tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id])
-  fromNumber  String   
-  toNumber    String   
-  direction   String   
-  content     String
-  isAiReply   Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  fromNumber String
+  toNumber   String
+  direction  String   // 'inbound' or 'outbound'
+  content    String   @db.Text
+  isAiReply  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
