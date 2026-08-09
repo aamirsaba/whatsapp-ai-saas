@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
+const { sendWelcomeEmail } = require('./email'); // 🚀 Added email utility
 
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
@@ -30,12 +31,19 @@ async function registerUser(email, password, businessName, whatsappNumber) {
     });
 
     return { user: newUser, tenant: newTenant };
-  });
+  }); // ⚠️ TRANSACTION ENDS HERE
 
-  // 4. Generate JWT Token
+  // 4. Generate JWT Token (OUTSIDE the transaction)
   const token = jwt.sign({ userId: result.user.id, role: result.user.role }, JWT_SECRET, { expiresIn: '7d' });
 
-  return { token, user: { id: result.user.id, email: result.user.email, role: result.user.role }, tenant: result.tenant };
+  // 5. 🚀 SEND WELCOME EMAIL (Non-blocking)
+  sendWelcomeEmail(email, businessName);
+
+  return { 
+    token, 
+    user: { id: result.user.id, email: result.user.email, role: result.user.role }, 
+    tenant: result.tenant 
+  };
 }
 
 // 🚀 LOGIN USER

@@ -1,4 +1,3 @@
-require('dotenv').config();
 
 /**
  * Unified AI Router: Checks tenant settings and routes to the correct LLM

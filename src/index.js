@@ -122,6 +122,11 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
+//  Serve the Login Page
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
+});
+
 // Helper function to handle QR and Success callbacks with caching
 const handleQr = (num, qr) => {
   qrCache[num] = qr; // Save to cache

@@ -3,66 +3,107 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Connect WhatsApp AI | Oman SaaS</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-    .container { max-width: 450px; width: 90%; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; }
-    h1 { color: #00a884; margin-bottom: 10px; font-size: 24px; }
-    p { color: #555; margin-bottom: 30px; font-size: 15px; }
-    input { width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-    input:focus { outline: none; border-color: #00a884; }
-    button { width: 100%; padding: 16px; background: #00a884; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
-    button:hover { background: #008f6f; }
-    button:disabled { background: #ccc; cursor: not-allowed; }
-    .error { color: #dc3545; font-size: 14px; margin-top: 10px; display: none; }
-  </style>
+  <title>WhatsApp AI SaaS - Get Started</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <div class="container">
-    <h1>🚀 Connect Your WhatsApp AI</h1>
-    <p>Enter your business details below to instantly generate your personal QR code.</p>
-    
-    <form id="connectForm">
-      <input type="text" id="businessName" placeholder="Business Name (e.g., Muscat Logistics)" required>
-      <input type="tel" id="whatsappNumber" placeholder="WhatsApp Number (e.g., 96891293119)" required>
-      <button type="submit" id="submitBtn">Connect WhatsApp</button>
-      <div class="error" id="errorMsg"></div>
-    </form>
-  </div>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+  
+  <!-- Navbar -->
+  <nav class="bg-white shadow-sm">
+    <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+      <h1 class="text-xl font-bold text-green-600">WhatsApp AI SaaS</h1>
+      <a href="/login" class="text-gray-600 hover:text-green-600 font-medium">Login</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="flex-grow flex items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg">
+      <h2 class="text-2xl font-bold text-gray-800 mb-2">Register Your Business</h2>
+      <p class="text-gray-500 mb-6 text-sm">Set up your AI assistant in seconds. You can update advanced settings later in your dashboard.</p>
+      
+      <form id="registerForm" class="space-y-4">
+        
+        <!-- Business Name -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
+          <input type="text" id="businessName" required placeholder="e.g., Tabarak Solutions" 
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition">
+        </div>
+
+        <!-- WhatsApp Number -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number</label>
+          <input type="text" id="whatsappNumber" required placeholder="+96891293119" 
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition font-mono">
+          <p class="text-xs text-gray-500 mt-1">⚠️ Must include country code with the + sign (e.g., +968...)</p>
+        </div>
+
+        <!-- Business Context (Optional but Recommended) -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Business Context (Optional)</label>
+          <textarea id="businessContext" rows="3" placeholder="e.g., We are an IT company in Muscat specializing in web development. We do not sell hardware." 
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition text-sm"></textarea>
+          <p class="text-xs text-gray-500 mt-1">This ensures the AI only answers questions related to your specific services.</p>
+        </div>
+
+        <button type="submit" class="w-full bg-green-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-green-700 transition duration-200 shadow-md">
+          Register & Generate QR Code
+        </button>
+      </form>
+
+      <p id="message" class="mt-4 text-center text-sm font-medium"></p>
+    </div>
+  </main>
 
   <script>
-    document.getElementById('connectForm').addEventListener('submit', async (e) => {
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const btn = e.target.querySelector('button');
+      const msg = document.getElementById('message');
       
       const businessName = document.getElementById('businessName').value;
-      const whatsappNumber = document.getElementById('whatsappNumber').value.replace(/\D/g, ''); // Remove non-digits
-      const submitBtn = document.getElementById('submitBtn');
-      const errorMsg = document.getElementById('errorMsg');
+      const whatsappNumber = document.getElementById('whatsappNumber').value;
+      const businessContext = document.getElementById('businessContext').value;
 
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Setting up your AI...';
-      errorMsg.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Registering...';
+      msg.textContent = '';
+      msg.className = 'mt-4 text-center text-sm text-gray-600';
 
       try {
-        const response = await fetch('/api/register-tenant', {
+        const res = await fetch('/api/register-tenant', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ businessName, whatsappNumber })
+          body: JSON.stringify({ 
+            businessName, 
+            whatsappNumber, 
+            businessContext,
+            systemPrompt: "You are a helpful, professional AI assistant."
+          })
         });
-
-        const data = await response.json();
         
+        const data = await res.json();
+
         if (data.success) {
-          // 🚀 AUTOMATICALLY REDIRECT TO THE BEAUTIFUL QR CODE PAGE!
-          window.location.href = `/connect/${whatsappNumber}`;
+          msg.textContent = '✅ Success! Redirecting to QR code scanner...';
+          msg.className = 'mt-4 text-center text-sm text-green-600 font-bold';
+          
+          // Redirect to the QR code page after 1.5 seconds
+          setTimeout(() => {
+            window.location.href = `/connect/${whatsappNumber.replace(/\D/g, '')}`;
+          }, 1500);
         } else {
-          throw new Error(data.error || data.details || 'Failed to register');
+          msg.textContent = `❌ Error: ${data.error}`;
+          msg.className = 'mt-4 text-center text-sm text-red-600 font-bold';
+          btn.disabled = false;
+          btn.textContent = 'Register & Generate QR Code';
         }
-      } catch (error) {
-        errorMsg.textContent = error.message;
-        errorMsg.style.display = 'block';
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Connect WhatsApp';
+      } catch (err) {
+        msg.textContent = '❌ Server error. Please try again.';
+        msg.className = 'mt-4 text-center text-sm text-red-600 font-bold';
+        btn.disabled = false;
+        btn.textContent = 'Register & Generate QR Code';
       }
     });
   </script>
