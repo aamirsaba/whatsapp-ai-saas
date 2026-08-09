@@ -30,7 +30,6 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       console.log(`\n📱 SCAN THIS QR CODE WITH WHATSAPP FOR: ${phoneNumber}`);
       qrcode.generate(qr, { small: true });
       
-      // 🚀 TRIGGER WEBSOCKET: Send raw QR string to the browser
       if (onQrGenerated) {
         onQrGenerated(phoneNumber, qr);
       }
@@ -40,13 +39,11 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       const shouldReconnect = (lastDisconnect.error instanceof Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
       console.log('⚠️ Connection closed. Reconnecting:', shouldReconnect);
       if (shouldReconnect) {
-        // Pass callbacks again on reconnect
         startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConnected);
       }
     } else if (connection === 'open') {
       console.log(`✅ SUCCESS! WhatsApp is connected and ready for: ${phoneNumber}`);
       
-      // 🚀 TRIGGER WEBSOCKET: Tell browser it's connected
       if (onConnected) {
         onConnected(phoneNumber);
       }
@@ -58,7 +55,6 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
     }
   });
 
-  // Listen for incoming messages with MAXIMUM DEBUG
   sock.ev.on('messages.upsert', async ({ messages, type }) => {
     console.log("🔔 [DEBUG] Event fired! Type:", type);
     
@@ -85,7 +81,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
     
     const isIndividualChat = rawJid.endsWith('@s.whatsapp.net') || rawJid.endsWith('@lid');
     if (!isIndividualChat) {
-      console.log("⏭️ [DEBUG] Ignored: Not an individual chat. JID:", rawJid);
+      console.log("️ [DEBUG] Ignored: Not an individual chat. JID:", rawJid);
       return;
     }
 
@@ -108,7 +104,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       console.log("🔔 [DEBUG] Looking up tenant in DB for number:", phoneNumber);
       const tenant = await prisma.tenant.findUnique({ where: { whatsappNumber: phoneNumber } });
       if (!tenant) {
-        console.log("❌ [DEBUG] Tenant NOT FOUND in database for this number.");
+        console.log(" [DEBUG] Tenant NOT FOUND in database for this number.");
         return;
       }
       console.log("✅ [DEBUG] Tenant found:", tenant.businessName);
@@ -125,7 +121,17 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       });
 
       console.log("🤖 Thinking...");
-      const aiReply = await getAIResponse(text, tenant.systemPrompt);
+      
+      // 🧠 NEW: Build a strict, context-aware system prompt
+      const basePrompt = tenant.systemPrompt || "You are a helpful AI assistant.";
+      const contextInstruction = tenant.businessContext 
+        ? `\n\nCRITICAL BUSINESS CONTEXT: ${tenant.businessContext}\n\nYou are representing ${tenant.businessName}. You MUST strictly answer questions related ONLY to this business context. If a user asks about unrelated topics (like general knowledge, other businesses, or random facts), politely decline and state that you can only assist with matters related to ${tenant.businessName}.` 
+        : "";
+        
+      const finalSystemPrompt = basePrompt + contextInstruction;
+
+      // Pass the new smart prompt to the AI
+      const aiReply = await getAIResponse(text, finalSystemPrompt, tenant); // <-- Added 'tenant' here!
       console.log(`🗣️ AI Reply: ${aiReply}`);
 
       await sock.sendMessage(msg.key.remoteJid, { text: aiReply });
@@ -141,22 +147,22 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         }
       });
 
-       // 🚀 Send Beautiful Lead Alert to Discord
-    console.log("📡 Sending lead alert to Discord...");
-    if (process.env.DISCORD_WEBHOOK_URL) {
-      fetch(process.env.DISCORD_WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: `🔥 **New WhatsApp Activity!**\n🏢 **Business:** ${tenant.businessName}\n📱 **Number:** ${fromNumber}\n💬 **Message:** ${text}\n🤖 **AI Reply:** ${aiReply}`
-        })
-      }).catch(err => console.error("❌ Failed to notify Discord:", err));
-    }
+      // 🚀 Send Beautiful Lead Alert to Discord
+      console.log("📡 Sending lead alert to Discord...");
+      if (process.env.DISCORD_WEBHOOK_URL) {
+        fetch(process.env.DISCORD_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content: `🔥 **New WhatsApp Activity!**\n🏢 **Business:** ${tenant.businessName}\n📱 **Number:** ${fromNumber}\n💬 **Message:** ${text}\n **AI Reply:** ${aiReply}`
+          })
+        }).catch(err => console.error("❌ Failed to notify Discord:", err));
+      }
 
-  } catch (error) {
-    console.error("❌ Error processing message:", error);
-  }
-});
+    } catch (error) {
+      console.error(" Error processing message:", error);
+    }
+  });
 }
 
 module.exports = { startWhatsAppSession, activeSockets };

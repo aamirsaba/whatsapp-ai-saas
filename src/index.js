@@ -135,22 +135,50 @@ app.post('/api/connect', async (req, res) => {
 
 app.post('/api/register-tenant', async (req, res) => {
   try {
-    const { businessName, whatsappNumber, systemPrompt } = req.body;
-    if (!businessName || !whatsappNumber) return res.status(400).json({ error: 'businessName and whatsappNumber are required' });
+    // 1. Grab ALL the new fields from the frontend form
+    const { 
+      businessName, 
+      whatsappNumber, 
+      systemPrompt, 
+      businessContext, 
+      llmProvider, 
+      llmApiKey, 
+      llmModel 
+    } = req.body;
+
+    if (!businessName || !whatsappNumber) {
+      return res.status(400).json({ error: 'businessName and whatsappNumber are required' });
+    }
     
+    // 2. Save them all to the database
     const newTenant = await prisma.tenant.create({
-      data: { businessName, whatsappNumber, systemPrompt: systemPrompt || 'You are a helpful AI assistant.', isActive: true }
+      data: { 
+        businessName, 
+        whatsappNumber, 
+        systemPrompt: systemPrompt || 'You are a helpful AI assistant.',
+        businessContext: businessContext || null,       // NEW: Save business context
+        llmProvider: llmProvider || 'QWEN',             // NEW: Default to Qwen
+        llmApiKey: llmApiKey || null,                   // NEW: Save custom API key if provided
+        llmModel: llmModel || null,                     // NEW: Save custom model name if provided
+        isActive: true 
+      }
     });
     
-    startWhatsAppSession(newTenant.id, newTenant.whatsappNumber, handleQr, handleSuccess);
+    startWhatsAppSession(newTenant.id, newTenant.whatsappNumber,
+      (num, qr) => { wss.clients.forEach(client => { if (client.readyState === 1) client.send(JSON.stringify({ type: 'qr', qr, phoneNumber: num })); }); },
+      (num) => { wss.clients.forEach(client => { if (client.readyState === 1) client.send(JSON.stringify({ type: 'success', phoneNumber: num })); }); }
+    );
     
-    res.status(201).json({ success: true, message: 'Tenant registered. Visit /connect/' + newTenant.whatsappNumber, tenantId: newTenant.id });
+    res.status(201).json({ 
+      success: true, 
+      message: 'Tenant registered. Visit /connect/' + newTenant.whatsappNumber, 
+      tenantId: newTenant.id 
+    });
   } catch (error) {
     console.error('❌ Error registering tenant:', error); 
     res.status(500).json({ error: 'Failed to register tenant', details: error.message });
   }
 });
-
 app.get('/api/tenants', async (req, res) => {
   try {
     const tenants = await prisma.tenant.findMany({ select: { id: true, businessName: true, whatsappNumber: true, isActive: true, createdAt: true } });
