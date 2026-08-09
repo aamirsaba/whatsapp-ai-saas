@@ -142,7 +142,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       });
 
       console.log("📡 Sending lead alert to n8n...");
-      fetch('http://localhost:5678/webhook/new-lead', {
+      fetch(process.env.DISCORD_WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

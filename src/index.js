@@ -4,20 +4,24 @@ const http = require('http');
 const { WebSocketServer } = require('ws');
 const { PrismaClient } = require('@prisma/client');
 const { startWhatsAppSession } = require('./whatsapp');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: "postgresql://neondb_owner:npg_4Q1bSfHmKypd@ep-dark-salad-ayyygp0n.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
-    }
+const prisma = new PrismaClient();
+app.use(express.json());
+
+// 🧠 CACHE TO REMEMBER THE LATEST QR CODE FOR EACH NUMBER
+const qrCache = {};
+
+// 🌐 WEBSOCKET: SEND CACHED QR CODE TO NEW CONNECTIONS IMMEDIATELY
+wss.on('connection', (ws) => {
+  for (const [num, qr] of Object.entries(qrCache)) {
+    ws.send(JSON.stringify({ type: 'qr', qr, phoneNumber: num }));
   }
 });
-
-app.use(express.json());
 
 // 🌐 CUSTOMER-FACING QR CODE PAGE
 app.get('/connect/:phoneNumber', (req, res) => {
@@ -81,12 +85,29 @@ app.get('/connect/:phoneNumber', (req, res) => {
   `);
 });
 
-const path = require('path');
-
 // 🌐 Serve the beautiful customer portal
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
+
+// Helper function to handle QR and Success callbacks with caching
+const handleQr = (num, qr) => {
+  qrCache[num] = qr; // Save to cache
+  wss.clients.forEach(client => { 
+    if (client.readyState === 1) {
+      client.send(JSON.stringify({ type: 'qr', qr, phoneNumber: num })); 
+    }
+  });
+};
+
+const handleSuccess = (num) => {
+  delete qrCache[num]; // Clear cache on success
+  wss.clients.forEach(client => { 
+    if (client.readyState === 1) {
+      client.send(JSON.stringify({ type: 'success', phoneNumber: num })); 
+    }
+  });
+};
 
 app.post('/api/connect', async (req, res) => {
   try {
@@ -103,14 +124,7 @@ app.post('/api/connect', async (req, res) => {
       }
     });
 
-    startWhatsAppSession(tenant.id, formattedNumber, 
-      (num, qr) => {
-        wss.clients.forEach(client => { if (client.readyState === 1) client.send(JSON.stringify({ type: 'qr', qr, phoneNumber: num })); });
-      },
-      (num) => {
-        wss.clients.forEach(client => { if (client.readyState === 1) client.send(JSON.stringify({ type: 'success', phoneNumber: num })); });
-      }
-    );
+    startWhatsAppSession(tenant.id, formattedNumber, handleQr, handleSuccess);
 
     res.json({ success: true, message: "Session started. Visit /connect/" + formattedNumber + " to scan.", tenantId: tenant.id });
   } catch (error) {
@@ -128,10 +142,7 @@ app.post('/api/register-tenant', async (req, res) => {
       data: { businessName, whatsappNumber, systemPrompt: systemPrompt || 'You are a helpful AI assistant.', isActive: true }
     });
     
-    startWhatsAppSession(newTenant.id, newTenant.whatsappNumber,
-      (num, qr) => { wss.clients.forEach(client => { if (client.readyState === 1) client.send(JSON.stringify({ type: 'qr', qr, phoneNumber: num })); }); },
-      (num) => { wss.clients.forEach(client => { if (client.readyState === 1) client.send(JSON.stringify({ type: 'success', phoneNumber: num })); }); }
-    );
+    startWhatsAppSession(newTenant.id, newTenant.whatsappNumber, handleQr, handleSuccess);
     
     res.status(201).json({ success: true, message: 'Tenant registered. Visit /connect/' + newTenant.whatsappNumber, tenantId: newTenant.id });
   } catch (error) {
@@ -153,10 +164,7 @@ app.post('/api/start-sessions', async (req, res) => {
   try {
     const activeTenants = await prisma.tenant.findMany({ where: { isActive: true } });
     for (const tenant of activeTenants) {
-      startWhatsAppSession(tenant.id, tenant.whatsappNumber,
-        (num, qr) => { wss.clients.forEach(client => { if (client.readyState === 1) client.send(JSON.stringify({ type: 'qr', qr, phoneNumber: num })); }); },
-        (num) => { wss.clients.forEach(client => { if (client.readyState === 1) client.send(JSON.stringify({ type: 'success', phoneNumber: num })); }); }
-      );
+      startWhatsAppSession(tenant.id, tenant.whatsappNumber, handleQr, handleSuccess);
     }
     res.json({ success: true, message: `Started ${activeTenants.length} session(s). Visit /connect/[number] to scan.` });
   } catch (error) {
@@ -168,5 +176,5 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 WhatsApp AI SaaS Backend is running!`);
   console.log(`🌐 Server running on http://localhost:${PORT}`);
-  console.log(`⚡ Customer QR Page: http://localhost:${PORT}/connect/96891293119`);
+  console.log(`⚡ Customer QR Page: https://bot.aamirsaba.com/connect/96891293119`);
 });
