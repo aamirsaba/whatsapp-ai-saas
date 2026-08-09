@@ -13,6 +13,38 @@ const wss = new WebSocketServer({ server });
 const prisma = new PrismaClient();
 app.use(express.json());
 
+
+const { registerUser, loginUser } = require('./auth');
+
+// ... (keep your existing QR code and WebSocket code here) ...
+
+// 🚀 AUTH ROUTES
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { email, password, businessName, whatsappNumber } = req.body;
+    if (!email || !password || !businessName || !whatsappNumber) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+    
+    const result = await registerUser(email, password, businessName, whatsappNumber);
+    res.status(201).json({ success: true, message: 'Account created!', ...result });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
+    
+    const result = await loginUser(email, password);
+    res.json({ success: true, message: 'Logged in successfully!', ...result });
+  } catch (error) {
+    res.status(401).json({ success: false, error: error.message });
+  }
+});
+
 // 🧠 CACHE TO REMEMBER THE LATEST QR CODE FOR EACH NUMBER
 const qrCache = {};
 
