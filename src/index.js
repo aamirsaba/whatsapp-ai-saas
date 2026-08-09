@@ -23,14 +23,18 @@ app.post('/api/auth/register', async (req, res) => {
   try {
     const { email, password, businessName, whatsappNumber, businessContext } = req.body;
     
-    // 🚀 ENFORCE BUSINESS CONTEXT
     if (!email || !password || !businessName || !whatsappNumber || !businessContext) {
       return res.status(400).json({ error: 'Email, password, business name, WhatsApp number, and Business Context are all required.' });
     }
     
-    const result = await registerUser(email, password, businessName, whatsappNumber);
+    const result = await registerUser(email, password, businessName, whatsappNumber, businessContext);
+    
+    // 🚀 NEW: START THE WHATSAPP SESSION FOR THIS NEW TENANT!
+    startWhatsAppSession(result.tenant.id, result.tenant.whatsappNumber, handleQr, handleSuccess);
+
     res.status(201).json({ success: true, message: 'Account created!', ...result });
   } catch (error) {
+    console.error('❌ Registration Error:', error);
     res.status(400).json({ success: false, error: error.message });
   }
 });
