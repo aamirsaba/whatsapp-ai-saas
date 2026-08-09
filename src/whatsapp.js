@@ -141,23 +141,22 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         }
       });
 
-      console.log("📡 Sending lead alert to n8n...");
+       // 🚀 Send Beautiful Lead Alert to Discord
+    console.log("📡 Sending lead alert to Discord...");
+    if (process.env.DISCORD_WEBHOOK_URL) {
       fetch(process.env.DISCORD_WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          businessName: tenant.businessName,
-          leadPhone: fromNumber,
-          leadMessage: text,
-          aiReply: aiReply,
-          timestamp: new Date().toISOString()
+          content: `🔥 **New WhatsApp Activity!**\n🏢 **Business:** ${tenant.businessName}\n📱 **Number:** ${fromNumber}\n💬 **Message:** ${text}\n🤖 **AI Reply:** ${aiReply}`
         })
-      }).catch(err => console.error("Failed to notify n8n:", err));
-
-    } catch (error) {
-      console.error("❌ Error processing message:", error);
+      }).catch(err => console.error("❌ Failed to notify Discord:", err));
     }
-  });
+
+  } catch (error) {
+    console.error("❌ Error processing message:", error);
+  }
+});
 }
 
 module.exports = { startWhatsAppSession, activeSockets };
