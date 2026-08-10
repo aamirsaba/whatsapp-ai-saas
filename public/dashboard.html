@@ -184,7 +184,7 @@
     </div>
   </main>
 
-  <script>
+    <script>
     // 1. Auth Check
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -194,8 +194,6 @@
     } else { 
       document.getElementById('userEmail').textContent = user.email; 
       document.getElementById('userEmail').classList.remove('hidden');
-    // Inside loadDashboard(), after setting other values:
-      document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
       loadDashboard(); 
     }
 
@@ -237,10 +235,24 @@
         
         if (data.success) {
           document.getElementById('businessName').textContent = data.tenant.businessName;
-          document.getElementById('systemPrompt').value = data.tenant.systemPrompt || personas.business.systemPrompt;
+          document.getElementById('systemPrompt').value = data.tenant.systemPrompt || '';
           document.getElementById('businessContext').value = data.tenant.businessContext || '';
           document.getElementById('llmApiKey').value = data.tenant.llmApiKey || '';
           document.getElementById('llmModel').value = data.tenant.llmModel || '';
+          document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
+          
+          // Parse and load contact info if it exists
+          if (data.tenant.contactInfo) {
+            const lines = data.tenant.contactInfo.split('\n');
+            const getValue = (prefix) => lines.find(l => l.startsWith(prefix))?.split(': ')[1]?.trim() || '';
+            
+            document.getElementById('contactPerson').value = getValue('Contact Person');
+            document.getElementById('contactEmail').value = getValue('Email');
+            document.getElementById('contactPhone').value = getValue('Phone/WhatsApp');
+            document.getElementById('contactWebsite').value = getValue('Website');
+            document.getElementById('contactNotes').value = getValue('Notes');
+          }
+          
           renderChatHistory(data.messages);
         } else {
           console.error('Failed to load data:', data.error);
@@ -283,51 +295,56 @@
         </div>
       `).join('');
       
-      // Scroll to bottom
       container.scrollTop = container.scrollHeight;
     }
 
-    // 🌟 NEW: Auto-Generate Context from Website
-    async function autoGenerateContext() {
-      const url = document.getElementById('websiteUrl').value;
+    // 6. Save Settings
+    document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
       const msg = document.getElementById('settingsMsg');
-      
-      if (!url) {
-        msg.textContent = '⚠️ Please enter a Website URL first.';
-        msg.className = 'mt-3 text-center text-sm text-yellow-600 font-bold';
-        return;
-      }
+      msg.textContent = 'Saving...';
+      msg.className = 'mt-3 text-center text-sm text-gray-600';
 
-      msg.textContent = '🕷️ Reading website and generating AI context... (This takes ~5 seconds)';
-      msg.className = 'mt-3 text-center text-sm text-indigo-600 font-bold';
+      const contactInfo = `
+Contact Person: ${document.getElementById('contactPerson').value || 'Not provided'}
+Email: ${document.getElementById('contactEmail').value || 'Not provided'}
+Phone/WhatsApp: ${document.getElementById('contactPhone').value || 'Not provided'}
+Website: ${document.getElementById('contactWebsite').value || 'Not provided'}
+Notes: ${document.getElementById('contactNotes').value || 'None'}
+      `.trim();
 
       try {
-        const res = await fetch('/api/dashboard/scrape-website', {
-          method: 'POST',
+        const res = await fetch('/api/dashboard/settings', {
+          method: 'PUT',
           headers: { 
             'Content-Type': 'application/json', 
             'Authorization': `Bearer ${token}` 
           },
-          body: JSON.stringify({ websiteUrl: url })
+          body: JSON.stringify({
+            systemPrompt: document.getElementById('systemPrompt').value,
+            businessContext: document.getElementById('businessContext').value,
+            contactInfo: contactInfo,
+            llmApiKey: document.getElementById('llmApiKey').value,
+            llmModel: document.getElementById('llmModel').value,
+            llmProvider: document.getElementById('llmProvider').value
+          })
         });
-        
         const data = await res.json();
         
         if (data.success) {
-          document.getElementById('businessContext').value = data.generatedContext;
-          msg.textContent = '✅ Context generated successfully! Review and edit if needed, then click Save.';
+          msg.textContent = '✅ AI reprogrammed successfully!';
           msg.className = 'mt-3 text-center text-sm text-green-600 font-bold';
         } else {
-          msg.textContent = '❌ ' + (data.error || 'Failed to generate context.');
+          msg.textContent = '❌ ' + data.error;
           msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
         }
       } catch (err) {
-        msg.textContent = '❌ Server error while scraping.';
+        msg.textContent = '❌ Server error.';
         msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
       }
-    }
+    });
 
-    // 🚨 NEW: Validate & Auto-Detect LLM Key
+    // 7. Auto-Detect LLM Key
     async function validateLLMKey() {
       const apiKey = document.getElementById('llmApiKey').value;
       const msg = document.getElementById('settingsMsg');
@@ -367,7 +384,7 @@
       }
     }
 
-    // 🚨 NEW: Fill Contact Template
+    // 8. Fill Contact Template
     function fillContactTemplate() {
       document.getElementById('contactPerson').value = 'Aamir Saba';
       document.getElementById('contactEmail').value = 'info@tabaraksolutions.com';
@@ -380,118 +397,7 @@
       msg.className = 'mt-3 text-center text-sm text-indigo-600 font-bold';
     }
 
-    // 🚨 UPDATED: Save Settings (Now includes Contact Info)
-    document.getElementById('settingsForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const msg = document.getElementById('settingsMsg');
-      msg.textContent = 'Saving...';
-      msg.className = 'mt-3 text-center text-sm text-gray-600';
-
-      // Combine contact fields into a single structured string for the AI
-      const contactInfo = `
-Contact Person: ${document.getElementById('contactPerson').value || 'Not provided'}
-Email: ${document.getElementById('contactEmail').value || 'Not provided'}
-Phone/WhatsApp: ${document.getElementById('contactPhone').value || 'Not provided'}
-Website: ${document.getElementById('contactWebsite').value || 'Not provided'}
-Notes: ${document.getElementById('contactNotes').value || 'None'}
-      `.trim();
-
-      try {
-        const res = await fetch('/api/dashboard/settings', {
-          method: 'PUT',
-          headers: { 
-            'Content-Type': 'application/json', 
-            'Authorization': `Bearer ${token}` 
-          },
-          body: JSON.stringify({
-            systemPrompt: document.getElementById('systemPrompt').value,
-            businessContext: document.getElementById('businessContext').value,
-            contactInfo: contactInfo, // 🚨 Send structured contact info
-            llmApiKey: document.getElementById('llmApiKey').value,
-            llmModel: document.getElementById('llmModel').value
-          })
-        });
-        const data = await res.json();
-        
-        if (data.success) {
-          msg.textContent = '✅ AI reprogrammed successfully!';
-          msg.className = 'mt-3 text-center text-sm text-green-600 font-bold';
-        } else {
-          msg.textContent = '❌ ' + data.error;
-          msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
-        }
-      } catch (err) {
-        msg.textContent = '❌ Server error.';
-        msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
-      }
-    });
-
-    // 🚨 UPDATED: Load Dashboard Data (Now loads Contact Info)
-    async function loadDashboard() {
-      try {
-        const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
-        const data = await res.json();
-        if (data.success) {
-          document.getElementById('businessName').textContent = data.tenant.businessName;
-          document.getElementById('systemPrompt').value = data.tenant.systemPrompt || '';
-          document.getElementById('businessContext').value = data.tenant.businessContext || '';
-          document.getElementById('llmApiKey').value = data.tenant.llmApiKey || '';
-          document.getElementById('llmModel').value = data.tenant.llmModel || '';
-          
-          // Parse and load contact info if it exists
-          if (data.tenant.contactInfo) {
-            const lines = data.tenant.contactInfo.split('\n');
-            const getValue = (prefix) => lines.find(l => l.startsWith(prefix))?.split(': ')[1]?.trim() || '';
-            
-            document.getElementById('contactPerson').value = getValue('Contact Person');
-            document.getElementById('contactEmail').value = getValue('Email');
-            document.getElementById('contactPhone').value = getValue('Phone/WhatsApp');
-            document.getElementById('contactWebsite').value = getValue('Website');
-            document.getElementById('contactNotes').value = getValue('Notes');
-          }
-          
-          renderChatHistory(data.messages);
-        }
-      } catch (err) { console.error('Failed to load dashboard', err); }
-    }
-
-    // 6. Save Settings
-    document.getElementById('settingsForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const msg = document.getElementById('settingsMsg');
-      msg.textContent = 'Saving...';
-      msg.className = 'mt-3 text-center text-sm text-gray-600';
-
-      try {
-        const res = await fetch('/api/dashboard/settings', {
-          method: 'PUT',
-          headers: { 
-            'Content-Type': 'application/json', 
-            'Authorization': `Bearer ${token}` 
-          },
-          body: JSON.stringify({
-            systemPrompt: document.getElementById('systemPrompt').value,
-            businessContext: document.getElementById('businessContext').value,
-            llmApiKey: document.getElementById('llmApiKey').value,
-            llmModel: document.getElementById('llmModel').value
-          })
-        });
-        const data = await res.json();
-        
-        if (data.success) {
-          msg.textContent = '✅ AI reprogrammed successfully!';
-          msg.className = 'mt-3 text-center text-sm text-green-600 font-bold';
-        } else {
-          msg.textContent = '❌ ' + data.error;
-          msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
-        }
-      } catch (err) {
-        msg.textContent = '❌ Server error.';
-        msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
-      }
-    });
-
-    // 7. Disconnect Bot
+    // 9. Disconnect Bot
     async function disconnectBot() {
       if (!confirm('⚠️ Are you sure? This will log out your WhatsApp number from the AI bot. You will need to scan the QR code again to reconnect.')) return;
       
@@ -518,7 +424,7 @@ Notes: ${document.getElementById('contactNotes').value || 'None'}
       }
     }
 
-    // 8. Delete Account
+    // 10. Delete Account
     async function deleteAccount() {
       if (!confirm('⚠️ WARNING: This will permanently delete your account, business data, and chat history. This CANNOT be undone.')) return;
       if (!confirm('Are you ABSOLUTELY sure? All your data will be erased forever.')) return;
@@ -541,7 +447,7 @@ Notes: ${document.getElementById('contactNotes').value || 'None'}
       }
     }
 
-    // 9. Logout
+    // 11. Logout
     function logout() { 
       localStorage.clear(); 
       window.location.href = '/login'; 
