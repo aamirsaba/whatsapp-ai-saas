@@ -415,8 +415,27 @@ app.post('/api/dashboard/validate-llm', authenticateToken, async (req, res) => {
   }
 });
 
+// 🚀 NEW: Auto-start all active WhatsApp sessions when the server boots up
+async function startAllActiveSessions() {
+  try {
+    const activeTenants = await prisma.tenant.findMany({ where: { isActive: true } });
+    console.log(`🔄 Found ${activeTenants.length} active tenant(s). Starting sessions...`);
+    
+    for (const tenant of activeTenants) {
+      console.log(`🔄 Auto-starting session for: ${tenant.whatsappNumber}`);
+      startWhatsAppSession(tenant.id, tenant.whatsappNumber, handleQr, handleSuccess);
+    }
+  } catch (error) {
+    console.error('❌ Failed to start active sessions:', error);
+  }
+}
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 WhatsApp AI SaaS Backend is running!`);
   console.log(`🌐 Server running on http://localhost:${PORT}`);
+  
+  // 🚀 CALL THE AUTO-START FUNCTION HERE
+  startAllActiveSessions(); 
 });
+
