@@ -20,23 +20,17 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
   });
 
   activeSockets.set(phoneNumber, sock);
-
-  // Simple creds update - no complex mismatch logic that breaks the connection
   sock.ev.on('creds.update', saveCreds);
 
   sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
-      console.log(`\n SCAN THIS QR CODE WITH WHATSAPP FOR: ${phoneNumber}`);
+      console.log(`\n📱 SCAN THIS QR CODE WITH WHATSAPP FOR: ${phoneNumber}`);
       qrcode.generate(qr, { small: true });
-      
-      if (onQrGenerated) {
-        onQrGenerated(phoneNumber, qr);
-      }
+      if (onQrGenerated) onQrGenerated(phoneNumber, qr);
     }
 
-    // Simple, proven reconnection logic
     if (connection === 'close') {
       const shouldReconnect = (lastDisconnect.error instanceof Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
       console.log('⚠️ Connection closed. Reconnecting:', shouldReconnect);
@@ -45,10 +39,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       }
     } else if (connection === 'open') {
       console.log(`✅ SUCCESS! WhatsApp is connected and ready for: ${phoneNumber}`);
-      
-      if (onConnected) {
-        onConnected(phoneNumber);
-      }
+      if (onConnected) onConnected(phoneNumber);
       
       await prisma.tenant.update({
         where: { id: tenantId },
@@ -99,6 +90,30 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       await prisma.message.create({
         data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: aiReply, isAiReply: true }
       });
+
+      // 🚨 NEW: Robust Discord Webhook Logging
+      console.log("📡 Checking Discord Webhook...");
+      if (process.env.DISCORD_WEBHOOK_URL) {
+        console.log("📡 Sending lead alert to Discord...");
+        
+        fetch(process.env.DISCORD_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content: `🔥 **New WhatsApp Activity!**\n🏢 **Business:** ${tenant.businessName}\n📱 **Number:** ${fromNumber}\n💬 **Message:** ${text}\n🤖 **AI Reply:** ${aiReply}`
+          })
+        })
+        .then(res => {
+          if (!res.ok) {
+            console.error(`❌ Discord Webhook HTTP Error: ${res.status} ${res.statusText}`);
+          } else {
+            console.log("✅ Discord Webhook sent successfully!");
+          }
+        })
+        .catch(err => console.error("❌ Failed to notify Discord (Network Error):", err));
+      } else {
+        console.log("⚠️ DISCORD_WEBHOOK_URL is MISSING in your .env file!");
+      }
 
     } catch (error) {
       console.error("❌ Error processing message:", error);

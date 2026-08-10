@@ -1,17 +1,17 @@
 const nodemailer = require('nodemailer');
 
-// Configure the transporter using Hostinger SMTP
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: parseInt(process.env.SMTP_PORT),
-  secure: process.env.SMTP_PORT == 465, // true for 465, false for 587
+  secure: process.env.SMTP_PORT == 465, 
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
 });
 
-async function sendWelcomeEmail(userEmail, businessName) {
+// 1. Welcome Email for the New User (Updated to show password)
+async function sendWelcomeEmail(userEmail, businessName, password) {
   const mailOptions = {
     from: `"WhatsApp AI SaaS" <${process.env.SMTP_USER}>`,
     to: userEmail,
@@ -20,14 +20,21 @@ async function sendWelcomeEmail(userEmail, businessName) {
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
         <h2 style="color: #16a34a;">Welcome to WhatsApp AI SaaS!</h2>
         <p>Hello,</p>
-        <p>Thank you for registering <strong>${businessName}</strong> with our platform. Your AI-powered WhatsApp assistant is now being set up.</p>
+        <p>Thank you for registering <strong>${businessName}</strong> with our platform.</p>
+        
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 6px; margin: 20px 0;">
+          <p style="margin: 0; font-weight: bold; color: #166534;">Your Login Credentials:</p>
+          <p style="margin: 5px 0 0 0; font-family: monospace; font-size: 16px; color: #166534;">🔑 Password: <strong>${password}</strong></p>
+        </div>
+
+        <p>Please save this password securely. You can change it later in your dashboard.</p>
+        
         <p>Here are your next steps:</p>
         <ol style="line-height: 1.6;">
           <li>Log in to your dashboard at <a href="https://bot.aamirsaba.com/login" style="color: #16a34a;">bot.aamirsaba.com</a></li>
           <li>Scan the QR code to link your WhatsApp business number.</li>
-          <li>Customize your AI's personality and business context in the settings.</li>
+          <li>Customize your AI's personality in the settings.</li>
         </ol>
-        <p>If you have any questions, simply reply to this email or contact us at <a href="mailto:info@aamirsaba.com">info@aamirsaba.com</a>.</p>
         <br>
         <p style="color: #6b7280; font-size: 14px;">Best regards,<br><strong>The Aamir Saba Team</strong><br>https://aamirsaba.com</p>
       </div>
@@ -39,8 +46,41 @@ async function sendWelcomeEmail(userEmail, businessName) {
     console.log(`✅ Welcome email sent to ${userEmail}`);
   } catch (error) {
     console.error('❌ Failed to send welcome email:', error.message);
-    // We don't throw the error here, so registration still succeeds even if email fails
   }
 }
 
-module.exports = { sendWelcomeEmail };
+// 2. 🚨 NEW: Admin Notification Email
+async function sendAdminNotificationEmail(newEmail, businessName, whatsappNumber) {
+  const adminEmail = process.env.ADMIN_EMAIL || 'aamir@aamirsaba.com'; 
+  
+  const mailOptions = {
+    from: `"WhatsApp AI SaaS System" <${process.env.SMTP_USER}>`,
+    to: adminEmail,
+    subject: '🔔 New User Registration Alert!',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; background-color: #f9fafb;">
+        <h2 style="color: #16a34a;">🔔 New Business Registered!</h2>
+        <p>Hello Admin,</p>
+        <p>A new user has just signed up on your platform:</p>
+        <ul style="line-height: 1.8; background: #fff; padding: 15px; border-radius: 6px; border: 1px solid #e5e7eb;">
+          <li><strong>📧 Email:</strong> ${newEmail}</li>
+          <li><strong>🏢 Business:</strong> ${businessName}</li>
+          <li><strong>📱 WhatsApp:</strong> ${whatsappNumber}</li>
+        </ul>
+        <p>Log in to your dashboard to monitor their activity and ensure their bot is running smoothly.</p>
+        <br>
+        <p style="color: #6b7280; font-size: 14px;">Best regards,<br><strong>Your SaaS System</strong></p>
+      </div>
+    `
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Admin notification email sent to ${adminEmail}`);
+  } catch (error) {
+    console.error('❌ Failed to send admin notification email:', error.message);
+  }
+}
+
+// 🚨 CRITICAL: Export BOTH functions
+module.exports = { sendWelcomeEmail, sendAdminNotificationEmail };

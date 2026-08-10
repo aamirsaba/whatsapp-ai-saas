@@ -1,7 +1,9 @@
+const crypto = require('crypto'); // 🚨 ADDED: For auto-generating passwords
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
-const { sendWelcomeEmail } = require('./email'); // 🚀 Added email utility
+// 🚨 UPDATED: Import BOTH email functions
+const { sendWelcomeEmail, sendAdminNotificationEmail } = require('./email'); 
 
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
@@ -15,8 +17,9 @@ async function registerUser(email, password, businessName, whatsappNumber, busin
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) throw new Error('Email already registered');
 
-  // 3. Hash the password
-  const hashedPassword = await bcrypt.hash(password, 10);
+  // 3. 🚨 NEW: Auto-generate password if not provided by frontend
+  const generatedPassword = password || crypto.randomBytes(10).toString('hex');
+  const hashedPassword = await bcrypt.hash(generatedPassword, 10);
 
   // 4. Create User and Tenant in a single transaction
   const result = await prisma.$transaction(async (tx) => {
@@ -27,7 +30,7 @@ async function registerUser(email, password, businessName, whatsappNumber, busin
     const newTenant = await tx.tenant.create({
       data: {
         businessName,
-        whatsappNumber: cleanNumber, // 🚀 USE THE CLEANED NUMBER HERE!
+        whatsappNumber: cleanNumber, 
         systemPrompt: 'You are a helpful, professional AI assistant for this business.',
         businessContext: businessContext,
         userId: newUser.id
@@ -38,11 +41,11 @@ async function registerUser(email, password, businessName, whatsappNumber, busin
   });
 
   // 5. Generate JWT Token
-  const token = jwt.sign({ userId: result.user.id, role: result.user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+  const token = jwt.sign({ userId: result.user.id, role: result.user.role }, JWT_SECRET, { expiresIn: '7d' });
 
-  // 6. 🚀 SEND WELCOME EMAIL
-  const { sendWelcomeEmail } = require('./email');
-  sendWelcomeEmail(email, businessName);
+  // 6. 🚀 SEND EMAILS (User Welcome + Admin Notification)
+  sendWelcomeEmail(email, businessName, generatedPassword); // Pass the generated password!
+  sendAdminNotificationEmail(email, businessName, cleanNumber); // Notify the admin
 
   return { 
     token, 
@@ -50,20 +53,16 @@ async function registerUser(email, password, businessName, whatsappNumber, busin
     tenant: result.tenant 
   };
 }
+
 // 🚀 LOGIN USER
 async function loginUser(email, password) {
-  // 1. Find user
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) throw new Error('Invalid email or password');
 
-  // 2. Check password
   const isPasswordValid = await bcrypt.compare(password, user.password);
   if (!isPasswordValid) throw new Error('Invalid email or password');
 
-  // 3. Generate JWT Token
   const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-
-  // 4. Fetch their tenant info
   const tenant = await prisma.tenant.findFirst({ where: { userId: user.id } });
 
   return { token, user: { id: user.id, email: user.email, role: user.role }, tenant };

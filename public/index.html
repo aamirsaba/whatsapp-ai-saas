@@ -11,7 +11,7 @@
   <!-- Navbar -->
   <nav class="bg-white shadow-sm">
     <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-      <h1 class="text-xl font-bold text-green-600">WhatsApp AI SaaS</h1>
+      <h1 class="text-xl font-bold text-green-600">Universal AI SaaS</h1>
       <a href="/login" class="text-gray-600 hover:text-green-600 font-medium">Already have an account? Login</a>
     </div>
   </nav>
@@ -29,13 +29,7 @@
           <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
           <input type="email" id="email" required placeholder="you@company.com" 
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition">
-        </div>
-
-        <!-- Password -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-          <input type="password" id="password" required minlength="6" placeholder="At least 6 characters" 
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition">
+          <p class="text-xs text-gray-500 mt-1">🔒 We will automatically generate a secure password and email it to you.</p>
         </div>
 
         <!-- Business Name -->
@@ -53,7 +47,7 @@
           <p class="text-xs text-gray-500 mt-1">⚠️ Must include country code with the + sign (e.g., +44... or +968...)</p>
         </div>
 
-                <!-- Business Context (REQUIRED) -->
+        <!-- Business Context (REQUIRED) -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">
             Business Context <span class="text-red-500">*</span>
@@ -80,7 +74,6 @@
       const msg = document.getElementById('message');
       
       const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
       const businessName = document.getElementById('businessName').value;
       const whatsappNumber = document.getElementById('whatsappNumber').value;
       const businessContext = document.getElementById('businessContext').value;
@@ -91,13 +84,11 @@
       msg.className = 'mt-4 text-center text-sm text-gray-600';
 
       try {
-        // 🚀 POINTING TO THE SECURE AUTH REGISTER ENDPOINT
         const res = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             email,
-            password,
             businessName, 
             whatsappNumber, 
             businessContext
@@ -107,20 +98,17 @@
         const data = await res.json();
 
         if (data.success) {
-          // Save login state immediately
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
           localStorage.setItem('tenant', JSON.stringify(data.tenant));
 
-          msg.textContent = '✅ Account created! Check your email, then redirecting to QR scanner...';
+          msg.textContent = '✅ Account created! Check your email for your password, redirecting to QR scanner...';
           msg.className = 'mt-4 text-center text-sm text-green-600 font-bold';
           
-          // Redirect to the QR code page after 2 seconds
           setTimeout(() => {
-            // Strip non-digits for the URL
             const cleanNumber = whatsappNumber.replace(/\D/g, '');
             window.location.href = `/connect/${cleanNumber}`;
-          }, 2000);
+          }, 2500);
         } else {
           msg.textContent = `❌ Error: ${data.error}`;
           msg.className = 'mt-4 text-center text-sm text-red-600 font-bold';
