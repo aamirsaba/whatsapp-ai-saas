@@ -83,7 +83,12 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
 
 app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
   try {
-    const { systemPrompt, businessContext, llmApiKey, llmModel } = req.body;
+    const { systemPrompt, businessContext, contactInfo, llmApiKey, llmModel, llmProvider, llmBaseUrl } = req.body;
+    
+    if (!llmApiKey) {
+      return res.status(400).json({ error: 'LLM API Key is strictly required.' });
+    }
+
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
     if (!tenant) return res.status(404).json({ error: 'Business not found.' });
 
@@ -92,12 +97,15 @@ app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
       data: { 
         systemPrompt: systemPrompt || tenant.systemPrompt,
         businessContext: businessContext || tenant.businessContext,
-        llmApiKey: llmApiKey || tenant.llmApiKey,
-        llmModel: llmModel || tenant.llmModel
+        contactInfo: contactInfo || tenant.contactInfo,
+        llmApiKey: llmApiKey,
+        llmModel: llmModel,
+        llmProvider: llmProvider || 'OPENAI',
+        llmBaseUrl: llmBaseUrl // 🚨 Save the detected Base URL
       }
     });
 
-    res.json({ success: true, message: '✨ AI Persona updated successfully!' });
+    res.json({ success: true, message: '✨ AI Settings updated successfully!' });
   } catch (error) {
     console.error('Dashboard update error:', error);
     res.status(500).json({ error: 'Failed to update settings.' });
@@ -271,6 +279,128 @@ app.post('/api/connect', async (req, res) => {
   } catch (error) {
     console.error("❌ Connection Error:", error);
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+const { scrapeWebsiteContext } = require('./scraper'); // Add this at the top with other requires
+
+// ... (keep all your existing routes) ...
+
+// 🚀 NEW: SCRAPE WEBSITE FOR AI CONTEXT (Protected)
+app.post('/api/dashboard/scrape-website', authenticateToken, async (req, res) => {
+  try {
+    const { websiteUrl } = req.body;
+    if (!websiteUrl) return res.status(400).json({ error: 'Website URL is required.' });
+
+    const scrapedText = await scrapeWebsiteContext(websiteUrl);
+    
+    if (!scrapedText) {
+      return res.status(400).json({ error: 'Could not extract text from this website. Please enter the context manually.' });
+    }
+
+    // Format it into a perfect AI prompt
+    const generatedContext = `This business is based on their website (${websiteUrl}). Here is their core information: ${scrapedText}. Use this information to answer customer questions accurately and professionally.`;
+
+    res.json({ success: true, generatedContext });
+  } catch (error) {
+    console.error('Scrape error:', error);
+    res.status(500).json({ error: 'Failed to scrape website.' });
+  }
+});
+
+// Helper to pick the best model from a list
+function pickBestModel(models, provider) {
+  // Filter for text/chat models (ignore image/audio models)
+  const chatModels = models.filter(m => 
+    m.id.toLowerCase().includes('chat') || 
+    m.id.toLowerCase().includes('gpt') || 
+    m.id.toLowerCase().includes('qwen') ||
+    m.id.toLowerCase().includes('turbo') ||
+    m.id.toLowerCase().includes('mini')
+  );
+  
+  const candidates = chatModels.length > 0 ? chatModels : models;
+  if (candidates.length === 0) return null;
+
+  // Priority logic based on provider
+  if (provider === 'OPENAI') {
+    // Prefer gpt-4o-mini (smart & cheap), then gpt-4o, then gpt-3.5
+    const priority = ['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo'];
+    for (let p of priority) {
+      const found = candidates.find(m => m.id === p);
+      if (found) return found.id;
+    }
+  }
+  
+  if (provider === 'QWEN') {
+    // Prefer qwen-plus (best balance), qwen-max, qwen-turbo
+    const priority = ['qwen-plus', 'qwen-max', 'qwen-turbo'];
+    for (let p of priority) {
+      const found = candidates.find(m => m.id === p);
+      if (found) return found.id;
+    }
+  }
+
+  // Fallback to the first available model
+  return candidates[0].id;
+}
+
+// 🚀 SMART VALIDATE & AUTO-DETECT LLM API KEY
+app.post('/api/dashboard/validate-llm', authenticateToken, async (req, res) => {
+  try {
+    const { llmApiKey } = req.body;
+    if (!llmApiKey) return res.status(400).json({ error: 'API Key is required' });
+
+    let detectedModel = null;
+    let provider = 'UNKNOWN';
+    let baseUrl = null;
+
+    // 1. Try OpenAI
+    try {
+      const response = await fetch('https://api.openai.com/v1/models', {
+        headers: { 'Authorization': `Bearer ${llmApiKey}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        detectedModel = pickBestModel(data.data, 'OPENAI');
+        if (detectedModel) {
+          provider = 'OPENAI';
+          baseUrl = 'https://api.openai.com/v1';
+        }
+      }
+    } catch (e) { /* ignore */ }
+
+    // 2. If not OpenAI, try Qwen (DashScope)
+    if (!detectedModel) {
+      try {
+        const response = await fetch('https://dashscope-intl.aliyuncs.com/compatible-mode/v1/models', {
+          headers: { 'Authorization': `Bearer ${llmApiKey}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          detectedModel = pickBestModel(data.data, 'QWEN');
+          if (detectedModel) {
+            provider = 'QWEN';
+            baseUrl = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1';
+          }
+        }
+      } catch (e) { /* ignore */ }
+    }
+
+    if (detectedModel) {
+      res.json({ 
+        success: true, 
+        detectedModel, 
+        provider, 
+        baseUrl,
+        message: `✅ Valid ${provider} Key! Auto-selected best model: ${detectedModel}` 
+      });
+    } else {
+      res.status(400).json({ error: ' Invalid API Key or no chat models found.' });
+    }
+  } catch (error) {
+    console.error('Validate LLM error:', error);
+    res.status(500).json({ error: 'Failed to validate API key.' });
   }
 });
 

@@ -37,19 +37,23 @@ model Tenant {
   id             String      @id @default(cuid())
   businessName   String
   whatsappNumber String      @unique
-  systemPrompt   String      @default("You are a helpful AI assistant.")
+  websiteUrl     String?     // 🚨 NEW: Store the website URL
   
   // 🌟 NEW: Business Context for Tailored AI Responses
   // This tells the AI exactly what the business does so it doesn't hallucinate.
-  businessContext String?    @db.Text 
+  systemPrompt   String      @default("You are a helpful AI assistant.")
+  businessContext String?    @db.Text
+  contactInfo    String?     @db.Text 
+ 
 
   isActive       Boolean     @default(true)
   createdAt      DateTime    @default(now())
 
   // 🧠 NEW: Bring Your Own LLM (BYOK) Fields
-  llmProvider    LLMProvider @default(QWEN)
-  llmApiKey      String?     // If empty, uses your server's default Qwen key
-  llmModel       String?     // e.g., "gpt-4o", "qwen-turbo", "claude-3-sonnet"
+ llmProvider    String?     // e.g., "OPENAI", "QWEN", "CUSTOM"
+  llmApiKey      String?     
+  llmModel       String?     // Dynamically selected best model
+  llmBaseUrl     String?     // API Base URL (auto-detected or custom)
 
   // 🔗 Relations
   userId         String?

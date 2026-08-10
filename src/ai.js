@@ -1,25 +1,34 @@
-
 /**
- * Unified AI Router: Checks tenant settings and routes to the correct LLM
+ * Unified AI Router: Strictly uses Tenant's LLM settings
  */
-async function getAIResponse(userMessage, systemPrompt, tenant = null) {
+async function getAIResponse(userMessage, systemPrompt, tenant) {
   try {
-    // 1. Determine which API Key and Model to use
-    // If tenant has their own key, use it. Otherwise, fall back to server's default Qwen key.
-    const apiKey = (tenant && tenant.llmApiKey) ? tenant.llmApiKey : process.env.QWEN_API_KEY;
-    const model = (tenant && tenant.llmModel) ? tenant.llmModel : 'qwen-turbo'; // Default fallback model
-    const provider = (tenant && tenant.llmProvider) ? tenant.llmProvider : 'QWEN';
-    const apiUrl = process.env.QWEN_API_URL || 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions';
+    if (!tenant || !tenant.llmApiKey) {
+      throw new Error("Tenant LLM API Key is missing.");
+    }
 
-    console.log(`🧠 Using AI Provider: ${provider} | Model: ${model}`);
+    const apiKey = tenant.llmApiKey;
+    const model = tenant.llmModel;
+    
+    // Use the saved Base URL, or fallback to standard endpoints if missing
+    let baseUrl = tenant.llmBaseUrl;
+    if (!baseUrl) {
+      if (tenant.llmProvider === 'QWEN') {
+        baseUrl = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1';
+      } else {
+        baseUrl = 'https://api.openai.com/v1'; // Default to OpenAI standard
+      }
+    }
 
-    // 2. Build the messages array for the LLM
+    const apiUrl = `${baseUrl}/chat/completions`;
+
+    console.log(`🧠 Using AI: ${tenant.llmProvider} | Model: ${model} | URL: ${apiUrl}`);
+
     const messages = [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userMessage }
     ];
 
-    // 3. Make the API call (Currently formatted for OpenAI-compatible APIs like Qwen, OpenAI, Groq, etc.)
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
@@ -35,8 +44,8 @@ async function getAIResponse(userMessage, systemPrompt, tenant = null) {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`AI API Error: ${response.status} - ${JSON.stringify(errorData)}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`AI API Error: ${response.status}`);
     }
 
     const data = await response.json();
@@ -44,7 +53,7 @@ async function getAIResponse(userMessage, systemPrompt, tenant = null) {
 
   } catch (error) {
     console.error('❌ AI Generation Failed:', error.message);
-    return "I'm sorry, I'm having trouble connecting to my brain right now. Please try again in a moment.";
+    return "I'm sorry, I'm having trouble connecting to my brain. Please check the LLM API Key in your dashboard settings.";
   }
 }
 

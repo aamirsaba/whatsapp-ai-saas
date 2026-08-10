@@ -77,10 +77,24 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         data: { tenantId: tenant.id, fromNumber, toNumber: phoneNumber, direction: 'inbound', content: text, isAiReply: false }
       });
 
-      const basePrompt = tenant.systemPrompt || "You are a helpful AI assistant.";
-      const contextInstruction = tenant.businessContext 
-        ? `\n\nCRITICAL BUSINESS CONTEXT: ${tenant.businessContext}\n\nYou are representing ${tenant.businessName}. You MUST strictly answer questions related ONLY to this business context.` 
-        : "";
+            // 🧠 STRICT: Build a context-aware system prompt with Anti-Hallucination Shield
+      const basePrompt = tenant.systemPrompt || "You are a helpful, professional AI assistant.";
+      
+      const contextRule = tenant.businessContext 
+        ? `\n\nBUSINESS CONTEXT:\n${tenant.businessContext}` 
+        : '';
+        
+      const contactRule = tenant.contactInfo 
+        ? `\n\nOFFICIAL CONTACT DETAILS (USE EXACTLY AS WRITTEN):\n${tenant.contactInfo}` 
+        : '';
+
+      const strictRules = `\n\n🚨 STRICT ANTI-HALLUCINATION RULES (DO NOT BREAK):
+1. You MUST strictly answer questions related ONLY to the provided BUSINESS CONTEXT and CONTACT DETAILS.
+2. DO NOT invent, guess, or make up phone numbers, email addresses, website URLs, prices, or people's names.
+3. If a user asks for specific contact details that are marked as "Not provided" or are missing from the OFFICIAL CONTACT DETAILS above, you MUST reply exactly with: "I don't have that specific information in my database. Please reach out to our official support channels for accurate details."
+4. Keep responses concise, professional, and directly aligned with the provided facts.`;
+
+      const finalSystemPrompt = basePrompt + contextRule + contactRule + strictRules;
         
       const aiReply = await getAIResponse(text, basePrompt + contextInstruction, tenant);
       console.log(`🗣️ AI Reply: ${aiReply}`);

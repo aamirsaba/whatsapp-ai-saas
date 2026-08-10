@@ -59,28 +59,94 @@
               <textarea id="systemPrompt" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm font-mono transition"></textarea>
             </div>
 
+                        <!-- 🌟 NEW: Website URL & Auto-Generate -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Website URL (Optional)</label>
+              <div class="flex gap-2">
+                <input type="url" id="websiteUrl" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="https://yourbusiness.com">
+                <button type="button" onclick="autoGenerateContext()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium whitespace-nowrap flex items-center gap-1">
+                  ✨ Auto-Generate
+                </button>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">We will read your website and write the perfect AI context for you.</p>
+            </div>
+
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Business / Topic Context</label>
               <textarea id="businessContext" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm transition"></textarea>
-              <p class="text-xs text-gray-500 mt-1">Specific facts, rules, or boundaries the AI must follow.</p>
+              <p class="text-xs text-gray-500 mt-1">Specific facts, rules, or boundaries the AI must follow. (Auto-filled or editable)</p>
+            </div>
+
+
+            <div class="grid grid-cols-2 gap-3">
+            <!--  REQUIRED: LLM API Key with Auto-Detect -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                LLM API Key <span class="text-red-500">*</span>
+              </label>
+              <div class="flex gap-2">
+                <input type="password" id="llmApiKey" required class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="sk-... or your provider key">
+                <button type="button" onclick="validateLLMKey()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium whitespace-nowrap flex items-center gap-1">
+                  🔍 Auto-Detect
+                </button>
+              </div>
+              <p class="text-xs text-red-600 font-semibold mt-1">️ REQUIRED: You must provide your own LLM API Key.</p>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">LLM API Key (Optional)</label>
-                <input type="password" id="llmApiKey" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="sk-...">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Detected Provider</label>
+                <input type="text" id="llmProvider" readonly class="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-lg text-sm text-gray-600 font-bold" placeholder="e.g., OPENAI">
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">LLM Model (Optional)</label>
-                <input type="text" id="llmModel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="e.g., gpt-4o">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Best Model Selected</label>
+                <input type="text" id="llmModel" readonly class="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-lg text-sm text-gray-600" placeholder="Auto-selected">
               </div>
+            </div>
             </div>
 
             <button type="submit" class="w-full bg-green-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-green-700 transition shadow-md flex items-center justify-center gap-2">
               <span>💾</span> Save AI Settings
             </button>
-          </form>
-          <p id="settingsMsg" class="mt-3 text-center text-sm font-medium min-h-[20px]"></p>
+          
+
+            <hr class="my-6 border-gray-200">
+            
+            <!-- 🚨 NEW: Official Contact Information Section -->
+            <div>
+              <div class="flex justify-between items-center mb-3">
+                <h4 class="text-sm font-semibold text-gray-800">📞 Official Contact Information</h4>
+                <button type="button" onclick="fillContactTemplate()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium underline">
+                  Fill Template
+                </button>
+              </div>
+              <p class="text-xs text-gray-500 mb-3">The AI will use ONLY this information to answer "how to contact you" questions. Prevents hallucination.</p>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium text-gray-600 mb-1">Contact Person Name</label>
+                  <input type="text" id="contactPerson" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="e.g., Aamir Saba">
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-600 mb-1">Business Email</label>
+                  <input type="email" id="contactEmail" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="info@business.com">
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-600 mb-1">Phone / WhatsApp</label>
+                  <input type="text" id="contactPhone" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="+968 9129 3119">
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-600 mb-1">Website (if any)</label>
+                  <input type="text" id="contactWebsite" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="www.business.com">
+                </div>
+              </div>
+              <div class="mt-3">
+                <label class="block text-xs font-medium text-gray-600 mb-1">Additional Contact Notes (Optional)</label>
+                <textarea id="contactNotes" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="e.g., Available Mon-Fri, 9 AM - 5 PM GST. For urgent support, WhatsApp us."></textarea>
+              </div>
+            </div>
+
+          </form> <!-- This is the existing closing form tag -->          <p id="settingsMsg" class="mt-3 text-center text-sm font-medium min-h-[20px]"></p>
 
           <hr class="my-6 border-gray-200">
           
@@ -128,6 +194,8 @@
     } else { 
       document.getElementById('userEmail').textContent = user.email; 
       document.getElementById('userEmail').classList.remove('hidden');
+    // Inside loadDashboard(), after setting other values:
+      document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
       loadDashboard(); 
     }
 
@@ -217,6 +285,174 @@
       
       // Scroll to bottom
       container.scrollTop = container.scrollHeight;
+    }
+
+    // 🌟 NEW: Auto-Generate Context from Website
+    async function autoGenerateContext() {
+      const url = document.getElementById('websiteUrl').value;
+      const msg = document.getElementById('settingsMsg');
+      
+      if (!url) {
+        msg.textContent = '⚠️ Please enter a Website URL first.';
+        msg.className = 'mt-3 text-center text-sm text-yellow-600 font-bold';
+        return;
+      }
+
+      msg.textContent = '🕷️ Reading website and generating AI context... (This takes ~5 seconds)';
+      msg.className = 'mt-3 text-center text-sm text-indigo-600 font-bold';
+
+      try {
+        const res = await fetch('/api/dashboard/scrape-website', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json', 
+            'Authorization': `Bearer ${token}` 
+          },
+          body: JSON.stringify({ websiteUrl: url })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+          document.getElementById('businessContext').value = data.generatedContext;
+          msg.textContent = '✅ Context generated successfully! Review and edit if needed, then click Save.';
+          msg.className = 'mt-3 text-center text-sm text-green-600 font-bold';
+        } else {
+          msg.textContent = '❌ ' + (data.error || 'Failed to generate context.');
+          msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+        }
+      } catch (err) {
+        msg.textContent = '❌ Server error while scraping.';
+        msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+      }
+    }
+
+    // 🚨 NEW: Validate & Auto-Detect LLM Key
+    async function validateLLMKey() {
+      const apiKey = document.getElementById('llmApiKey').value;
+      const msg = document.getElementById('settingsMsg');
+      
+      if (!apiKey) {
+        msg.textContent = '⚠️ Please enter an API Key first.';
+        msg.className = 'mt-3 text-center text-sm text-yellow-600 font-bold';
+        return;
+      }
+
+      msg.textContent = '🔍 Scanning API for available models...';
+      msg.className = 'mt-3 text-center text-sm text-indigo-600 font-bold';
+
+      try {
+        const res = await fetch('/api/dashboard/validate-llm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ llmApiKey: apiKey })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+          document.getElementById('llmProvider').value = data.provider;
+          document.getElementById('llmModel').value = data.detectedModel;
+          msg.textContent = `✅ ${data.message}`;
+          msg.className = 'mt-3 text-center text-sm text-green-600 font-bold';
+        } else {
+          document.getElementById('llmProvider').value = '';
+          document.getElementById('llmModel').value = '';
+          msg.textContent = data.error || '❌ Invalid API Key.';
+          msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+        }
+      } catch (err) {
+        msg.textContent = '❌ Server error.';
+        msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+      }
+    }
+
+    // 🚨 NEW: Fill Contact Template
+    function fillContactTemplate() {
+      document.getElementById('contactPerson').value = 'Aamir Saba';
+      document.getElementById('contactEmail').value = 'info@tabaraksolutions.com';
+      document.getElementById('contactPhone').value = '+968 9129 3119';
+      document.getElementById('contactWebsite').value = 'www.tabaraksolutions.com';
+      document.getElementById('contactNotes').value = 'Available Mon-Fri, 9 AM - 5 PM GST. For urgent support, WhatsApp us.';
+      
+      const msg = document.getElementById('settingsMsg');
+      msg.textContent = '✨ Template filled! Edit the details to match your business, then click Save.';
+      msg.className = 'mt-3 text-center text-sm text-indigo-600 font-bold';
+    }
+
+    // 🚨 UPDATED: Save Settings (Now includes Contact Info)
+    document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('settingsMsg');
+      msg.textContent = 'Saving...';
+      msg.className = 'mt-3 text-center text-sm text-gray-600';
+
+      // Combine contact fields into a single structured string for the AI
+      const contactInfo = `
+Contact Person: ${document.getElementById('contactPerson').value || 'Not provided'}
+Email: ${document.getElementById('contactEmail').value || 'Not provided'}
+Phone/WhatsApp: ${document.getElementById('contactPhone').value || 'Not provided'}
+Website: ${document.getElementById('contactWebsite').value || 'Not provided'}
+Notes: ${document.getElementById('contactNotes').value || 'None'}
+      `.trim();
+
+      try {
+        const res = await fetch('/api/dashboard/settings', {
+          method: 'PUT',
+          headers: { 
+            'Content-Type': 'application/json', 
+            'Authorization': `Bearer ${token}` 
+          },
+          body: JSON.stringify({
+            systemPrompt: document.getElementById('systemPrompt').value,
+            businessContext: document.getElementById('businessContext').value,
+            contactInfo: contactInfo, // 🚨 Send structured contact info
+            llmApiKey: document.getElementById('llmApiKey').value,
+            llmModel: document.getElementById('llmModel').value
+          })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          msg.textContent = '✅ AI reprogrammed successfully!';
+          msg.className = 'mt-3 text-center text-sm text-green-600 font-bold';
+        } else {
+          msg.textContent = '❌ ' + data.error;
+          msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+        }
+      } catch (err) {
+        msg.textContent = '❌ Server error.';
+        msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+      }
+    });
+
+    // 🚨 UPDATED: Load Dashboard Data (Now loads Contact Info)
+    async function loadDashboard() {
+      try {
+        const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('businessName').textContent = data.tenant.businessName;
+          document.getElementById('systemPrompt').value = data.tenant.systemPrompt || '';
+          document.getElementById('businessContext').value = data.tenant.businessContext || '';
+          document.getElementById('llmApiKey').value = data.tenant.llmApiKey || '';
+          document.getElementById('llmModel').value = data.tenant.llmModel || '';
+          
+          // Parse and load contact info if it exists
+          if (data.tenant.contactInfo) {
+            const lines = data.tenant.contactInfo.split('\n');
+            const getValue = (prefix) => lines.find(l => l.startsWith(prefix))?.split(': ')[1]?.trim() || '';
+            
+            document.getElementById('contactPerson').value = getValue('Contact Person');
+            document.getElementById('contactEmail').value = getValue('Email');
+            document.getElementById('contactPhone').value = getValue('Phone/WhatsApp');
+            document.getElementById('contactWebsite').value = getValue('Website');
+            document.getElementById('contactNotes').value = getValue('Notes');
+          }
+          
+          renderChatHistory(data.messages);
+        }
+      } catch (err) { console.error('Failed to load dashboard', err); }
     }
 
     // 6. Save Settings
