@@ -114,8 +114,19 @@ app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
 
 app.post('/api/dashboard/disconnect', authenticateToken, async (req, res) => {
   try {
+    console.log("🔍 Disconnect attempt for userId:", req.user.userId);
+    
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
-    if (!tenant) return res.status(404).json({ error: 'Business not found.' });
+    
+    if (!tenant) {
+      console.log("❌ No tenant found for userId:", req.user.userId);
+      
+      // Let's see what's actually in the database to spot the mismatch
+      const allTenants = await prisma.tenant.findMany({ select: { id: true, businessName: true, userId: true } });
+      console.log("📊 Total tenants in DB:", allTenants.length, allTenants);
+      
+      return res.status(404).json({ error: 'Business not found. Please check if you are logged into the correct account, or try logging out and back in.' });
+    }
 
     const sock = activeSockets.get(tenant.whatsappNumber);
     if (sock) {
