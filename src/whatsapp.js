@@ -20,6 +20,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
   });
 
   activeSockets.set(phoneNumber, sock);
+
   sock.ev.on('creds.update', saveCreds);
 
   sock.ev.on('connection.update', async (update) => {
@@ -28,7 +29,10 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
     if (qr) {
       console.log(`\n📱 SCAN THIS QR CODE WITH WHATSAPP FOR: ${phoneNumber}`);
       qrcode.generate(qr, { small: true });
-      if (onQrGenerated) onQrGenerated(phoneNumber, qr);
+      
+      if (onQrGenerated) {
+        onQrGenerated(phoneNumber, qr);
+      }
     }
 
     if (connection === 'close') {
@@ -39,7 +43,10 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       }
     } else if (connection === 'open') {
       console.log(`✅ SUCCESS! WhatsApp is connected and ready for: ${phoneNumber}`);
-      if (onConnected) onConnected(phoneNumber);
+      
+      if (onConnected) {
+        onConnected(phoneNumber);
+      }
       
       await prisma.tenant.update({
         where: { id: tenantId },
@@ -77,7 +84,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         data: { tenantId: tenant.id, fromNumber, toNumber: phoneNumber, direction: 'inbound', content: text, isAiReply: false }
       });
 
-            // 🧠 STRICT: Build a context-aware system prompt with Anti-Hallucination Shield
+      // 🧠 Build the prompt with Anti-Hallucination Shield
       const basePrompt = tenant.systemPrompt || "You are a helpful, professional AI assistant.";
       
       const contextRule = tenant.businessContext 
@@ -95,8 +102,8 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
 4. Keep responses concise, professional, and directly aligned with the provided facts.`;
 
       const finalSystemPrompt = basePrompt + contextRule + contactRule + strictRules;
-        
-      const aiReply = await getAIResponse(text, basePrompt + contextInstruction, tenant);
+
+      const aiReply = await getAIResponse(text, finalSystemPrompt, tenant);
       console.log(`🗣️ AI Reply: ${aiReply}`);
 
       await sock.sendMessage(msg.key.remoteJid, { text: aiReply });
@@ -105,28 +112,15 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: aiReply, isAiReply: true }
       });
 
-      // 🚨 NEW: Robust Discord Webhook Logging
-      console.log("📡 Checking Discord Webhook...");
+      // 🚀 Discord Webhook
       if (process.env.DISCORD_WEBHOOK_URL) {
-        console.log("📡 Sending lead alert to Discord...");
-        
         fetch(process.env.DISCORD_WEBHOOK_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             content: `🔥 **New WhatsApp Activity!**\n🏢 **Business:** ${tenant.businessName}\n📱 **Number:** ${fromNumber}\n💬 **Message:** ${text}\n🤖 **AI Reply:** ${aiReply}`
           })
-        })
-        .then(res => {
-          if (!res.ok) {
-            console.error(`❌ Discord Webhook HTTP Error: ${res.status} ${res.statusText}`);
-          } else {
-            console.log("✅ Discord Webhook sent successfully!");
-          }
-        })
-        .catch(err => console.error("❌ Failed to notify Discord (Network Error):", err));
-      } else {
-        console.log("⚠️ DISCORD_WEBHOOK_URL is MISSING in your .env file!");
+        }).catch(err => console.error("❌ Failed to notify Discord:", err));
       }
 
     } catch (error) {
