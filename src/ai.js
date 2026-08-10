@@ -1,33 +1,31 @@
 /**
- * Unified AI Router: Strictly uses Tenant's LLM settings
+ * Unified AI Router with Timeout and Detailed Error Logging
  */
 async function getAIResponse(userMessage, systemPrompt, tenant) {
   try {
+    // 1. Strict check for API Key
     if (!tenant || !tenant.llmApiKey) {
-      throw new Error("Tenant LLM API Key is missing.");
+      throw new Error("Tenant LLM API Key is missing. Please add it in the dashboard.");
     }
 
     const apiKey = tenant.llmApiKey;
-    const model = tenant.llmModel;
+    const model = tenant.llmModel || 'gpt-3.5-turbo';
     
-    // Use the saved Base URL, or fallback to standard endpoints if missing
     let baseUrl = tenant.llmBaseUrl;
     if (!baseUrl) {
       if (tenant.llmProvider === 'QWEN') {
         baseUrl = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1';
       } else {
-        baseUrl = 'https://api.openai.com/v1'; // Default to OpenAI standard
+        baseUrl = 'https://api.openai.com/v1';
       }
     }
 
     const apiUrl = `${baseUrl}/chat/completions`;
+    console.log(`🧠 Calling AI: ${tenant.llmProvider} | Model: ${model}`);
 
-    console.log(`🧠 Using AI: ${tenant.llmProvider} | Model: ${model} | URL: ${apiUrl}`);
-
-    const messages = [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userMessage }
-    ];
+    // 2. Add a 15-second timeout to prevent silent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -37,15 +35,22 @@ async function getAIResponse(userMessage, systemPrompt, tenant) {
       },
       body: JSON.stringify({
         model: model,
-        messages: messages,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage }
+        ],
         temperature: 0.7,
         max_tokens: 500
-      })
+      }),
+      signal: controller.signal
     });
 
+    clearTimeout(timeoutId);
+
+    // 3. Detailed error logging if the API key is invalid or quota is exceeded
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(`AI API Error: ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(`AI API Error ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
@@ -53,7 +58,7 @@ async function getAIResponse(userMessage, systemPrompt, tenant) {
 
   } catch (error) {
     console.error('❌ AI Generation Failed:', error.message);
-    return "I'm sorry, I'm having trouble connecting to my brain. Please check the LLM API Key in your dashboard settings.";
+    return "I'm sorry, I'm having trouble connecting to my brain. Please check the LLM API Key in your dashboard settings or try again in a moment.";
   }
 }
 
