@@ -122,17 +122,18 @@
 
             <!-- 🚨 NEW: Human Takeover Toggle -->
             <div class="flex items-center justify-between bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-              <div>
-                <h4 class="text-sm font-bold text-gray-800 flex items-center gap-2">
-                  👤 Human Takeover Mode
-                </h4>
-                <p class="text-xs text-gray-600 mt-1">Pause the AI and reply manually from your phone.</p>
-              </div>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="humanModeToggle" class="sr-only peer">
-                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
-              </label>
-            </div>
+  <div>
+    <h4 class="text-sm font-bold text-gray-800 flex items-center gap-2">
+      👤 Human Takeover Mode
+    </h4>
+    <!-- 🚨 ADD ID HERE -->
+    <p id="humanModeStatus" class="text-xs text-gray-600 mt-1">Pause the AI and reply manually from your phone.</p>
+  </div>
+  <label class="relative inline-flex items-center cursor-pointer">
+    <input type="checkbox" id="humanModeToggle" class="sr-only peer">
+    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
+  </label>
+</div>
           
 <hr class="my-6 border-gray-200">
           
@@ -401,15 +402,17 @@
       }
     }
 
-    //  AUTO-SAVE HUMAN TAKEOVER TOGGLE
+    // 🚨 AUTO-SAVE HUMAN TAKEOVER TOGGLE
     document.getElementById('humanModeToggle').addEventListener('change', async function() {
       const isChecked = this.checked;
-      const toggleLabel = this.parentElement.querySelector('p'); // The text below the toggle
+      const statusText = document.getElementById('humanModeStatus'); // 🚨 USE ID SELECTOR
       
       // Show saving state
-      const originalText = toggleLabel ? toggleLabel.textContent : 'Pause the AI and reply manually from your phone.';
-      if (toggleLabel) toggleLabel.textContent = '⏳ Updating AI status...';
-      if (toggleLabel) toggleLabel.classList.add('text-yellow-600');
+      const originalText = statusText ? statusText.textContent : 'Pause the AI and reply manually from your phone.';
+      if (statusText) {
+        statusText.textContent = ' Updating AI status...';
+        statusText.className = 'text-xs text-yellow-600 mt-1 font-medium';
+      }
 
       try {
         const res = await fetch('/api/dashboard/toggle-human-mode', {
@@ -421,20 +424,24 @@
         const data = await res.json();
         
         if (data.success) {
-          if (toggleLabel) {
-            toggleLabel.textContent = isChecked ? '✅ AI is PAUSED. You are in control.' : ' AI is ACTIVE and replying automatically.';
-            toggleLabel.classList.remove('text-yellow-600');
-            toggleLabel.classList.add(isChecked ? 'text-red-600' : 'text-green-600');
+          if (statusText) {
+            if (isChecked) {
+              statusText.textContent = '✅ AI is PAUSED. You are in control.';
+              statusText.className = 'text-xs text-red-600 mt-1 font-bold';
+            } else {
+              statusText.textContent = '🤖 AI is ACTIVE and replying automatically.';
+              statusText.className = 'text-xs text-green-600 mt-1 font-bold';
+            }
           }
         } else {
           // Revert toggle if failed
           this.checked = !isChecked;
-          if (toggleLabel) toggleLabel.textContent = originalText;
+          if (statusText) statusText.textContent = originalText;
           alert('❌ Failed to update mode.');
         }
       } catch (err) {
         this.checked = !isChecked;
-        if (toggleLabel) toggleLabel.textContent = originalText;
+        if (statusText) statusText.textContent = originalText;
         alert('❌ Server error while toggling.');
       }
     });
