@@ -49,8 +49,12 @@ model Tenant {
   isActive       Boolean     @default(true)
   createdAt      DateTime    @default(now())
 
+//  NEW: Human Takeover Toggle
+  isHumanMode    Boolean     @default(false)
+
+
   // 🧠 NEW: Bring Your Own LLM (BYOK) Fields
- llmProvider    String?     // e.g., "OPENAI", "QWEN", "CUSTOM"
+  llmProvider    String?     // e.g., "OPENAI", "QWEN", "CUSTOM"
   llmApiKey      String?     
   llmModel       String?     // Dynamically selected best model
   llmBaseUrl     String?     // API Base URL (auto-detected or custom)

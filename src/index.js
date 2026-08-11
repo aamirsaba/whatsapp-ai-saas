@@ -83,7 +83,7 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
 
 app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
   try {
-    const { systemPrompt, businessContext, contactInfo, llmApiKey, llmModel, llmProvider, llmBaseUrl } = req.body;
+    const { systemPrompt, businessContext, contactInfo, llmApiKey, llmModel, llmProvider, llmBaseUrl, isHumanMode } = req.body;
     
     if (!llmApiKey) {
       return res.status(400).json({ error: 'LLM API Key is strictly required.' });
@@ -95,19 +95,20 @@ app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
     await prisma.tenant.update({
       where: { id: tenant.id },
       data: { 
-        systemPrompt: systemPrompt || tenant.systemPrompt,
-        businessContext: businessContext || tenant.businessContext,
-        contactInfo: contactInfo || tenant.contactInfo,
+        systemPrompt: systemPrompt !== undefined ? systemPrompt : tenant.systemPrompt,
+        businessContext: businessContext !== undefined ? businessContext : tenant.businessContext,
+        contactInfo: contactInfo !== undefined ? contactInfo : tenant.contactInfo,
         llmApiKey: llmApiKey,
-        llmModel: llmModel,
-        llmProvider: llmProvider || 'OPENAI',
-        llmBaseUrl: llmBaseUrl // 🚨 Save the detected Base URL
+        llmModel: llmModel || tenant.llmModel,
+        llmProvider: llmProvider || tenant.llmProvider || 'OPENAI',
+        llmBaseUrl: llmBaseUrl,
+        isHumanMode: isHumanMode === true || isHumanMode === 'true' // 🚨 Save the toggle state
       }
     });
 
     res.json({ success: true, message: '✨ AI Settings updated successfully!' });
   } catch (error) {
-    console.error('Dashboard update error:', error);
+    console.error('❌ Dashboard update error DETAILS:', error);
     res.status(500).json({ error: 'Failed to update settings.' });
   }
 });

@@ -100,7 +100,21 @@
           </form>
           <p id="settingsMsg" class="mt-3 text-center text-sm font-medium min-h-[20px]"></p>
 
-          <hr class="my-6 border-gray-200">
+            <!-- 🚨 NEW: Human Takeover Toggle -->
+            <div class="flex items-center justify-between bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+              <div>
+                <h4 class="text-sm font-bold text-gray-800 flex items-center gap-2">
+                  👤 Human Takeover Mode
+                </h4>
+                <p class="text-xs text-gray-600 mt-1">Pause the AI and reply manually from your phone.</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="humanModeToggle" class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
+              </label>
+            </div>
+          
+<hr class="my-6 border-gray-200">
           <button type="button" onclick="disconnectBot()" class="w-full bg-yellow-500 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-yellow-600 transition shadow-md flex items-center justify-center gap-2">🔌 Disconnect WhatsApp Number</button>
           <div class="mt-6 pt-6 border-t-2 border-red-100">
             <h4 class="text-sm font-bold text-red-600 mb-3 flex items-center gap-2">⚠️ Danger Zone</h4>
@@ -147,7 +161,8 @@
           document.getElementById('businessContext').value = data.tenant.businessContext || '';
           document.getElementById('llmApiKey').value = data.tenant.llmApiKey || '';
           document.getElementById('llmModel').value = data.tenant.llmModel || '';
-          document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
+          document.getElementById('humanModeToggle').checked = data.tenant.isHumanMode || false;          
+	  document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
           
           if (data.tenant.contactInfo) {
             const lines = data.tenant.contactInfo.split('\n');
@@ -243,7 +258,16 @@
       msg.textContent = 'Saving...'; msg.className = 'mt-3 text-center text-sm text-gray-600';
       const contactInfo = `Contact Person: ${document.getElementById('contactPerson').value || 'Not provided'}\nEmail: ${document.getElementById('contactEmail').value || 'Not provided'}\nPhone/WhatsApp: ${document.getElementById('contactPhone').value || 'Not provided'}\nWebsite: ${document.getElementById('contactWebsite').value || 'Not provided'}\nNotes: ${document.getElementById('contactNotes').value || 'None'}`.trim();
       try {
-        const res = await fetch('/api/dashboard/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ systemPrompt: document.getElementById('systemPrompt').value, businessContext: document.getElementById('businessContext').value, contactInfo: contactInfo, llmApiKey: document.getElementById('llmApiKey').value, llmModel: document.getElementById('llmModel').value, llmProvider: document.getElementById('llmProvider').value }) });
+        const res = await fetch('/api/dashboard/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },           body: JSON.stringify({ 
+            systemPrompt: document.getElementById('systemPrompt').value, 
+            businessContext: document.getElementById('businessContext').value, 
+            contactInfo: contactInfo, 
+            llmApiKey: document.getElementById('llmApiKey').value, 
+            llmModel: document.getElementById('llmModel').value, 
+            llmProvider: document.getElementById('llmProvider').value,
+            llmBaseUrl: document.getElementById('llmBaseUrl').value,
+            isHumanMode: document.getElementById('humanModeToggle').checked // 🚨 Send toggle state
+          })  });
         const data = await res.json();
         if (data.success) { msg.textContent = '✅ AI reprogrammed successfully!'; msg.className = 'mt-3 text-center text-sm text-green-600 font-bold'; } 
         else { msg.textContent = '❌ ' + data.error; msg.className = 'mt-3 text-center text-sm text-red-600 font-bold'; }

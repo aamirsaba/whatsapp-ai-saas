@@ -72,6 +72,12 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         data: { tenantId: tenant.id, fromNumber, toNumber: phoneNumber, direction: 'inbound', content: text, isAiReply: false }
       });
 
+      // 🚨 NEW: Human Takeover Check
+      if (tenant.isHumanMode) {
+        console.log(`👤 Human Mode Active: AI paused. Message from ${fromNumber} saved for manual reply.`);
+        return; // Stop here! Do not call the AI or send a message.
+      }
+
       const basePrompt = tenant.systemPrompt || "You are a helpful, professional AI assistant.";
       const contextRule = tenant.businessContext ? `\n\nBUSINESS CONTEXT:\n${tenant.businessContext}` : '';
       const contactRule = tenant.contactInfo ? `\n\nOFFICIAL CONTACT DETAILS (USE EXACTLY AS WRITTEN):\n${tenant.contactInfo}` : '';
