@@ -135,7 +135,12 @@
             </div>
           
 <hr class="my-6 border-gray-200">
-          <button type="button" onclick="disconnectBot()" class="w-full bg-yellow-500 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-yellow-600 transition shadow-md flex items-center justify-center gap-2">🔌 Disconnect WhatsApp Number</button>
+          
+          <!-- 🚨 DYNAMIC CONNECTION STATUS SECTION -->
+          <div id="connectionStatusSection">
+            <!-- JavaScript will inject either the "Disconnect" or "Reconnect" button here -->
+          </div>
+
           <div class="mt-6 pt-6 border-t-2 border-red-100">
             <h4 class="text-sm font-bold text-red-600 mb-3 flex items-center gap-2">⚠️ Danger Zone</h4>
             <button type="button" onclick="deleteAccount()" class="w-full bg-red-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-red-700 transition shadow-md flex items-center justify-center gap-2">🗑️ Delete My Account Permanently</button>
@@ -175,15 +180,18 @@
       try {
         const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
+        
         if (data.success) {
+          // 1. Set basic fields
           document.getElementById('businessName').textContent = data.tenant.businessName;
           document.getElementById('systemPrompt').value = data.tenant.systemPrompt || '';
           document.getElementById('businessContext').value = data.tenant.businessContext || '';
           document.getElementById('llmApiKey').value = data.tenant.llmApiKey || '';
           document.getElementById('llmModel').value = data.tenant.llmModel || '';
+          document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
           document.getElementById('humanModeToggle').checked = data.tenant.isHumanMode || false;          
-	  document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
           
+          // 2. Parse contact info (if it exists)
           if (data.tenant.contactInfo) {
             const lines = data.tenant.contactInfo.split('\n');
             const getValue = (prefix) => lines.find(l => l.startsWith(prefix))?.split(': ')[1]?.trim() || '';
@@ -193,9 +201,38 @@
             document.getElementById('contactWebsite').value = getValue('Website');
             document.getElementById('contactNotes').value = getValue('Notes');
           }
+
+          // 3. 🚨 DYNAMIC: Show Connect or Disconnect button based on status (ALWAYS RUNS)
+          const statusContainer = document.getElementById('connectionStatusSection');
+          
+          if (data.tenant.isActive) {
+            // Bot is connected
+            statusContainer.innerHTML = `
+              <button type="button" onclick="disconnectBot()" class="w-full bg-yellow-500 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-yellow-600 transition shadow-md flex items-center justify-center gap-2">
+                🔌 Disconnect WhatsApp Number
+              </button>
+              <p class="text-xs text-green-600 font-medium mt-2 text-center flex items-center justify-center gap-1">
+                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Your AI bot is currently active and replying.
+              </p>
+            `;
+          } else {
+            // Bot is disconnected
+            statusContainer.innerHTML = `
+              <a href="/connect/${data.tenant.whatsappNumber}" class="block w-full bg-green-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-green-700 transition shadow-md flex items-center justify-center gap-2 text-center">
+                📱 Reconnect & Scan QR Code
+              </a>
+              <p class="text-xs text-red-500 font-medium mt-2 text-center flex items-center justify-center gap-1">
+                <span class="w-2 h-2 bg-red-500 rounded-full"></span> Your AI bot is currently paused. Click to reactivate.
+              </p>
+            `;
+          }
+
+          // 4. Render chat history
           renderChatHistory(data.messages);
         }
-      } catch (err) { console.error('Failed to load dashboard', err); }
+      } catch (err) { 
+        console.error('Failed to load dashboard', err); 
+      }
     }
 
     document.getElementById('personaTemplate').addEventListener('change', function() {
