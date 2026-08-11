@@ -3,7 +3,7 @@ const express = require('express');
 const http = require('http');
 const { WebSocketServer } = require('ws');
 const { PrismaClient } = require('@prisma/client');
-const { startWhatsAppSession } = require('./whatsapp');
+const { startWhatsAppSession, activeSockets } = require('./whatsapp');
 const { registerUser, loginUser } = require('./auth');
 const { authenticateToken } = require('./middleware'); // 🚀 NEW: Auth Middleware
 const path = require('path');
@@ -18,7 +18,6 @@ app.use(express.json());
 
 // 🧠 CACHE TO REMEMBER THE LATEST QR CODE FOR EACH NUMBER
 const qrCache = {};
-const activeSockets = new Map(); // Shared with whatsapp.js
 
 // ==========================================
 // 🚀 AUTH ROUTES
@@ -430,6 +429,51 @@ async function startAllActiveSessions() {
     console.error('❌ Failed to start active sessions:', error);
   }
 }
+
+// 🚀 AUTOPILOT DAILY BRIEF ROUTE (Protected)
+app.post('/api/dashboard/daily-summary', authenticateToken, async (req, res) => {
+  try {
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    if (!tenant) return res.status(404).json({ error: 'Business not found.' });
+
+    // 1. Get today's messages
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const todaysMessages = await prisma.message.findMany({
+      where: { tenantId: tenant.id, createdAt: { gte: startOfDay } },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    if (todaysMessages.length === 0) {
+      return res.json({ success: true, summary: "📊 No messages received today! Time to run some marketing campaigns." });
+    }
+
+    // 2. Format messages for AI
+    const chatLog = todaysMessages.map(m => `[${m.direction === 'inbound' ? 'Customer' : 'AI/Bot'}] ${m.fromNumber}: ${m.content}`).join('\n');
+
+    // 3. Generate Summary using AI
+    const systemPrompt = "You are an executive assistant to the business owner. Summarize the following daily WhatsApp chat logs into a brief, professional daily brief. Highlight: 1. Total number of interactions. 2. Key lead inquiries or services requested. 3. Any unresolved issues. Keep it concise, use bullet points, and maintain a professional tone.";
+    const { getAIResponse } = require('./ai');
+    const summary = await getAIResponse(chatLog, systemPrompt, tenant);
+
+    // 4. Send to WhatsApp "Message Yourself"
+    const sock = activeSockets.get(tenant.whatsappNumber);
+    if (sock && sock.user) {
+      try {
+        // sock.user.id is the special JID for "Message Yourself"
+        await sock.sendMessage(sock.user.id, { text: `📊 *Daily AI Summary for ${tenant.businessName}*\n\n${summary}` });
+      } catch (waError) {
+        console.log("⚠️ Could not send to WhatsApp 'Message Yourself', but summary generated.");
+      }
+    }
+
+    res.json({ success: true, summary });
+  } catch (error) {
+    console.error('Daily summary error:', error);
+    res.status(500).json({ error: 'Failed to generate daily summary.' });
+  }
+});
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

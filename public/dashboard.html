@@ -24,6 +24,26 @@
       <p class="text-green-100">Your AI agent is active. Choose a persona below to instantly reprogram its personality.</p>
     </div>
 
+    <!-- 🚨 NEW: Autopilot Daily Brief Card -->
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+            📊 Autopilot Daily Brief
+          </h3>
+          <p class="text-sm text-gray-500">Let AI summarize today's leads and chats, then send it straight to your WhatsApp "Message Yourself" chat.</p>
+        </div>
+        <button type="button" onclick="generateDailySummary(this)" class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg hover:bg-indigo-700 transition text-sm font-medium whitespace-nowrap flex items-center gap-2 shadow-md">
+          ✨ Generate Brief
+        </button>
+      </div>
+      <div id="summaryBox" class="hidden bg-indigo-50 border border-indigo-100 rounded-lg p-4 mt-2">
+        <p id="summaryText" class="text-sm text-indigo-900 whitespace-pre-wrap leading-relaxed font-mono"></p>
+        <p class="text-xs text-indigo-600 mt-3 italic font-semibold">✅ This brief was also sent to your phone's WhatsApp!</p>
+      </div>
+    </div>
+
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div class="lg:col-span-1 space-y-6">
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -291,6 +311,42 @@
         const data = await res.json();
         if (data.success) { localStorage.clear(); window.location.href = '/login'; } else { alert('❌ ' + data.error); }
       } catch (err) { alert('Server error.'); }
+    }
+
+    // 🚨 NEW: Generate and Send Daily Summary
+    async function generateDailySummary(btn) {
+      const summaryBox = document.getElementById('summaryBox');
+      const summaryText = document.getElementById('summaryText');
+      
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '⏳ AI is analyzing chats...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/dashboard/daily-summary', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          summaryText.textContent = data.summary;
+          summaryBox.classList.remove('hidden');
+          btn.innerHTML = '✅ Brief Sent to WhatsApp!';
+          setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+          }, 4000);
+        } else {
+          alert('❌ ' + (data.error || 'Failed to generate summary'));
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }
+      } catch (err) {
+        alert('❌ Server error while generating summary.');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
     }
 
     function logout() { localStorage.clear(); window.location.href = '/login'; }
