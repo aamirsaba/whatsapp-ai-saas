@@ -496,6 +496,28 @@ app.post('/api/dashboard/daily-summary', authenticateToken, async (req, res) => 
   }
 });
 
+
+// 🚀 AUTO-SAVE HUMAN TAKEOVER TOGGLE
+app.patch('/api/dashboard/toggle-human-mode', authenticateToken, async (req, res) => {
+  try {
+    const { isHumanMode } = req.body;
+    console.log(`🔄 Toggling Human Mode to: ${isHumanMode} for user: ${req.user.userId}`);
+
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    if (!tenant) return res.status(404).json({ error: 'Business not found.' });
+
+    await prisma.tenant.update({
+      where: { id: tenant.id },
+      data: { isHumanMode: Boolean(isHumanMode) }
+    });
+
+    res.json({ success: true, isHumanMode: Boolean(isHumanMode) });
+  } catch (error) {
+    console.error('❌ Toggle human mode error:', error);
+    res.status(500).json({ error: 'Failed to toggle mode.' });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 WhatsApp AI SaaS Backend is running!`);
