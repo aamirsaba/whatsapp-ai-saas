@@ -312,10 +312,16 @@
     document.getElementById('settingsForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const msg = document.getElementById('settingsMsg');
-      msg.textContent = 'Saving...'; msg.className = 'mt-3 text-center text-sm text-gray-600';
+      msg.textContent = 'Saving...'; 
+      msg.className = 'mt-3 text-center text-sm text-gray-600';
+      
       const contactInfo = `Contact Person: ${document.getElementById('contactPerson').value || 'Not provided'}\nEmail: ${document.getElementById('contactEmail').value || 'Not provided'}\nPhone/WhatsApp: ${document.getElementById('contactPhone').value || 'Not provided'}\nWebsite: ${document.getElementById('contactWebsite').value || 'Not provided'}\nNotes: ${document.getElementById('contactNotes').value || 'None'}`.trim();
+      
       try {
-        const res = await fetch('/api/dashboard/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },           body: JSON.stringify({ 
+        const res = await fetch('/api/dashboard/settings', { 
+          method: 'PUT', 
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, 
+          body: JSON.stringify({ 
             systemPrompt: document.getElementById('systemPrompt').value, 
             businessContext: document.getElementById('businessContext').value, 
             contactInfo: contactInfo, 
@@ -323,12 +329,21 @@
             llmModel: document.getElementById('llmModel').value, 
             llmProvider: document.getElementById('llmProvider').value,
             llmBaseUrl: document.getElementById('llmBaseUrl').value,
-            isHumanMode: document.getElementById('humanModeToggle').checked // 🚨 Send toggle state
-          })  });
+            isHumanMode: document.getElementById('humanModeToggle').checked // 🚨 CRITICAL: This sends the toggle state
+          }) 
+        });
         const data = await res.json();
-        if (data.success) { msg.textContent = '✅ AI reprogrammed successfully!'; msg.className = 'mt-3 text-center text-sm text-green-600 font-bold'; } 
-        else { msg.textContent = '❌ ' + data.error; msg.className = 'mt-3 text-center text-sm text-red-600 font-bold'; }
-      } catch (err) { msg.textContent = '❌ Server error.'; msg.className = 'mt-3 text-center text-sm text-red-600 font-bold'; }
+        if (data.success) { 
+          msg.textContent = '✅ AI reprogrammed successfully!'; 
+          msg.className = 'mt-3 text-center text-sm text-green-600 font-bold'; 
+        } else { 
+          msg.textContent = '❌ ' + data.error; 
+          msg.className = 'mt-3 text-center text-sm text-red-600 font-bold'; 
+        }
+      } catch (err) { 
+        msg.textContent = '❌ Server error.'; 
+        msg.className = 'mt-3 text-center text-sm text-red-600 font-bold'; 
+      }
     });
 
     async function disconnectBot() {

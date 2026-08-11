@@ -82,6 +82,7 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
 
 app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
   try {
+    // 🚨 CRITICAL: Destructure isHumanMode from req.body
     const { systemPrompt, businessContext, contactInfo, llmApiKey, llmModel, llmProvider, llmBaseUrl, isHumanMode } = req.body;
     
     if (!llmApiKey) {
@@ -101,7 +102,7 @@ app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
         llmModel: llmModel || tenant.llmModel,
         llmProvider: llmProvider || tenant.llmProvider || 'OPENAI',
         llmBaseUrl: llmBaseUrl,
-        isHumanMode: isHumanMode === true || isHumanMode === 'true' // 🚨 Save the toggle state
+        isHumanMode: isHumanMode === true || isHumanMode === 'true' // 🚨 CRITICAL: This saves the toggle state
       }
     });
 
