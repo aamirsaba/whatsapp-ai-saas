@@ -203,17 +203,23 @@
             document.getElementById('contactNotes').value = getValue('Notes');
           }
 
-          // 3. 🚨 DYNAMIC: Show Connect or Disconnect button based on status (ALWAYS RUNS)
+          //  DYNAMIC: Show Connect or Disconnect button based on status
           const statusContainer = document.getElementById('connectionStatusSection');
           
           if (data.tenant.isActive) {
             // Bot is connected
+            const humanModeText = data.tenant.isHumanMode 
+              ? "⚠️ Human Takeover Mode is ON - AI is paused." 
+              : "🟢 Your AI bot is currently active and replying.";
+            const humanModeColor = data.tenant.isHumanMode ? "text-yellow-600" : "text-green-600";
+            const humanModeDot = data.tenant.isHumanMode ? "bg-yellow-500" : "bg-green-500";
+            
             statusContainer.innerHTML = `
               <button type="button" onclick="disconnectBot()" class="w-full bg-yellow-500 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-yellow-600 transition shadow-md flex items-center justify-center gap-2">
                 🔌 Disconnect WhatsApp Number
               </button>
-              <p class="text-xs text-green-600 font-medium mt-2 text-center flex items-center justify-center gap-1">
-                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Your AI bot is currently active and replying.
+              <p class="text-xs ${humanModeColor} font-medium mt-2 text-center flex items-center justify-center gap-1">
+                <span class="w-2 h-2 ${humanModeDot} rounded-full animate-pulse"></span> ${humanModeText}
               </p>
             `;
           } else {
