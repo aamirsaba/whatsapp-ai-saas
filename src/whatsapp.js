@@ -68,6 +68,32 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         return;
       }
 
+      // 🚀 NEW: Detect and Send New Leads to Webhook
+      const existingLead = await prisma.message.findFirst({
+        where: { tenantId: tenant.id, fromNumber: fromNumber }
+      });
+
+      // If no previous messages exist, this is a NEW LEAD!
+      if (!existingLead && tenant.leadWebhookUrl) {
+        console.log(` New Lead Detected: ${fromNumber} | Sending to Webhook...`);
+        
+        try {
+          await fetch(tenant.leadWebhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              businessName: tenant.businessName,
+              leadNumber: fromNumber,
+              firstMessage: text,
+              timestamp: new Date().toISOString()
+            })
+          });
+          console.log('✅ Lead successfully sent to webhook!');
+        } catch (webhookError) {
+          console.error('❌ Failed to send lead to webhook:', webhookError.message);
+        }
+      }
+
       await prisma.message.create({
         data: { tenantId: tenant.id, fromNumber, toNumber: phoneNumber, direction: 'inbound', content: text, isAiReply: false }
       });

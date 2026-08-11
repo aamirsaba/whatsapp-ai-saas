@@ -59,6 +59,9 @@ model Tenant {
   llmModel       String?     // Dynamically selected best model
   llmBaseUrl     String?     // API Base URL (auto-detected or custom)
 
+ // 🚨 NEW: Webhook for new leads
+  leadWebhookUrl String?    
+
   // 🔗 Relations
   userId         String?
   user           User?       @relation(fields: [userId], references: [id], onDelete: Cascade)

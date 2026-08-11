@@ -84,7 +84,7 @@ app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
   console.log("🔍 SETTINGS ROUTE HIT! Body:", req.body); // 🚨 ADD THIS LINE
   
   try {
-    const { systemPrompt, businessContext, contactInfo, llmApiKey, llmModel, llmProvider, llmBaseUrl, isHumanMode } = req.body;
+    const { systemPrompt, businessContext, contactInfo, llmApiKey, llmModel, llmProvider, llmBaseUrl, isHumanMode, leadWebhookUrl } = req.body;
     // ... rest of the code
     
     if (!llmApiKey) {
@@ -104,7 +104,8 @@ app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
         llmModel: llmModel || tenant.llmModel,
         llmProvider: llmProvider || tenant.llmProvider || 'OPENAI',
         llmBaseUrl: llmBaseUrl,
-        isHumanMode: isHumanMode === true || isHumanMode === 'true' // 🚨 CRITICAL: This saves the toggle state
+        isHumanMode: isHumanMode === true || isHumanMode === 'true', // 🚨 CRITICAL: This saves the toggle state
+	leadWebhookUrl: leadWebhookUrl || null //  Save the webhook URL
       }
     });
 
