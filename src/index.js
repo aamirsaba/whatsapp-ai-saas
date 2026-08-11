@@ -109,7 +109,10 @@ app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
     res.json({ success: true, message: '✨ AI Settings updated successfully!' });
   } catch (error) {
     console.error('❌ Dashboard update error DETAILS:', error);
-    res.status(500).json({ error: 'Failed to update settings.' });
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error code:', error.code);
+    res.status(500).json({ error: 'Failed to update settings. Check server logs.', details: error.message });
   }
 });
 
