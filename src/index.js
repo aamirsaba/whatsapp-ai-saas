@@ -81,9 +81,11 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
 });
 
 app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
+  console.log("🔍 SETTINGS ROUTE HIT! Body:", req.body); // 🚨 ADD THIS LINE
+  
   try {
-    // 🚨 CRITICAL: Destructure isHumanMode from req.body
     const { systemPrompt, businessContext, contactInfo, llmApiKey, llmModel, llmProvider, llmBaseUrl, isHumanMode } = req.body;
+    // ... rest of the code
     
     if (!llmApiKey) {
       return res.status(400).json({ error: 'LLM API Key is strictly required.' });
