@@ -408,15 +408,15 @@
       }
     }
 
-    // 🚨 AUTO-SAVE HUMAN TAKEOVER TOGGLE
+    //  AUTO-SAVE HUMAN TAKEOVER TOGGLE
     document.getElementById('humanModeToggle').addEventListener('change', async function() {
       const isChecked = this.checked;
-      const statusText = document.getElementById('humanModeStatus'); // 🚨 USE ID SELECTOR
+      const statusText = document.getElementById('humanModeStatus');
       
       // Show saving state
       const originalText = statusText ? statusText.textContent : 'Pause the AI and reply manually from your phone.';
       if (statusText) {
-        statusText.textContent = ' Updating AI status...';
+        statusText.textContent = '⏳ Updating AI status...';
         statusText.className = 'text-xs text-yellow-600 mt-1 font-medium';
       }
 
@@ -430,6 +430,7 @@
         const data = await res.json();
         
         if (data.success) {
+          // Update the top status text
           if (statusText) {
             if (isChecked) {
               statusText.textContent = '✅ AI is PAUSED. You are in control.';
@@ -439,11 +440,27 @@
               statusText.className = 'text-xs text-green-600 mt-1 font-bold';
             }
           }
+          
+          // 🚨 UPDATE THE BOTTOM STATUS TEXT TOO
+          const connectionStatusSection = document.getElementById('connectionStatusSection');
+          if (connectionStatusSection) {
+            const bottomStatus = connectionStatusSection.querySelector('p');
+            if (bottomStatus) {
+              if (isChecked) {
+                bottomStatus.innerHTML = '<span class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span> ⚠️ Human Takeover Mode is ON - AI is paused.';
+                bottomStatus.className = 'text-xs text-yellow-600 font-medium mt-2 text-center flex items-center justify-center gap-1';
+              } else {
+                bottomStatus.innerHTML = '<span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Your AI bot is currently active and replying.';
+                bottomStatus.className = 'text-xs text-green-600 font-medium mt-2 text-center flex items-center justify-center gap-1';
+              }
+            }
+          }
+          
         } else {
           // Revert toggle if failed
           this.checked = !isChecked;
           if (statusText) statusText.textContent = originalText;
-          alert('❌ Failed to update mode.');
+          alert(' Failed to update mode.');
         }
       } catch (err) {
         this.checked = !isChecked;
