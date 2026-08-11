@@ -177,8 +177,23 @@ wss.on('connection', (ws) => {
   }
 });
 
-app.get('/connect/:phoneNumber', (req, res) => {
+// 🌐 CUSTOMER-FACING QR CODE PAGE
+app.get('/connect/:phoneNumber', async (req, res) => {
   const { phoneNumber } = req.params;
+  
+  // 🚨 NEW: Auto-start session if not already running
+  if (!activeSockets.has(phoneNumber)) {
+    try {
+      const tenant = await prisma.tenant.findUnique({ where: { whatsappNumber: phoneNumber } });
+      if (tenant) {
+        console.log(`🔄 Auto-starting session for QR page visitor: ${phoneNumber}`);
+        startWhatsAppSession(tenant.id, phoneNumber, handleQr, handleSuccess);
+      }
+    } catch (err) {
+      console.error('Failed to auto-start session:', err);
+    }
+  }
+
   res.send(`
     <!DOCTYPE html>
     <html>
