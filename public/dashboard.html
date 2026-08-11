@@ -100,31 +100,46 @@
               </div>
             </div>
 
-            <hr class="my-4 border-gray-200">
+            <hr class="my-6 border-gray-200">
             
-            <div>
-              <div class="flex justify-between items-center mb-3">
-            <!-- 🚀 NEW: Lead Webhook URL -->
+            <!-- 🚀 NEW: Lead Webhook URL (Full Width, Outside the Flex Container) -->
             <div class="mb-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
-              <label class="block text-sm font-bold text-blue-900 mb-1 flex items-center gap-2">
+              <label class="block text-sm font-bold text-blue-900 mb-2 flex items-center gap-2">
                 🚀 Lead Webhook URL (Optional)
               </label>
               <input type="url" id="leadWebhookUrl" class="w-full px-3 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm bg-white" placeholder="https://hooks.zapier.com/hooks/catch/... or Google Apps Script URL">
-              <p class="text-xs text-blue-700 mt-1">Automatically send new customer details to Zapier, Make.com, or Google Sheets.</p>
+              <p class="text-xs text-blue-700 mt-2">Automatically send new customer details to Zapier, Make.com, or Google Sheets.</p>
             </div>
 
-                <h4 class="text-sm font-semibold text-gray-800">📞 Official Contact Information</h4>
-                <button type="button" onclick="fillContactTemplate()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium underline">Fill Template</button>
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div><label class="block text-xs font-medium text-gray-600 mb-1">Contact Person</label><input type="text" id="contactPerson" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm"></div>
-                <div><label class="block text-xs font-medium text-gray-600 mb-1">Business Email</label><input type="email" id="contactEmail" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm"></div>
-                <div><label class="block text-xs font-medium text-gray-600 mb-1">Phone / WhatsApp</label><input type="text" id="contactPhone" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm"></div>
-                <div><label class="block text-xs font-medium text-gray-600 mb-1">Website</label><input type="text" id="contactWebsite" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm"></div>
-              </div>
-              <div class="mt-3"><label class="block text-xs font-medium text-gray-600 mb-1">Additional Notes</label><textarea id="contactNotes" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm"></textarea></div>
+            <!-- Official Contact Information Section -->
+            <div class="flex justify-between items-center mb-3">
+              <h4 class="text-sm font-semibold text-gray-800">📞 Official Contact Information</h4>
+              <button type="button" onclick="fillContactTemplate()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium underline">Fill Template</button>
             </div>
-
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Contact Person</label>
+                <input type="text" id="contactPerson" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Business Email</label>
+                <input type="email" id="contactEmail" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Phone / WhatsApp</label>
+                <input type="text" id="contactPhone" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Website</label>
+                <input type="text" id="contactWebsite" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm">
+              </div>
+            </div>
+            
+            <div class="mt-3">
+              <label class="block text-xs font-medium text-gray-600 mb-1">Additional Notes</label>
+              <textarea id="contactNotes" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm"></textarea>
+            </div>
             <button type="submit" class="w-full bg-green-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-green-700 transition shadow-md flex items-center justify-center gap-2">💾 Save AI Settings</button>
           </form>
           <p id="settingsMsg" class="mt-3 text-center text-sm font-medium min-h-[20px]"></p>
@@ -328,10 +343,17 @@
 
     document.getElementById('settingsForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      
+      // 🚨 DEBUG: Check if token exists
+      console.log(" SAVE BUTTON CLICKED!");
+      console.log("Token:", token);
+      console.log("Lead Webhook Value:", document.getElementById('leadWebhookUrl').value);
+      
       const msg = document.getElementById('settingsMsg');
       msg.textContent = 'Saving...'; 
       msg.className = 'mt-3 text-center text-sm text-gray-600';
       
+      // ... rest of the existing code ...      
       const contactInfo = `Contact Person: ${document.getElementById('contactPerson').value || 'Not provided'}\nEmail: ${document.getElementById('contactEmail').value || 'Not provided'}\nPhone/WhatsApp: ${document.getElementById('contactPhone').value || 'Not provided'}\nWebsite: ${document.getElementById('contactWebsite').value || 'Not provided'}\nNotes: ${document.getElementById('contactNotes').value || 'None'}`.trim();
       
       try {
