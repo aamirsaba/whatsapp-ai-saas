@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <title>Dashboard - Universal AI SaaS</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -22,6 +23,18 @@
     <div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-6 mb-8 text-white shadow-lg">
       <h2 class="text-2xl font-bold mb-2">Welcome back, <span id="businessName">User</span>! 👋</h2>
       <p class="text-green-100">Your AI agent is active. Choose a persona below to instantly reprogram its personality.</p>
+    </div>
+
+    <!-- 📊 NEW: Visual Analytics Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">📈 Messages (Last 7 Days)</h3>
+        <div class="h-64"><canvas id="messageChart"></canvas></div>
+      </div>
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">🎯 New Leads (Last 7 Days)</h3>
+        <div class="h-64"><canvas id="leadChart"></canvas></div>
+      </div>
     </div>
 
     <!-- 🚀 UPGRADED: Autopilot Daily Brief Card -->
@@ -268,13 +281,15 @@
   </main>
 
   <script>
+    let messageChartInstance = null;
+    let leadChartInstance = null;
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     if (!token) { window.location.href = '/login'; } 
     else { 
       document.getElementById('userEmail').textContent = user.email; 
       document.getElementById('userEmail').classList.remove('hidden');
-      loadDashboard(); loadTeamInbox();
+      loadDashboard(); loadTeamInbox(); loadAnalytics();
     }
 
     const personas = {

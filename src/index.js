@@ -655,6 +655,34 @@ app.post('/api/dashboard/send-message', authenticateToken, async (req, res) => {
   }
 });
 
+// 📊 ANALYTICS: Get Dashboard Stats for Charts
+app.get('/api/dashboard/analytics', authenticateToken, async (req, res) => {
+  try {
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    if (!tenant) return res.status(404).json({ error: 'Business not found.' });
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const messages = await prisma.message.findMany({ where: { tenantId: tenant.id, createdAt: { gte: sevenDaysAgo } } });
+    const leads = await prisma.lead.findMany({ where: { tenantId: tenant.id, createdAt: { gte: sevenDaysAgo } } });
+
+    const labels = [], messageCounts = [], leadCounts = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      labels.push(d.toLocaleDateString('en-US', { weekday: 'short' }));
+      const dayStart = new Date(d); dayStart.setHours(0,0,0,0);
+      const dayEnd = new Date(d); dayEnd.setHours(23,59,59,999);
+      messageCounts.push(messages.filter(m => m.createdAt >= dayStart && m.createdAt <= dayEnd).length);
+      leadCounts.push(leads.filter(l => l.createdAt >= dayStart && l.createdAt <= dayEnd).length);
+    }
+
+    res.json({ success: true, chartData: { labels, messageCounts, leadCounts } });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch analytics.' });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 WhatsApp AI SaaS Backend is running!`);
