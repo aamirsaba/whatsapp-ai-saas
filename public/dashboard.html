@@ -281,15 +281,15 @@
   </main>
 
   <script>
+    const token = localStorage.getItem('token');
     let messageChartInstance = null;
     let leadChartInstance = null;
-    const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     if (!token) { window.location.href = '/login'; } 
     else { 
       document.getElementById('userEmail').textContent = user.email; 
       document.getElementById('userEmail').classList.remove('hidden');
-      loadDashboard(); loadTeamInbox(); loadAnalytics();
+      loadDashboard(); loadTeamInbox(); 
     }
 
     const personas = {
@@ -364,6 +364,7 @@
           // 4. Render chat history
           renderChatHistory(data.messages);
           loadLeads();
+	  loadAnalytics();
         }
       } catch (err) { 
         console.error('Failed to load dashboard', err); 
@@ -773,6 +774,29 @@
           alert('❌ ' + data.error);
         }
       } catch (err) { alert('❌ Server error.'); }
+    }
+
+    async function loadAnalytics() {
+      try {
+        const res = await fetch('/api/dashboard/analytics', { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.success) {
+          if (messageChartInstance) messageChartInstance.destroy();
+          if (leadChartInstance) leadChartInstance.destroy();
+
+          messageChartInstance = new Chart(document.getElementById('messageChart'), {
+            type: 'bar',
+            data: { labels: data.chartData.labels, datasets: [{ label: 'Messages', data: data.chartData.messageCounts, backgroundColor: 'rgba(59, 130, 246, 0.5)', borderColor: 'rgb(59, 130, 246)', borderWidth: 1 }] },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+          });
+
+          leadChartInstance = new Chart(document.getElementById('leadChart'), {
+            type: 'line',
+            data: { labels: data.chartData.labels, datasets: [{ label: 'New Leads', data: data.chartData.leadCounts, borderColor: 'rgb(16, 185, 129)', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.3 }] },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+          });
+        }
+      } catch (err) { console.error('Failed to load analytics', err); }
     }
 
     function logout() { localStorage.clear(); window.location.href = '/login'; }
