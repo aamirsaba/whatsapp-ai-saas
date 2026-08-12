@@ -30,60 +30,56 @@ enum LeadStatus {
 
 // 3. The User Model (For Login & Admin)
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String   // We will hash this with bcrypt in Phase 2
-  role      Role     @default(TENANT)
-  createdAt DateTime @default(now())
+  id              String         @id @default(cuid())
+  email           String         @unique
+  password        String
+  role            Role           @default(TENANT)
+  isAgency        Boolean        @default(false)
+  createdAt       DateTime       @default(now())
 
-  tenants   Tenant[]
+  tenants         Tenant[]
+  teamMemberships TeamMember[]
 }
 
 // 4. The Upgraded Tenant Model
 model Tenant {
-  id             String      @id @default(cuid())
-  businessName   String
-  whatsappNumber String      @unique
-  websiteUrl     String?     // 🚨 NEW: Store the website URL
-  // 🚀 NEW: Autopilot Daily Brief Settings
-  isSummaryEnabled Boolean     @default(false)
-  summaryTime      String?     // Format: "HH:MM" (e.g., "21:00")  
+  id               String         @id @default(cuid())
+  businessName     String
+  whatsappNumber   String         @unique
+  websiteUrl       String?
+  
+  isSummaryEnabled Boolean        @default(false)
+  summaryTime      String?
 
-  // 🌟 NEW: Business Context for Tailored AI Responses
-  // This tells the AI exactly what the business does so it doesn't hallucinate.
-  systemPrompt   String      @default("You are a helpful AI assistant.")
-  businessContext String?    @db.Text
-  contactInfo    String?     @db.Text 
- 
+  systemPrompt     String         @default("You are a helpful AI assistant.")
+  businessContext  String?        @db.Text
+  contactInfo      String?        @db.Text
+  serviceAreas     String?        @db.Text
 
-  isActive       Boolean     @default(true)
-  createdAt      DateTime    @default(now())
+  isActive         Boolean        @default(true)
+  isHumanMode      Boolean        @default(false)
+  createdAt        DateTime       @default(now())
 
-//  NEW: Human Takeover Toggle
-  isHumanMode    Boolean     @default(false)
+  llmProvider      String?
+  llmApiKey        String?
+  llmModel         String?
+  llmBaseUrl       String?
+  leadWebhookUrl   String?
 
-
-  // 🧠 NEW: Bring Your Own LLM (BYOK) Fields
-  llmProvider    String?     // e.g., "OPENAI", "QWEN", "CUSTOM"
-  llmApiKey      String?     
-  llmModel       String?     // Dynamically selected best model
-  llmBaseUrl     String?     // API Base URL (auto-detected or custom)
-
- // 🚨 NEW: Webhook for new leads
-  leadWebhookUrl String?    
-
-  // 🔗 Relations
-  userId         String?
-  user           User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages       Message[]
+  userId           String?
+  user             User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  messages         Message[]
+  leads            Lead[]
+  teamMembers      TeamMember[]
 }
 
 // 5. The Message Model
 model Message {
-  id        String   @id @default(cuid())
+  id         String   @id @default(cuid())
   fromNumber String
   toNumber   String
-  direction  String   // 'inbound' or 'outbound'
+  direction  String
   content    String   @db.Text
   isAiReply  Boolean  @default(false)
   createdAt  DateTime @default(now())
@@ -92,15 +88,28 @@ model Message {
   tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
+// 6. The Lead Model (CRM)
 model Lead {
-  id            String      @id @default(cuid())
-  tenantId      String
-  tenant        Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  phoneNumber   String
-  firstMessage  String      @db.Text
-  status        LeadStatus  @default(NEW)
-  notes         String?     @db.Text
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id           String     @id @default(cuid())
+  tenantId     String
+  tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  phoneNumber  String
+  firstMessage String     @db.Text
+  status       LeadStatus @default(NEW)
+  notes        String?    @db.Text
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 }
 
+// 7. The Team Member Model (Shared Inbox)
+model TeamMember {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String   @default("AGENT") // "OWNER" or "AGENT"
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, userId])
+}
