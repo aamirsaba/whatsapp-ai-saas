@@ -569,6 +569,92 @@ app.patch('/api/dashboard/leads/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// 🚀 TEAM: Get All Clients (Tenants) for the User
+app.get('/api/dashboard/clients', authenticateToken, async (req, res) => {
+  try {
+    const clients = await prisma.tenant.findMany({
+      where: { userId: req.user.userId },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json({ success: true, clients });
+  } catch (error) {
+    console.error(' Fetch clients error:', error);
+    res.status(500).json({ error: 'Failed to fetch clients.' });
+  }
+});
+
+// 🚀 TEAM: Invite Agent to Tenant
+app.post('/api/dashboard/team/invite', authenticateToken, async (req, res) => {
+  try {
+    const { email } = req.body;
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    const userToAdd = await prisma.user.findUnique({ where: { email } });
+    if (!userToAdd) return res.status(404).json({ error: 'User with this email does not exist. They must register first.' });
+
+    await prisma.teamMember.create({
+      data: { tenantId: tenant.id, userId: userToAdd.id, role: 'AGENT' }
+    });
+
+    res.json({ success: true, message: 'Agent added successfully!' });
+  } catch (error) {
+    console.error('Invite error:', error);
+    res.status(500).json({ error: 'Failed to invite agent.' });
+  }
+});
+
+//  TEAM: Get Team Members
+app.get('/api/dashboard/team', authenticateToken, async (req, res) => {
+  try {
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    const members = await prisma.teamMember.findMany({
+      where: { tenantId: tenant.id },
+      include: { user: { select: { email: true } } }
+    });
+    res.json({ success: true, members });
+  } catch (error) {
+    console.error('Fetch team error:', error);
+    res.status(500).json({ error: 'Failed to fetch team.' });
+  }
+});
+
+// 🚀 LIVE INBOX: Send Manual Reply via WhatsApp
+app.post('/api/dashboard/send-message', authenticateToken, async (req, res) => {
+  try {
+    const { toNumber, content, tenantId } = req.body;
+    
+    const tenant = await prisma.tenant.findFirst({ where: { id: tenantId || req.query.tenantId, userId: req.user.userId } });
+    if (!tenant) return res.status(403).json({ error: 'Access denied.' });
+
+    const sock = activeSockets.get(tenant.whatsappNumber);
+    if (!sock) return res.status(400).json({ error: 'WhatsApp is not connected.' });
+
+    // Send via Baileys
+    const jid = `${toNumber}@s.whatsapp.net`;
+    await sock.sendMessage(jid, { text: content });
+
+    // Save to DB
+    await prisma.message.create({
+      data: {
+        tenantId: tenant.id,
+        fromNumber: tenant.whatsappNumber,
+        toNumber: toNumber,
+        direction: 'outbound',
+        content: content,
+        isAiReply: false
+      }
+    });
+
+    res.json({ success: true, message: 'Message sent!' });
+  } catch (error) {
+    console.error('Send message error:', error);
+    res.status(500).json({ error: 'Failed to send message.' });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 WhatsApp AI SaaS Backend is running!`);
