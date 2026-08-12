@@ -68,30 +68,21 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         return;
       }
 
-      // 🚀 NEW: Detect and Send New Leads to Webhook
-      const existingLead = await prisma.message.findFirst({
-        where: { tenantId: tenant.id, fromNumber: fromNumber }
+      // 🚀 NEW: Auto-Create Lead in CRM if it's a new customer
+      const existingLead = await prisma.lead.findFirst({
+        where: { tenantId: tenant.id, phoneNumber: fromNumber }
       });
 
-      // If no previous messages exist, this is a NEW LEAD!
-      if (!existingLead && tenant.leadWebhookUrl) {
-        console.log(` New Lead Detected: ${fromNumber} | Sending to Webhook...`);
-        
-        try {
-          await fetch(tenant.leadWebhookUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              businessName: tenant.businessName,
-              leadNumber: fromNumber,
-              firstMessage: text,
-              timestamp: new Date().toISOString()
-            })
-          });
-          console.log('✅ Lead successfully sent to webhook!');
-        } catch (webhookError) {
-          console.error('❌ Failed to send lead to webhook:', webhookError.message);
-        }
+      if (!existingLead) {
+        console.log(`🎯 New Lead Detected: ${fromNumber} | Adding to CRM...`);
+        await prisma.lead.create({
+          data: {
+            tenantId: tenant.id,
+            phoneNumber: fromNumber,
+            firstMessage: text,
+            status: 'NEW'
+          }
+        });
       }
 
       await prisma.message.create({

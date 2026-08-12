@@ -528,6 +528,47 @@ app.patch('/api/dashboard/toggle-human-mode', authenticateToken, async (req, res
   }
 });
 
+// 🚀 CRM: Get All Leads
+app.get('/api/dashboard/leads', authenticateToken, async (req, res) => {
+  try {
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    if (!tenant) return res.status(404).json({ error: 'Business not found.' });
+    
+    const leads = await prisma.lead.findMany({
+      where: { tenantId: tenant.id },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json({ success: true, leads });
+  } catch (error) {
+    console.error('❌ Fetch leads error:', error);
+    res.status(500).json({ error: 'Failed to fetch leads.' });
+  }
+});
+
+// 🚀 CRM: Update Lead Status or Notes
+app.patch('/api/dashboard/leads/:id', authenticateToken, async (req, res) => {
+  try {
+    const { status, notes } = req.body;
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    
+    // Verify ownership
+    const lead = await prisma.lead.findFirst({ where: { id: req.params.id, tenantId: tenant.id } });
+    if (!lead) return res.status(404).json({ error: 'Lead not found.' });
+
+    const updatedLead = await prisma.lead.update({
+      where: { id: req.params.id },
+      data: { 
+        status: status || lead.status,
+        notes: notes !== undefined ? notes : lead.notes
+      }
+    });
+    res.json({ success: true, lead: updatedLead });
+  } catch (error) {
+    console.error('❌ Update lead error:', error);
+    res.status(500).json({ error: 'Failed to update lead.' });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 WhatsApp AI SaaS Backend is running!`);
