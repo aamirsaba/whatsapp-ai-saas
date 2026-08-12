@@ -481,13 +481,21 @@ app.post('/api/dashboard/daily-summary', authenticateToken, async (req, res) => 
 
     // 4. Send to WhatsApp "Message Yourself"
     const sock = activeSockets.get(tenant.whatsappNumber);
-    if (sock && sock.user) {
+    if (sock) {
       try {
-        // sock.user.id is the special JID for "Message Yourself"
-        await sock.sendMessage(sock.user.id, { text: `📊 *Daily AI Summary for ${tenant.businessName}*\n\n${summary}` });
+        // Use the bot's own number as the JID for "Message Yourself"
+        const selfJid = `${tenant.whatsappNumber}@s.whatsapp.net`;
+        console.log(` Sending summary to self JID: ${selfJid}`);
+        
+        await sock.sendMessage(selfJid, { 
+          text: `📊 *Daily AI Summary for ${tenant.businessName}*\n\n${summary}` 
+        });
+        console.log('✅ Summary sent to WhatsApp "Message Yourself"');
       } catch (waError) {
-        console.log("⚠️ Could not send to WhatsApp 'Message Yourself', but summary generated.");
+        console.error("⚠️ Could not send to WhatsApp 'Message Yourself':", waError.message);
       }
+    } else {
+      console.log("⚠️ No active socket found for this tenant");
     }
 
     res.json({ success: true, summary });
