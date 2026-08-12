@@ -578,7 +578,7 @@ app.get('/api/dashboard/clients', authenticateToken, async (req, res) => {
     });
     res.json({ success: true, clients });
   } catch (error) {
-    console.error(' Fetch clients error:', error);
+    console.error('❌ Fetch clients error:', error);
     res.status(500).json({ error: 'Failed to fetch clients.' });
   }
 });
@@ -599,12 +599,12 @@ app.post('/api/dashboard/team/invite', authenticateToken, async (req, res) => {
 
     res.json({ success: true, message: 'Agent added successfully!' });
   } catch (error) {
-    console.error('Invite error:', error);
+    console.error('❌ Invite error:', error);
     res.status(500).json({ error: 'Failed to invite agent.' });
   }
 });
 
-//  TEAM: Get Team Members
+// 🚀 TEAM: Get Team Members
 app.get('/api/dashboard/team', authenticateToken, async (req, res) => {
   try {
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
@@ -616,27 +616,27 @@ app.get('/api/dashboard/team', authenticateToken, async (req, res) => {
     });
     res.json({ success: true, members });
   } catch (error) {
-    console.error('Fetch team error:', error);
+    console.error('❌ Fetch team error:', error);
     res.status(500).json({ error: 'Failed to fetch team.' });
   }
 });
 
-// 🚀 LIVE INBOX: Send Manual Reply via WhatsApp
+//  LIVE INBOX: Send Manual Reply via WhatsApp
 app.post('/api/dashboard/send-message', authenticateToken, async (req, res) => {
   try {
     const { toNumber, content, tenantId } = req.body;
     
-    const tenant = await prisma.tenant.findFirst({ where: { id: tenantId || req.query.tenantId, userId: req.user.userId } });
+    const tenant = await prisma.tenant.findFirst({ 
+      where: { id: tenantId || req.query.tenantId, userId: req.user.userId } 
+    });
     if (!tenant) return res.status(403).json({ error: 'Access denied.' });
 
     const sock = activeSockets.get(tenant.whatsappNumber);
     if (!sock) return res.status(400).json({ error: 'WhatsApp is not connected.' });
 
-    // Send via Baileys
     const jid = `${toNumber}@s.whatsapp.net`;
     await sock.sendMessage(jid, { text: content });
 
-    // Save to DB
     await prisma.message.create({
       data: {
         tenantId: tenant.id,
@@ -650,7 +650,7 @@ app.post('/api/dashboard/send-message', authenticateToken, async (req, res) => {
 
     res.json({ success: true, message: 'Message sent!' });
   } catch (error) {
-    console.error('Send message error:', error);
+    console.error('❌ Send message error:', error);
     res.status(500).json({ error: 'Failed to send message.' });
   }
 });
