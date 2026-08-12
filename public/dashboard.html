@@ -24,22 +24,37 @@
       <p class="text-green-100">Your AI agent is active. Choose a persona below to instantly reprogram its personality.</p>
     </div>
 
-    <!-- 🚨 NEW: Autopilot Daily Brief Card -->
+    <!-- 🚀 UPGRADED: Autopilot Daily Brief Card -->
     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
         <div>
           <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
             📊 Autopilot Daily Brief
           </h3>
-          <p class="text-sm text-gray-500">Let AI summarize today's leads and chats, then send it straight to your WhatsApp "Message Yourself" chat.</p>
+          <p class="text-sm text-gray-500">Automatically send an AI summary of today's leads to your WhatsApp "Message Yourself" chat.</p>
         </div>
         <button type="button" onclick="generateDailySummary(this)" class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg hover:bg-indigo-700 transition text-sm font-medium whitespace-nowrap flex items-center gap-2 shadow-md">
-          ✨ Generate Brief
+          ✨ Generate Now
         </button>
       </div>
-      <div id="summaryBox" class="hidden bg-indigo-50 border border-indigo-100 rounded-lg p-4 mt-2">
+      
+      <!-- 🚨 NEW: Schedule Settings -->
+      <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="isSummaryEnabled" class="sr-only peer">
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+          </label>
+          <span class="text-sm font-medium text-gray-700">Enable Daily Auto-Send</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-sm text-gray-600">Send at:</label>
+          <input type="time" id="summaryTime" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+      </div>
+
+      <div id="summaryBox" class="hidden bg-indigo-50 border border-indigo-100 rounded-lg p-4 mt-4">
         <p id="summaryText" class="text-sm text-indigo-900 whitespace-pre-wrap leading-relaxed font-mono"></p>
-        <p class="text-xs text-indigo-600 mt-3 italic font-semibold">✅ This brief was also sent to your phone's WhatsApp!</p>
       </div>
     </div>
 
@@ -215,6 +230,8 @@
           document.getElementById('llmModel').value = data.tenant.llmModel || '';
           document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
           document.getElementById('humanModeToggle').checked = data.tenant.isHumanMode || false;
+          document.getElementById('isSummaryEnabled').checked = data.tenant.isSummaryEnabled || false;
+          document.getElementById('summaryTime').value = data.tenant.summaryTime || '21:00'; // Default to 9 PM
           document.getElementById('leadWebhookUrl').value = data.tenant.leadWebhookUrl || '';          
           
           // 2. Parse contact info (if it exists)
@@ -332,11 +349,11 @@
     }
 
     function fillContactTemplate() {
-      document.getElementById('contactPerson').value = 'Aamir Saba';
-      document.getElementById('contactEmail').value = 'info@tabaraksolutions.com';
+      document.getElementById('contactPerson').value = 'Aamir Durrani';
+      document.getElementById('contactEmail').value = 'info@tabarak.solutions';
       document.getElementById('contactPhone').value = '+968 9129 3119';
-      document.getElementById('contactWebsite').value = 'www.tabaraksolutions.com';
-      document.getElementById('contactNotes').value = 'Available Mon-Fri, 9 AM - 5 PM GST.';
+      document.getElementById('contactWebsite').value = 'www.tabarak.solutions';
+      document.getElementById('contactNotes').value = 'Available Sun-Thr, 9 AM - 5 PM GST.';
       const msg = document.getElementById('settingsMsg');
       msg.textContent = '✨ Template filled! Edit details, then click Save.'; msg.className = 'mt-3 text-center text-sm text-indigo-600 font-bold';
     }
@@ -369,7 +386,9 @@
             llmProvider: document.getElementById('llmProvider').value,
             llmBaseUrl: document.getElementById('llmBaseUrl').value,
             isHumanMode: document.getElementById('humanModeToggle').checked,
-            leadWebhookUrl: document.getElementById('leadWebhookUrl').value // 🚨 Send the webhook URL
+            leadWebhookUrl: document.getElementById('leadWebhookUrl').value,
+            isSummaryEnabled: document.getElementById('isSummaryEnabled').checked, // 🚨 NEW
+            summaryTime: document.getElementById('summaryTime').value             // 🚨 NEW
           }) 
  
         });

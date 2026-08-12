@@ -38,7 +38,10 @@ model Tenant {
   businessName   String
   whatsappNumber String      @unique
   websiteUrl     String?     // 🚨 NEW: Store the website URL
-  
+  // 🚀 NEW: Autopilot Daily Brief Settings
+  isSummaryEnabled Boolean     @default(false)
+  summaryTime      String?     // Format: "HH:MM" (e.g., "21:00")  
+
   // 🌟 NEW: Business Context for Tailored AI Responses
   // This tells the AI exactly what the business does so it doesn't hallucinate.
   systemPrompt   String      @default("You are a helpful AI assistant.")

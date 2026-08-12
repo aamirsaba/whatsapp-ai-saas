@@ -8,6 +8,7 @@ const { registerUser, loginUser } = require('./auth');
 const { authenticateToken } = require('./middleware'); // 🚀 NEW: Auth Middleware
 const path = require('path');
 const fs = require('fs');
+const cron = require('node-cron');
 
 const app = express();
 const server = http.createServer(app);
@@ -533,6 +534,62 @@ server.listen(PORT, () => {
   console.log(`🌐 Server running on http://localhost:${PORT}`);
   
   // 🚀 CALL THE AUTO-START FUNCTION HERE
-  startAllActiveSessions(); 
+  startAllActiveSessions();
+  // 🚀 AUTOMATED DAILY BRIEF CRON JOB
+  // Runs every minute to check if any tenant needs a summary right now
+  cron.schedule('* * * * *', async () => {
+    try {
+      const now = new Date();
+      // Format current time as "HH:MM" (e.g., "21:05")
+      const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+      
+      // Find tenants who want a summary at this exact minute
+      const tenantsToNotify = await prisma.tenant.findMany({
+        where: {
+          isSummaryEnabled: true,
+          summaryTime: currentTime,
+          isActive: true // Only send if WhatsApp is connected
+        }
+      });
+
+      if (tenantsToNotify.length > 0) {
+        console.log(`⏰ Cron Job: Sending daily briefs to ${tenantsToNotify.length} tenant(s) at ${currentTime}`);
+        
+        for (const tenant of tenantsToNotify) {
+          try {
+            // 1. Get today's messages
+            const startOfDay = new Date();
+            startOfDay.setHours(0, 0, 0, 0);
+            
+            const todaysMessages = await prisma.message.findMany({
+              where: { tenantId: tenant.id, createdAt: { gte: startOfDay } },
+              orderBy: { createdAt: 'asc' }
+            });
+
+            if (todaysMessages.length === 0) continue; // Skip if no messages
+
+            // 2. Format and generate AI summary
+            const chatLog = todaysMessages.map(m => `[${m.direction === 'inbound' ? 'Customer' : 'AI'}] ${m.fromNumber}: ${m.content}`).join('\n');
+            const systemPrompt = "Summarize this daily WhatsApp chat log into a brief, professional daily brief. Highlight: 1. Total interactions. 2. Key lead inquiries. 3. Unresolved issues. Use bullet points.";
+            const { getAIResponse } = require('./ai');
+            const summary = await getAIResponse(chatLog, systemPrompt, tenant);
+
+            // 3. Send to WhatsApp "Message Yourself"
+            const sock = activeSockets.get(tenant.whatsappNumber);
+            if (sock) {
+              const selfJid = `${tenant.whatsappNumber}@s.whatsapp.net`;
+              await sock.sendMessage(selfJid, { text: `📊 *Daily AI Summary for ${tenant.businessName}*\n\n${summary}` });
+              console.log(`✅ Sent automated brief to ${tenant.businessName}`);
+            }
+          } catch (err) {
+            console.error(`❌ Failed to send brief to ${tenant.businessName}:`, err.message);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ Cron job error:', error);
+    }
+  });
+ 
 });
 
