@@ -99,13 +99,29 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       const contextRule = tenant.businessContext ? `\n\nBUSINESS CONTEXT:\n${tenant.businessContext}` : '';
       const contactRule = tenant.contactInfo ? `\n\nOFFICIAL CONTACT DETAILS (USE EXACTLY AS WRITTEN):\n${tenant.contactInfo}` : '';
       
+      // 🚨 NEW: Dynamic Service Zones Logic
+      let zoneRule = '';
+      if (tenant.serviceAreas) {
+        try {
+          const zones = JSON.parse(tenant.serviceAreas);
+          if (zones.length > 0) {
+            const zoneList = zones.join(', ');
+            zoneRule = `\n\n📍 SERVICE ZONES (CRITICAL):\nYou ONLY operate in the following locations: [${zoneList}]. 
+            RULE: If a customer asks if you serve a specific city or area, check this list. 
+            - If the area IS in the list, confirm enthusiastically. 
+            - If the area is NOT in the list, politely inform them you do not currently operate there and provide the official contact details.`;
+          }
+        } catch (e) { console.error('Error parsing service areas:', e); }
+      }
+
       const strictRules = `\n\n🚨 STRICT ANTI-HALLUCINATION RULES (DO NOT BREAK):
-1. You MUST strictly answer questions related ONLY to the provided BUSINESS CONTEXT and CONTACT DETAILS.
+1. You MUST strictly answer questions related ONLY to the provided BUSINESS CONTEXT, SERVICE ZONES, and CONTACT DETAILS.
 2. DO NOT invent, guess, or make up phone numbers, email addresses, website URLs, prices, or people's names.
 3. If a user asks for specific contact details that are marked as "Not provided" or are missing, you MUST reply: "I don't have that specific information in my database. Please reach out to our official support channels."
 4. Keep responses concise, professional, and directly aligned with the provided facts.`;
 
-      const finalSystemPrompt = basePrompt + contextRule + contactRule + strictRules;
+      // 🚨 UPDATED: Added zoneRule to the final prompt
+      const finalSystemPrompt = basePrompt + contextRule + contactRule + zoneRule + strictRules;
       const aiReply = await getAIResponse(text, finalSystemPrompt, tenant);
       console.log(`🗣️ AI Reply: ${aiReply}`);
 

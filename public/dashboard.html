@@ -387,6 +387,9 @@
       if (personas[this.value]) {
         document.getElementById('systemPrompt').value = personas[this.value].systemPrompt;
         document.getElementById('businessContext').value = personas[this.value].businessContext;
+          // 📍 Load Service Zones
+          const savedZones = data.tenant.serviceAreas ? JSON.parse(data.tenant.serviceAreas) : [];
+          document.getElementById('currentZonesDisplay').textContent = savedZones.length > 0 ? `Current Zones: ${JSON.stringify(savedZones)}` : 'No service zones configured.';
         const msg = document.getElementById('settingsMsg');
         msg.textContent = '✨ Template applied! Review and edit, then click Save.';
         msg.className = 'mt-3 text-center text-sm text-blue-600 font-bold';
