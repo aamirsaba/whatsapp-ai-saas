@@ -82,5 +82,37 @@ async function sendAdminNotificationEmail(newEmail, businessName, whatsappNumber
   }
 }
 
+
+// 3. Password Reset Email
+async function sendPasswordResetEmail(userEmail, newPassword) {
+  const mailOptions = {
+    from: `"WhatsApp AI SaaS" <${process.env.SMTP_USER}>`,
+    to: userEmail,
+    subject: '🔑 Your New Password for WhatsApp AI SaaS',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+        <h2 style="color: #16a34a;">Password Reset Request</h2>
+        <p>Hello,</p>
+        <p>We received a request to reset your password. Your new temporary password is:</p>
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 6px; margin: 20px 0; text-align: center;">
+          <p style="margin: 0; font-family: monospace; font-size: 24px; font-weight: bold; color: #166534;">${newPassword}</p>
+        </div>
+        <p>Please log in with this password and change it immediately in your dashboard settings.</p>
+        <br>
+        <p style="color: #6b7280; font-size: 14px;">Best regards,<br><strong>The Aamir Saba Team</strong></p>
+      </div>
+    `
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Password reset email sent to ${userEmail}`);
+  } catch (error) {
+    console.error('❌ Failed to send password reset email:', error.message);
+  }
+}
+
+// 🚨 UPDATE THIS LINE AT THE VERY BOTTOM OF email.js:
+module.exports = { sendWelcomeEmail, sendAdminNotificationEmail, sendPasswordResetEmail };
 // 🚨 CRITICAL: Export BOTH functions
 module.exports = { sendWelcomeEmail, sendAdminNotificationEmail };

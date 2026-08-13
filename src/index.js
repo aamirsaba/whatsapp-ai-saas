@@ -59,17 +59,109 @@ app.post('/api/register-wizard', async (req, res) => {
       data: { email, password: hashedPassword, role: 'TENANT' }
     });
 
-    // 3. Auto-generate Context & Prompt based on Industry
+    // 3. Auto-generate Context based on Industry
     let autoContext = `This business operates in the ${industry} industry.`;
     if (websiteUrl) autoContext += ` Their website is ${websiteUrl}. Use this context to answer questions accurately.`;
     
-    let autoPrompt = "You are a helpful, professional AI assistant for this business.";
-    if (industry === 'Real Estate') autoPrompt = "You are a top-tier Real Estate AI Sales Agent. Your goal is to qualify buyers, answer property questions, and proactively book property viewings.";
-    if (industry === 'Clinic') autoPrompt = "You are a professional Medical Clinic Receptionist AI. Your goal is to answer patient questions, provide clinic hours, and proactively book appointments.";
-    if (industry === 'E-commerce') autoPrompt = "You are an E-commerce AI Sales Assistant. Your goal is to answer product questions, handle shipping inquiries, and drive sales.";
-    if (industry === 'Services') autoPrompt = "You are a Field Service AI Dispatcher. Your goal is to confirm service areas, answer pricing questions, and book technician visits.";
+    // 4. 🚨 SMART INDUSTRY-TO-PROMPT MAPPING (30+ industries covered)
+    let autoPrompt = "You are a helpful, professional AI assistant for this business. Be concise, polite, and accurate.";
+    
+    const ind = industry.toLowerCase();
+    
+    // 🏠 SALES & BOOKING FOCUSED
+    if (ind.includes('real estate') || ind.includes('property')) {
+      autoPrompt = "You are a top-tier Real Estate AI Sales Agent. Your goal is to qualify buyers/renters, answer property questions, showcase listings, and proactively book property viewings. Always ask about their budget and preferred location.";
+    }
+    else if (ind.includes('automotive') || ind.includes('dealership')) {
+      autoPrompt = "You are a professional Automotive Dealership AI Assistant. Help customers with vehicle inquiries, test drive bookings, financing questions, and service appointments. Be knowledgeable and persuasive.";
+    }
+    else if (ind.includes('e-commerce') || ind.includes('online store') || ind.includes('retail')) {
+      autoPrompt = "You are an E-commerce AI Sales Assistant. Help customers with product questions, order status, shipping info, returns, and drive conversions. Be friendly and solution-oriented.";
+    }
+    else if (ind.includes('restaurant') || ind.includes('cafe') || ind.includes('food')) {
+      autoPrompt = "You are a Restaurant AI Host. Help customers with menu questions, dietary restrictions, table reservations, delivery options, and operating hours. Be warm and welcoming.";
+    }
+    else if (ind.includes('hotel') || ind.includes('resort') || ind.includes('hospitality')) {
+      autoPrompt = "You are a Hotel & Hospitality AI Concierge. Assist with room bookings, amenities, check-in/out times, local attractions, and special requests. Be elegant and service-oriented.";
+    }
+    else if (ind.includes('travel') || ind.includes('tourism') || ind.includes('ticketing')) {
+      autoPrompt = "You are a Travel & Tourism AI Agent. Help with bookings, itineraries, visa info, package details, and travel recommendations. Be enthusiastic and detail-oriented.";
+    }
+    else if (ind.includes('event')) {
+      autoPrompt = "You are an Event Planning AI Coordinator. Help clients with venue options, packages, catering, guest management, and booking consultations. Be organized and creative.";
+    }
+    
+    // 🏥 APPOINTMENT & SERVICE BOOKING FOCUSED
+    else if (ind.includes('medical') || ind.includes('clinic') || ind.includes('healthcare') || ind.includes('hospital')) {
+      autoPrompt = "You are a professional Medical Clinic AI Receptionist. Answer patient questions, provide clinic hours, help with appointment booking, and handle general inquiries. ⚠️ CRITICAL: Never provide medical diagnoses. Always advise consulting a doctor for health concerns.";
+    }
+    else if (ind.includes('beauty') || ind.includes('salon') || ind.includes('spa')) {
+      autoPrompt = "You are a Beauty Salon & Spa AI Assistant. Help clients with service menus, pricing, stylist availability, and appointment bookings. Be friendly and make them feel pampered.";
+    }
+    else if (ind.includes('fitness') || ind.includes('gym') || ind.includes('training')) {
+      autoPrompt = "You are a Fitness & Gym AI Assistant. Help with membership plans, class schedules, trainer bookings, and facility info. Be motivating and energetic.";
+    }
+    else if (ind.includes('mental health') || ind.includes('counseling')) {
+      autoPrompt = "You are a Mental Health & Counseling AI Assistant. Help with appointment booking, service info, and general inquiries. Be empathetic and supportive. ⚠️ CRITICAL: Never provide medical advice. In crisis situations, always direct to emergency services.";
+    }
+    else if (ind.includes('vet') || ind.includes('pet')) {
+      autoPrompt = "You are a Veterinary Clinic AI Assistant. Help pet owners with appointment booking, service info, and general pet care questions. Be caring and knowledgeable. ⚠️ Never provide emergency medical advice - direct to the vet immediately for urgent issues.";
+    }
+    
+    // 🔧 FIELD & HOME SERVICES
+    else if (ind.includes('field service') || ind.includes('home maintenance') || ind.includes('plumbing') || ind.includes('ac') || ind.includes('electrical')) {
+      autoPrompt = "You are a Field Service AI Dispatcher. Confirm service areas, answer pricing questions, book technician visits, and handle emergency requests. Be efficient and reassuring.";
+    }
+    else if (ind.includes('cleaning')) {
+      autoPrompt = "You are a Cleaning Services AI Coordinator. Help clients with service types (residential/commercial), pricing, scheduling, and special requests. Be thorough and trustworthy.";
+    }
+    else if (ind.includes('construction') || ind.includes('architecture') || ind.includes('contracting')) {
+      autoPrompt = "You are a Construction & Contracting AI Assistant. Help with project inquiries, quotes, service areas, and consultation bookings. Be professional and detail-oriented.";
+    }
+    else if (ind.includes('logistics') || ind.includes('delivery') || ind.includes('courier')) {
+      autoPrompt = "You are a Logistics & Delivery AI Assistant. Help with shipping quotes, tracking, service areas, and booking pickups. Be fast and accurate.";
+    }
+    
+    // 💼 PROFESSIONAL SERVICES
+    else if (ind.includes('legal') || ind.includes('law')) {
+      autoPrompt = "You are a Law Firm AI Assistant. Help with practice areas, attorney info, consultation bookings, and general inquiries. Be professional and discreet. ⚠️ Never provide specific legal advice - always direct to an attorney.";
+    }
+    else if (ind.includes('financial') || ind.includes('accounting') || ind.includes('tax') || ind.includes('wealth')) {
+      autoPrompt = "You are a Financial Services AI Assistant. Help with service info, appointment bookings, and general inquiries. Be professional and trustworthy. ️ Never provide specific financial or investment advice.";
+    }
+    else if (ind.includes('marketing') || ind.includes('advertising') || ind.includes('agency')) {
+      autoPrompt = "You are a Marketing Agency AI Assistant. Help potential clients with service offerings, case studies, pricing, and consultation bookings. Be creative and results-focused.";
+    }
+    else if (ind.includes('it') || ind.includes('software') || ind.includes('saas')) {
+      autoPrompt = "You are an IT & Software Solutions AI Assistant. Help with product demos, pricing, technical questions, and sales inquiries. Be knowledgeable and solution-oriented.";
+    }
+    else if (ind.includes('hr') || ind.includes('recruitment') || ind.includes('staffing')) {
+      autoPrompt = "You are an HR & Recruitment AI Assistant. Help with service info, candidate inquiries, client bookings, and general questions. Be professional and people-focused.";
+    }
+    
+    // 🎓 EDUCATION
+    else if (ind.includes('school') || ind.includes('university') || ind.includes('academy')) {
+      autoPrompt = "You are an Educational Institution AI Assistant. Help with admissions, programs, fees, campus info, and enrollment. Be informative and welcoming.";
+    }
+    else if (ind.includes('online course') || ind.includes('tutoring')) {
+      autoPrompt = "You are an Online Education AI Assistant. Help with course info, enrollment, pricing, and instructor details. Be encouraging and helpful.";
+    }
+    else if (ind.includes('coaching') || ind.includes('consulting')) {
+      autoPrompt = "You are a Coaching & Consulting AI Assistant. Help potential clients understand your services, book discovery calls, and answer FAQs. Be inspiring and professional.";
+    }
+    
+    // 🎭 MEDIA & OTHER
+    else if (ind.includes('media') || ind.includes('publishing') || ind.includes('content')) {
+      autoPrompt = "You are a Media & Content Creation AI Assistant. Help with service inquiries, portfolio info, collaboration requests, and bookings. Be creative and engaging.";
+    }
+    else if (ind.includes('non-profit') || ind.includes('community')) {
+      autoPrompt = "You are a Non-Profit Organization AI Assistant. Help with mission info, volunteering, donations, and events. Be warm and mission-driven.";
+    }
+    else if (ind.includes('government') || ind.includes('public service')) {
+      autoPrompt = "You are a Government & Public Service AI Assistant. Help citizens with service info, office hours, required documents, and procedures. Be clear and respectful.";
+    }
 
-    // 4. Create Tenant
+    // 5. Create Tenant
     const newTenant = await prisma.tenant.create({
       data: {
         businessName,
@@ -78,27 +170,30 @@ app.post('/api/register-wizard', async (req, res) => {
         userId: newUser.id,
         systemPrompt: autoPrompt,
         businessContext: autoContext,
-        isActive: false, // Requires QR scan to activate
+        isActive: false,
         isHumanMode: false
       }
     });
 
-    // 5. Generate JWT
+    // 6. Generate JWT
     const jwt = require('jsonwebtoken');
     const token = jwt.sign({ userId: newUser.id, role: newUser.role }, process.env.JWT_SECRET || 'your-super-secret-jwt-key', { expiresIn: '7d' });
+
+    // 7. Send Welcome Email
+    const { sendWelcomeEmail } = require('./email');
+    sendWelcomeEmail(email, businessName, password);
 
     res.json({ 
       success: true, 
       token, 
       user: { id: newUser.id, email: newUser.email, role: newUser.role },
-      redirectUrl: `/connect/${whatsappNumber}` // Send them straight to QR scan!
+      redirectUrl: `/connect/${whatsappNumber}`
     });
   } catch (error) {
     console.error('❌ Wizard registration error:', error);
     res.status(500).json({ error: 'Failed to create account.' });
   }
 });
-
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -315,11 +410,17 @@ app.get('/connect/:phoneNumber', async (req, res) => {
             document.getElementById('status').textContent = '📱 Scan the QR code now';
             document.getElementById('status').className = 'mt-6 p-3 rounded-lg font-bold text-sm bg-blue-50 text-blue-700';
           }
-          if (data.type === 'success' && data.phoneNumber === '${phoneNumber}') {
-            document.getElementById('status').className = 'mt-6 p-3 rounded-lg font-bold text-sm bg-green-100 text-green-700';
-            document.getElementById('status').textContent = '✅ Connected successfully! Your AI is now active.';
-            document.getElementById('qrcode').innerHTML = '<div class="text-6xl text-green-500">✓</div>';
-          }
+          // In the WebSocket onmessage handler, add this:
+if (data.type === 'success' && data.phoneNumber === '${phoneNumber}') {
+  document.getElementById('status').className = 'mt-6 p-3 rounded-lg font-bold text-sm bg-green-100 text-green-700';
+  document.getElementById('status').textContent = '✅ Connected successfully! Redirecting to dashboard...';
+  document.getElementById('qrcode').innerHTML = '<div class="text-6xl text-green-500">✓</div>';
+  
+  // 🚨 AUTO-REDIRECT TO DASHBOARD AFTER 2 SECONDS
+  setTimeout(() => {
+    window.location.href = '/dashboard';
+  }, 2000);
+}
         };
       </script>
     </body>
@@ -340,6 +441,38 @@ app.get('/register', (req, res) => {
 
 app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
+});
+
+
+app.get('/forgot-password', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'forgot-password.html'));
+});
+
+app.post('/api/auth/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return res.json({ success: true, message: 'If email exists, reset link sent.' }); // Security: don't reveal if email exists
+
+    // Generate reset token
+    const crypto = require('crypto');
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { resetToken, resetTokenExpiry }
+    });
+
+    // Send email with reset link
+    const { sendPasswordResetEmail } = require('./email');
+    const resetUrl = `https://bot.aamirsaba.com/reset-password?token=${resetToken}`;
+    await sendPasswordResetEmail(email, resetUrl);
+
+    res.json({ success: true, message: 'If email exists, reset link sent.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to process request.' });
+  }
 });
 
 const handleQr = (num, qr) => {

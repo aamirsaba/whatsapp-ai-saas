@@ -35,7 +35,7 @@
 
       <div class="flex items-center justify-between">
         <div class="text-sm">
-          <a href="#" class="font-medium text-green-600 hover:text-green-500">Forgot your password?</a>
+          <a href="/forgot-password" class="font-medium text-green-600 hover:text-green-500">Forgot your password?</a>
         </div>
       </div>
 
@@ -69,6 +69,7 @@
       e.preventDefault();
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
+
       const msg = document.getElementById('message');
 
       msg.textContent = 'Logging in...';

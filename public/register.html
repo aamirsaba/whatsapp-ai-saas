@@ -41,17 +41,64 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
                     <input type="text" id="businessName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Industry</label>
-                    <select id="industry" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white">
-                        <option value="General">General Business</option>
-                        <option value="Real Estate">Real Estate</option>
-                        <option value="Clinic">Medical Clinic</option>
-                        <option value="E-commerce">E-commerce / Retail</option>
-                        <option value="Services">Field Services (AC, Plumbing, etc.)</option>
-                    </select>
-                </div>
-                <div>
+                <!-- In Step 2 of register.html, replace the Industry section with this: -->
+<div>
+  <label class="block text-sm font-medium text-gray-700 mb-1">Industry</label>
+  <div class="relative">
+    <input type="text" id="industry" list="industryList" required placeholder="Start typing to search..." 
+      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
+    <datalist id="industryList">
+      <!-- Professional & Business Services -->
+      <option value="General Business / Corporate Services">
+      <option value="Real Estate & Property Management">
+      <option value="Legal Services / Law Firm">
+      <option value="Financial Services & Accounting">
+      <option value="Marketing, Advertising & Agency">
+      <option value="IT, Software & SaaS">
+      <option value="HR, Recruitment & Staffing">
+      
+      <!-- Health, Wellness & Personal Care -->
+      <option value="Medical Clinic & Healthcare">
+      <option value="Hospital & Urgent Care">
+      <option value="Beauty, Salon & Spa">
+      <option value="Fitness, Gym & Personal Training">
+      <option value="Mental Health & Counseling">
+      <option value="Veterinary & Pet Care">
+      
+      <!-- Retail, Commerce & Goods -->
+      <option value="E-commerce & Online Store">
+      <option value="Retail & Brick-and-Mortar Shop">
+      <option value="Automotive & Dealership">
+      <option value="Wholesale & B2B Distribution">
+      
+      <!-- On-Demand & Home/Field Services -->
+      <option value="Field Services & Home Maintenance">
+      <option value="Cleaning Services">
+      <option value="Construction, Architecture & Contracting">
+      <option value="Logistics, Delivery & Courier">
+      
+      <!-- Hospitality, Travel & Food -->
+      <option value="Restaurant, Cafe & Food Delivery">
+      <option value="Hotel, Resort & Hospitality">
+      <option value="Travel, Tourism & Event Ticketing">
+      <option value="Event Planning & Catering">
+      
+      <!-- Education, Training & Non-Profit -->
+      <option value="School, University & Academy">
+      <option value="Online Courses & Tutoring">
+      <option value="Non-Profit & Community Organization">
+      <option value="Government & Public Services">
+      
+      <!-- Entertainment, Media & Other -->
+      <option value="Coaching & Consulting">
+      <option value="Media, Publishing & Content Creation">
+      <option value="Other / Not Listed">
+    </datalist>
+    <div class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">🔍</div>
+  </div>
+  <p class="text-xs text-gray-500 mt-1">💡 Type to search from 30+ industries</p>
+</div>
+         <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Website URL (Optional)</label>
                     <input type="url" id="websiteUrl" placeholder="https://..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
                 </div>

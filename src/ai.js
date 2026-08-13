@@ -1,5 +1,7 @@
 /**
  * Unified AI Router with Timeout and Detailed Error Logging
+ * Note: Language mirroring, service zones, and industry personas 
+ * are dynamically injected via the 'systemPrompt' parameter.
  */
 async function getAIResponse(userMessage, systemPrompt, tenant) {
   try {
@@ -40,7 +42,7 @@ async function getAIResponse(userMessage, systemPrompt, tenant) {
           { role: 'user', content: userMessage }
         ],
         temperature: 0.7,
-        max_tokens: 500
+        max_tokens: 800 // 🚨 INCREASED: Prevents cut-offs during detailed sales/contact replies
       }),
       signal: controller.signal
     });
