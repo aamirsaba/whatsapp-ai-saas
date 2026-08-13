@@ -284,7 +284,6 @@
             const width = currentStep === 0 ? 0 : (currentStep * 33.33);
             document.getElementById('progressBar').style.width = `${width}%`;
         }
-
         // 5. Form Submission
         document.getElementById('wizardForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -296,6 +295,10 @@
             btn.disabled = true;
 
             try {
+                // 🚨 SAFE CHECK: Only get websiteUrl if the element exists (Business bots only)
+                const websiteUrlInput = document.getElementById('websiteUrl');
+                const websiteUrl = websiteUrlInput ? websiteUrlInput.value : '';
+
                 const res = await fetch('/api/register-wizard', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -304,7 +307,7 @@
                         email: document.getElementById('email').value,
                         businessName: document.getElementById('businessName').value,
                         industry: document.getElementById('industry').value,
-                        websiteUrl: document.getElementById('websiteUrl').value,
+                        websiteUrl: websiteUrl, // 🚨 Uses the safe variable
                         whatsappNumber: document.getElementById('whatsappNumber').value.replace(/\D/g, '')
                     })
                 });
@@ -323,7 +326,8 @@
                     btn.disabled = false;
                 }
             } catch (err) {
-                alert('Server error. Please try again.');
+                console.error('Registration error:', err); // 🚨 Logs the exact error to console for debugging
+                alert('Server error: ' + err.message);
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }

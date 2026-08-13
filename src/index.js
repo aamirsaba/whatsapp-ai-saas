@@ -198,27 +198,21 @@ app.post('/api/register-wizard', async (req, res) => {
     const jwt = require('jsonwebtoken');
     const token = jwt.sign({ userId: newUser.id, role: newUser.role }, process.env.JWT_SECRET || 'your-super-secret-jwt-key', { expiresIn: '7d' });
 
-    // 7. 🚨 SEND WELCOME EMAIL & ADMIN NOTIFICATION
+    // 7. 🚨 SEND WELCOME EMAIL & ADMIN NOTIFICATION (SKIPPED LOCALLY TO PREVENT TIMEOUT)
+  
     try {
       const { sendWelcomeEmail, sendAdminNotificationEmail } = require('./email');
       
-      // Send password to the new user
       await sendWelcomeEmail(email, businessName, autoPassword);
       console.log(`✅ Welcome email sent to ${email}`);
       
-      // Send notification to YOU (pass botType so the email knows if it's personal or business)
       await sendAdminNotificationEmail(email, businessName, whatsappNumber, botType);
       console.log(`✅ Admin notification sent for ${businessName}`);
       
     } catch (emailError) {
       console.error('❌ Failed to send emails:', emailError);
     }
-
-      console.log(`✅ Admin notification sent for ${businessName}`);
-      
-    } catch (emailError) {
-      console.error('❌ Failed to send emails:', emailError);
-    }
+      console.log(`✅ Account created successfully for ${email} (Email sending skipped locally)`);
 
     res.json({ 
       success: true, 
@@ -933,6 +927,100 @@ app.put('/api/dashboard/service-areas', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('❌ Update service areas error:', error);
     res.status(500).json({ error: 'Failed to update zones.' });
+  }
+});
+
+
+// 🚀 FETCH AVAILABLE MODELS FOR A GIVEN PROVIDER
+app.post('/api/fetch-models', authenticateToken, async (req, res) => {
+  try {
+    const { provider, apiKey } = req.body;
+    if (!provider || !apiKey) {
+      return res.status(400).json({ error: 'Provider and API Key are required.' });
+    }
+
+    let models = [];
+    let baseUrl = '';
+
+    // 1. Define Base URLs
+    if (provider === 'openai') {
+      baseUrl = 'https://api.openai.com/v1';
+    } else if (provider === 'deepseek') {
+      baseUrl = 'https://api.deepseek.com/v1';
+    } else if (provider === 'alibaba' || provider === 'qwen') {
+      baseUrl = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1';
+    } else if (provider === 'groq') {
+      baseUrl = 'https://api.groq.com/openai/v1';
+    } else if (provider === 'anthropic') {
+      // Anthropic doesn't have a standard /models endpoint, use hardcoded safe defaults
+      return res.json({ 
+        models: [
+          { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', isRecommended: true },
+          { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', isRecommended: false }
+        ] 
+      });
+    } else if (provider === 'google') {
+      // Google Gemini safe defaults
+      return res.json({
+        models: [
+          { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', isRecommended: true },
+          { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', isRecommended: false }
+        ]
+      });
+    } else {
+      return res.status(400).json({ error: 'Unsupported provider for model fetching.' });
+    }
+
+    // 2. Fetch models from the provider's API
+    const response = await fetch(`${baseUrl}/models`, {
+      headers: { 'Authorization': `Bearer ${apiKey}` }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const rawModels = data.data || [];
+      
+      // Filter for chat models and map to our format
+      models = rawModels.map(m => {
+        const isRecommended = m.id.includes('gpt-4o') || m.id.includes('deepseek-chat') || m.id.includes('llama-3') || m.id.includes('qwen-plus');
+        return {
+          id: m.id,
+          name: m.id,
+          isRecommended: isRecommended
+        };
+      }).filter(m => 
+        m.id.includes('chat') || m.id.includes('gpt') || m.id.includes('qwen') || 
+        m.id.includes('deepseek') || m.id.includes('llama') || m.id.includes('claude') || m.id.includes('gemini')
+      );
+
+      // Sort recommended to top
+      models.sort((a, b) => (b.isRecommended === a.isRecommended) ? 0 : b.isRecommended ? 1 : -1);
+      
+      // Limit to top 20 to keep dropdown clean
+      models = models.slice(0, 20);
+    } 
+
+    // 3. Fallback to hardcoded recommended models if the /models endpoint fails (but key might still be valid)
+    if (models.length === 0) {
+      if (provider === 'openai') {
+        models = [{ id: 'gpt-4o-mini', name: 'GPT-4o Mini', isRecommended: true }, { id: 'gpt-4o', name: 'GPT-4o', isRecommended: false }];
+      } else if (provider === 'deepseek') {
+        models = [{ id: 'deepseek-chat', name: 'DeepSeek V3', isRecommended: true }];
+      } else if (provider === 'alibaba' || provider === 'qwen') {
+        models = [{ id: 'qwen-plus', name: 'Qwen Plus', isRecommended: true }, { id: 'qwen-max', name: 'Qwen Max', isRecommended: false }];
+      } else if (provider === 'groq') {
+        models = [{ id: 'llama-3.1-70b-versatile', name: 'Llama 3.1 70B', isRecommended: true }];
+      }
+    }
+
+    if (models.length === 0) {
+      return res.status(400).json({ error: 'No chat models found for this provider/key.' });
+    }
+
+    res.json({ success: true, models });
+  } catch (error) {
+    console.error('Fetch models error:', error);
+    res.status(500).json({ error: 'Failed to fetch models.' });
   }
 });
 

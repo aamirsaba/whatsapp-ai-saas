@@ -42,7 +42,7 @@
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
         <div>
           <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
-            📊 Autopilot Daily Brief
+             Autopilot Daily Brief
           </h3>
           <p class="text-sm text-gray-500">Automatically send an AI summary of today's leads to your WhatsApp "Message Yourself" chat.</p>
         </div>
@@ -106,7 +106,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div class="lg:col-span-1 space-y-6">
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">🧠 AI Configuration</h3>
+          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center"> AI Configuration</h3>
           
           <form id="settingsForm" class="space-y-4">
             <div>
@@ -152,12 +152,29 @@
             </div>
             <p id="currentZonesDisplay" class="text-xs text-gray-500 mt-2 italic">Loading zones...</p>
 
+            <!-- 🚨 NEW: AI Provider Selection -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">AI Provider</label>
+              <select id="llmProviderSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white transition">
+                <option value="openai">OpenAI (ChatGPT)</option>
+                <option value="deepseek">DeepSeek (Best Value)</option>
+                <option value="alibaba">Alibaba (Qwen)</option>
+                <option value="groq">Groq (Fastest)</option>
+                <option value="anthropic">Anthropic (Claude)</option>
+                <option value="google">Google (Gemini)</option>
+                <option value="custom">Custom / Local Server</option>
+              </select>
+            </div>
+
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">LLM API Key <span class="text-red-500">*</span></label>
               <div class="flex gap-2">
                 <input type="password" id="llmApiKey" required class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="sk-...">
-                <button type="button" onclick="validateLLMKey()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium whitespace-nowrap flex items-center gap-1">🔍 Auto-Detect</button>
+                <button type="button" id="loadModelsBtn" onclick="loadAvailableModels()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium whitespace-nowrap flex items-center gap-1">
+                  🔄 Load Models
+                </button>
               </div>
+              <p id="llmValidationMsg" class="text-xs mt-1"></p>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
@@ -166,9 +183,18 @@
                 <input type="text" id="llmProvider" readonly class="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-lg text-sm text-gray-600 font-bold" placeholder="e.g., OPENAI">
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Best Model Selected</label>
-                <input type="text" id="llmModel" readonly class="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-lg text-sm text-gray-600" placeholder="Auto-selected">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Selected Model</label>
+                <select id="llmModelSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white text-sm">
+                  <option value="">-- Load models first --</option>
+                </select>
+                <input type="text" id="llmModel" readonly class="hidden w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-lg text-sm text-gray-600" placeholder="Auto-selected">
               </div>
+            </div>
+
+            <!-- 🚨 Custom Base URL (only for custom provider) -->
+            <div id="customBaseUrlContainer" class="hidden">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Custom Base URL</label>
+              <input type="text" id="llmBaseUrl" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm font-mono" placeholder="https://api.your-provider.com/v1">
             </div>
 
             <hr class="my-6 border-gray-200">
@@ -267,7 +293,7 @@
         <p class="text-xs font-bold text-gray-700 mb-1">Replying to: <span id="replyToNumber" class="text-indigo-600"></span></p>
         <textarea id="manualReplyText" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none mb-2" placeholder="Type your manual reply..."></textarea>
         <button onclick="sendManualReply()" class="w-full bg-green-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition flex items-center justify-center gap-2">
-          <span>📤</span> Send via WhatsApp
+          <span></span> Send via WhatsApp
         </button>
       </div>
     </div>
@@ -326,7 +352,7 @@
           document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
           document.getElementById('humanModeToggle').checked = data.tenant.isHumanMode || false;
           document.getElementById('isSummaryEnabled').checked = data.tenant.isSummaryEnabled || false;
-          document.getElementById('summaryTime').value = data.tenant.summaryTime || '21:00'; // Default to 9 PM
+          document.getElementById('summaryTime').value = data.tenant.summaryTime || '21:00';
           document.getElementById('leadWebhookUrl').value = data.tenant.leadWebhookUrl || '';          
           
           // 2. Parse contact info (if it exists)
@@ -340,14 +366,18 @@
             document.getElementById('contactNotes').value = getValue('Notes');
           }
 
-          //  DYNAMIC: Show Connect or Disconnect button based on status
+          // 3. Set provider dropdown if saved
+          if (data.tenant.llmProvider) {
+            document.getElementById('llmProviderSelect').value = data.tenant.llmProvider.toLowerCase();
+          }
+
+          // 4. DYNAMIC: Show Connect or Disconnect button based on status
           const statusContainer = document.getElementById('connectionStatusSection');
           
           if (data.tenant.isActive) {
-            // Bot is connected
             const humanModeText = data.tenant.isHumanMode 
               ? "⚠️ Human Takeover Mode is ON - AI is paused." 
-              : "🟢 Your AI bot is currently active and replying.";
+              : " Your AI bot is currently active and replying.";
             const humanModeColor = data.tenant.isHumanMode ? "text-yellow-600" : "text-green-600";
             const humanModeDot = data.tenant.isHumanMode ? "bg-yellow-500" : "bg-green-500";
             
@@ -360,7 +390,6 @@
               </p>
             `;
           } else {
-            // Bot is disconnected
             statusContainer.innerHTML = `
               <a href="/connect/${data.tenant.whatsappNumber}" class="block w-full bg-green-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-green-700 transition shadow-md flex items-center justify-center gap-2 text-center">
                 📱 Reconnect & Scan QR Code
@@ -371,10 +400,10 @@
             `;
           }
 
-          // 4. Render chat history
+          // 5. Render chat history
           renderChatHistory(data.messages);
           loadLeads();
-	  loadAnalytics();
+          loadAnalytics();
         }
       } catch (err) { 
         console.error('Failed to load dashboard', err); 
@@ -385,9 +414,6 @@
       if (personas[this.value]) {
         document.getElementById('systemPrompt').value = personas[this.value].systemPrompt;
         document.getElementById('businessContext').value = personas[this.value].businessContext;
-          // 📍 Load Service Zones
-          const savedZones = data.tenant.serviceAreas ? JSON.parse(data.tenant.serviceAreas) : [];
-          document.getElementById('currentZonesDisplay').textContent = savedZones.length > 0 ? `Current Zones: ${JSON.stringify(savedZones)}` : 'No service zones configured.';
         const msg = document.getElementById('settingsMsg');
         msg.textContent = '✨ Template applied! Review and edit, then click Save.';
         msg.className = 'mt-3 text-center text-sm text-blue-600 font-bold';
@@ -404,7 +430,7 @@
         <div class="flex ${msg.direction === 'inbound' ? 'justify-start' : 'justify-end'}">
           <div class="max-w-[85%] rounded-2xl p-4 shadow-sm ${msg.direction === 'inbound' ? 'bg-gray-100 text-gray-800 rounded-tl-none' : 'bg-green-100 text-green-900 rounded-tr-none'}">
             <p class="text-[10px] font-bold mb-1.5 uppercase tracking-wide ${msg.direction === 'inbound' ? 'text-gray-500' : 'text-green-700'}">
-              ${msg.direction === 'inbound' ? '👤 Customer (' + msg.fromNumber + ')' : '🤖 AI Agent'}
+              ${msg.direction === 'inbound' ? ' Customer (' + msg.fromNumber + ')' : '🤖 AI Agent'}
             </p>
             <p class="text-sm whitespace-pre-wrap leading-relaxed">${msg.content}</p>
             <p class="text-[10px] text-gray-400 mt-2 text-right">${new Date(msg.createdAt).toLocaleString()}</p>
@@ -418,7 +444,7 @@
       const url = document.getElementById('websiteUrl').value;
       const msg = document.getElementById('settingsMsg');
       if (!url) { msg.textContent = '⚠️ Please enter a Website URL first.'; msg.className = 'mt-3 text-center text-sm text-yellow-600 font-bold'; return; }
-      msg.textContent = '🕷️ Reading website...'; msg.className = 'mt-3 text-center text-sm text-indigo-600 font-bold';
+      msg.textContent = '️ Reading website...'; msg.className = 'mt-3 text-center text-sm text-indigo-600 font-bold';
       try {
         const res = await fetch('/api/dashboard/scrape-website', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ websiteUrl: url }) });
         const data = await res.json();
@@ -429,24 +455,91 @@
       } catch (err) { msg.textContent = '❌ Server error.'; msg.className = 'mt-3 text-center text-sm text-red-600 font-bold'; }
     }
 
-    async function validateLLMKey() {
-      const apiKey = document.getElementById('llmApiKey').value;
-      const msg = document.getElementById('settingsMsg');
-      if (!apiKey) { msg.textContent = '⚠️ Please enter an API Key first.'; msg.className = 'mt-3 text-center text-sm text-yellow-600 font-bold'; return; }
-      msg.textContent = '🔍 Scanning API...'; msg.className = 'mt-3 text-center text-sm text-indigo-600 font-bold';
+    // 🚨 NEW: Load Available Models from Provider
+    async function loadAvailableModels() {
+      const btn = document.getElementById('loadModelsBtn');
+      const provider = document.getElementById('llmProviderSelect').value;
+      const apiKey = document.getElementById('llmApiKey').value.trim();
+      const msgElement = document.getElementById('llmValidationMsg');
+      
+      if (!apiKey) {
+        msgElement.textContent = '❌ Please enter an API Key first.';
+        msgElement.className = 'text-red-600 text-xs mt-1';
+        return;
+      }
+      
+      btn.textContent = '🔄 Loading...';
+      btn.disabled = true;
+      msgElement.textContent = '⏳ Fetching models...';
+      msgElement.className = 'text-blue-600 text-xs mt-1';
+      
       try {
-        const res = await fetch('/api/dashboard/validate-llm', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ llmApiKey: apiKey }) });
+        const res = await fetch('/api/fetch-models', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ provider, apiKey })
+        });
+        
         const data = await res.json();
-        if (data.success) {
-          document.getElementById('llmProvider').value = data.provider;
-          document.getElementById('llmModel').value = data.detectedModel;
-          msg.textContent = `✅ ${data.message}`; msg.className = 'mt-3 text-center text-sm text-green-600 font-bold';
+        
+        if (res.ok && data.success) {
+          // Update the model dropdown
+          const modelDropdown = document.getElementById('llmModelSelect');
+          modelDropdown.innerHTML = data.models.map(m => `
+            <option value="${m.id}" ${m.isRecommended ? 'selected' : ''}>
+              ${m.name} ${m.isRecommended ? '⭐' : ''}
+            </option>
+          `).join('');
+          
+          // Update the hidden readonly field for backend
+          document.getElementById('llmModel').value = modelDropdown.value;
+          document.getElementById('llmProvider').value = provider.toUpperCase();
+          
+          msgElement.textContent = `✅ Loaded ${data.models.length} models!`;
+          msgElement.className = 'text-green-600 text-xs mt-1 font-semibold';
         } else {
-          document.getElementById('llmProvider').value = ''; document.getElementById('llmModel').value = '';
-          msg.textContent = data.error || '❌ Invalid API Key.'; msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+          msgElement.textContent = `❌ ${data.error || 'Failed to load models'}`;
+          msgElement.className = 'text-red-600 text-xs mt-1';
         }
-      } catch (err) { msg.textContent = '❌ Server error.'; msg.className = 'mt-3 text-center text-sm text-red-600 font-bold'; }
+      } catch (error) {
+        msgElement.textContent = '❌ Network error while loading models';
+        msgElement.className = 'text-red-600 text-xs mt-1';
+      } finally {
+        btn.textContent = '🔄 Load Models';
+        btn.disabled = false;
+      }
     }
+
+    // 🚨 Handle provider change
+    document.getElementById('llmProviderSelect').addEventListener('change', function() {
+      const provider = this.value;
+      const customContainer = document.getElementById('customBaseUrlContainer');
+      const modelSelect = document.getElementById('llmModelSelect');
+      const modelInput = document.getElementById('llmModel');
+      
+      if (provider === 'custom') {
+        customContainer.classList.remove('hidden');
+        modelSelect.classList.add('hidden');
+        modelInput.classList.remove('hidden');
+        modelInput.placeholder = 'e.g., llama3, mistral';
+      } else {
+        customContainer.classList.add('hidden');
+        modelSelect.classList.remove('hidden');
+        modelInput.classList.add('hidden');
+      }
+      
+      // Clear API key when provider changes
+      document.getElementById('llmApiKey').value = '';
+      document.getElementById('llmValidationMsg').textContent = '';
+    });
+
+    // 🚨 Handle model selection change
+    document.getElementById('llmModelSelect').addEventListener('change', function() {
+      document.getElementById('llmModel').value = this.value;
+    });
 
     function fillContactTemplate() {
       document.getElementById('contactPerson').value = 'Aamir Durrani';
@@ -461,23 +554,17 @@
     document.getElementById('settingsForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       
-      // 🚨 DEBUG: Check if token exists
-      console.log(" SAVE BUTTON CLICKED!");
-      console.log("Token:", token);
-      console.log("Lead Webhook Value:", document.getElementById('leadWebhookUrl').value);
-      
       const msg = document.getElementById('settingsMsg');
       msg.textContent = 'Saving...'; 
       msg.className = 'mt-3 text-center text-sm text-gray-600';
       
-      // ... rest of the existing code ...      
       const contactInfo = `Contact Person: ${document.getElementById('contactPerson').value || 'Not provided'}\nEmail: ${document.getElementById('contactEmail').value || 'Not provided'}\nPhone/WhatsApp: ${document.getElementById('contactPhone').value || 'Not provided'}\nWebsite: ${document.getElementById('contactWebsite').value || 'Not provided'}\nNotes: ${document.getElementById('contactNotes').value || 'None'}`.trim();
       
       try {
         const res = await fetch('/api/dashboard/settings', { 
           method: 'PUT', 
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, 
-                    body: JSON.stringify({ 
+          body: JSON.stringify({ 
             systemPrompt: document.getElementById('systemPrompt').value, 
             businessContext: document.getElementById('businessContext').value, 
             contactInfo: contactInfo, 
@@ -487,10 +574,9 @@
             llmBaseUrl: document.getElementById('llmBaseUrl').value,
             isHumanMode: document.getElementById('humanModeToggle').checked,
             leadWebhookUrl: document.getElementById('leadWebhookUrl').value,
-            isSummaryEnabled: document.getElementById('isSummaryEnabled').checked, // 🚨 NEW
-            summaryTime: document.getElementById('summaryTime').value             // 🚨 NEW
+            isSummaryEnabled: document.getElementById('isSummaryEnabled').checked,
+            summaryTime: document.getElementById('summaryTime').value
           }) 
- 
         });
         const data = await res.json();
         if (data.success) { 
@@ -511,7 +597,7 @@
       try {
         const res = await fetch('/api/dashboard/disconnect', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
-        if (data.success) { alert('✅ ' + data.message); window.location.reload(); } else { alert('❌ ' + data.error); }
+        if (data.success) { alert('✅ ' + data.message); window.location.reload(); } else { alert(' ' + data.error); }
       } catch (err) { alert('Failed to disconnect.'); }
     }
 
@@ -525,7 +611,6 @@
       } catch (err) { alert('Server error.'); }
     }
 
-    // 🚨 NEW: Generate and Send Daily Summary
     async function generateDailySummary(btn) {
       const summaryBox = document.getElementById('summaryBox');
       const summaryText = document.getElementById('summaryText');
@@ -555,21 +640,19 @@
           btn.disabled = false;
         }
       } catch (err) {
-        alert('❌ Server error while generating summary.');
+        alert(' Server error while generating summary.');
         btn.innerHTML = originalText;
         btn.disabled = false;
       }
     }
 
-    //  AUTO-SAVE HUMAN TAKEOVER TOGGLE
     document.getElementById('humanModeToggle').addEventListener('change', async function() {
       const isChecked = this.checked;
       const statusText = document.getElementById('humanModeStatus');
       
-      // Show saving state
       const originalText = statusText ? statusText.textContent : 'Pause the AI and reply manually from your phone.';
       if (statusText) {
-        statusText.textContent = '⏳ Updating AI status...';
+        statusText.textContent = ' Updating AI status...';
         statusText.className = 'text-xs text-yellow-600 mt-1 font-medium';
       }
 
@@ -583,7 +666,6 @@
         const data = await res.json();
         
         if (data.success) {
-          // Update the top status text
           if (statusText) {
             if (isChecked) {
               statusText.textContent = '✅ AI is PAUSED. You are in control.';
@@ -594,7 +676,6 @@
             }
           }
           
-          // 🚨 UPDATE THE BOTTOM STATUS TEXT TOO
           const connectionStatusSection = document.getElementById('connectionStatusSection');
           if (connectionStatusSection) {
             const bottomStatus = connectionStatusSection.querySelector('p');
@@ -608,12 +689,10 @@
               }
             }
           }
-          
         } else {
-          // Revert toggle if failed
           this.checked = !isChecked;
           if (statusText) statusText.textContent = originalText;
-          alert(' Failed to update mode.');
+          alert('❌ Failed to update mode.');
         }
       } catch (err) {
         this.checked = !isChecked;
@@ -622,7 +701,6 @@
       }
     });
 
-    // 🚀 CRM: Load Leads
     async function loadLeads() {
       const tbody = document.getElementById('leadsTableBody');
       tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Loading leads...</td></tr>';
@@ -649,8 +727,8 @@
                 <td class="px-4 py-3">
                   <select onchange="updateLead('${lead.id}', 'status', this.value)" class="text-xs font-semibold px-2 py-1 rounded-full border-0 ${statusColors[lead.status]} cursor-pointer outline-none">
                     <option value="NEW" ${lead.status === 'NEW' ? 'selected' : ''}>🟡 New</option>
-                    <option value="CONTACTED" ${lead.status === 'CONTACTED' ? 'selected' : ''}>🔵 Contacted</option>
-                    <option value="CONVERTED" ${lead.status === 'CONVERTED' ? 'selected' : ''}>🟢 Converted</option>
+                    <option value="CONTACTED" ${lead.status === 'CONTACTED' ? 'selected' : ''}> Contacted</option>
+                    <option value="CONVERTED" ${lead.status === 'CONVERTED' ? 'selected' : ''}> Converted</option>
                     <option value="LOST" ${lead.status === 'LOST' ? 'selected' : ''}>🔴 Lost</option>
                   </select>
                 </td>
@@ -676,7 +754,6 @@
       }
     }
 
-    // 🚀 CRM: Update Lead
     async function updateLead(leadId, field, value) {
       try {
         const res = await fetch(`/api/dashboard/leads/${leadId}`, {
@@ -686,7 +763,6 @@
         });
         const data = await res.json();
         if (data.success) {
-          // Optional: Show a quick toast or just let the UI update naturally
           console.log('Lead updated successfully');
         }
       } catch (err) {
@@ -698,7 +774,6 @@
     let currentTenantIdForReply = null;
 
     async function loadTeamInbox() {
-      // 1. Load Agents
       try {
         const res = await fetch('/api/dashboard/team', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
@@ -714,7 +789,6 @@
         }
       } catch (err) { console.error('Failed to load team', err); }
 
-      // 2. Load Recent Chats (Unique numbers)
       try {
         const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
@@ -812,12 +886,10 @@
       } catch (err) { console.error('Failed to load analytics', err); }
     }
 
-    // 📍 SERVICE ZONE MANAGER LOGIC
     let currentZones = [];
 
     function openZoneModal() {
       document.getElementById('zoneModal').classList.remove('hidden');
-      // Load existing zones from the display text or fetch them
       const displayText = document.getElementById('currentZonesDisplay').textContent;
       if (displayText.includes('[')) {
         try { currentZones = JSON.parse(displayText.replace('Current Zones: ', '')); } catch(e) { currentZones = []; }
@@ -865,7 +937,6 @@
       if(confirm('Clear all zones?')) { currentZones = []; renderZonesList(); }
     }
 
-    //  CSV / TXT FILE PARSER
     function handleFileUpload(input) {
       const file = input.files[0];
       if (!file) return;
@@ -873,7 +944,6 @@
       const reader = new FileReader();
       reader.onload = function(e) {
         const text = e.target.result;
-        // Split by comma, newline, or carriage return
         const lines = text.split(/[\n,]+/).map(l => l.trim()).filter(l => l.length > 0);
         
         let addedCount = 0;
@@ -886,7 +956,7 @@
         
         alert(`✅ Successfully added ${addedCount} new locations from file!`);
         renderZonesList();
-        input.value = ''; // Reset input
+        input.value = '';
       };
       reader.readAsText(file);
     }
