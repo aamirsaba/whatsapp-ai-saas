@@ -49,25 +49,29 @@ async function sendWelcomeEmail(userEmail, businessName, password) {
   }
 }
 
-// 2. 🚨 NEW: Admin Notification Email
-async function sendAdminNotificationEmail(newEmail, businessName, whatsappNumber) {
-  const adminEmail = process.env.ADMIN_EMAIL || 'aamir@aamirsaba.com'; 
+// 2. 🚨 ADMIN NOTIFICATION EMAIL (Updated for Personal & Business)
+async function sendAdminNotificationEmail(newEmail, nameOrBusiness, whatsappNumber, botType = 'business') {
+  const adminEmail = process.env.ADMIN_EMAIL || 'your-admin-email@gmail.com'; 
   
+  const botTypeEmoji = botType === 'personal' ? '👤 Personal' : '🏢 Business';
+  const accountLabel = botType === 'personal' ? 'Personal Account' : 'Business';
+
   const mailOptions = {
     from: `"WhatsApp AI SaaS System" <${process.env.SMTP_USER}>`,
     to: adminEmail,
-    subject: '🔔 New User Registration Alert!',
+    subject: `🔔 New ${accountLabel} Registered!`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; background-color: #f9fafb;">
-        <h2 style="color: #16a34a;">🔔 New Business Registered!</h2>
+        <h2 style="color: #16a34a;">🔔 New ${accountLabel} Registered!</h2>
         <p>Hello Admin,</p>
         <p>A new user has just signed up on your platform:</p>
         <ul style="line-height: 1.8; background: #fff; padding: 15px; border-radius: 6px; border: 1px solid #e5e7eb;">
+          <li><strong>🤖 Bot Type:</strong> ${botTypeEmoji}</li>
           <li><strong>📧 Email:</strong> ${newEmail}</li>
-          <li><strong>🏢 Business:</strong> ${businessName}</li>
+          <li><strong>👤 Name/Business:</strong> ${nameOrBusiness}</li>
           <li><strong>📱 WhatsApp:</strong> ${whatsappNumber}</li>
         </ul>
-        <p>Log in to your dashboard to monitor their activity and ensure their bot is running smoothly.</p>
+        <p>Log in to your dashboard to monitor their activity.</p>
         <br>
         <p style="color: #6b7280; font-size: 14px;">Best regards,<br><strong>Your SaaS System</strong></p>
       </div>
@@ -81,7 +85,6 @@ async function sendAdminNotificationEmail(newEmail, businessName, whatsappNumber
     console.error('❌ Failed to send admin notification email:', error.message);
   }
 }
-
 
 // 3. Password Reset Email
 async function sendPasswordResetEmail(userEmail, newPassword) {

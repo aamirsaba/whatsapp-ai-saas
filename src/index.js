@@ -206,8 +206,14 @@ app.post('/api/register-wizard', async (req, res) => {
       await sendWelcomeEmail(email, businessName, autoPassword);
       console.log(`✅ Welcome email sent to ${email}`);
       
-      // Send notification to YOU (the admin/owner)
-      await sendAdminNotificationEmail(email, businessName, whatsappNumber);
+      // Send notification to YOU (pass botType so the email knows if it's personal or business)
+      await sendAdminNotificationEmail(email, businessName, whatsappNumber, botType);
+      console.log(`✅ Admin notification sent for ${businessName}`);
+      
+    } catch (emailError) {
+      console.error('❌ Failed to send emails:', emailError);
+    }
+
       console.log(`✅ Admin notification sent for ${businessName}`);
       
     } catch (emailError) {
