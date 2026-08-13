@@ -21,44 +21,22 @@
         </div>
 
         <form id="wizardForm" class="p-8">
-            <!-- STEP 1: Account -->
-            <div id="step1" class="space-y-4">
-                <h2 class="text-xl font-bold text-gray-900 mb-4">Create your account</h2>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Work Email <span class="text-red-500">*</span></label>
-                    <input type="email" id="email" required placeholder="you@company.com" 
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
-                    <p class="text-xs text-gray-500 mt-1">🔒 We'll auto-generate a secure password and email it to you.</p>
-                </div>
+<!-- STEP 1: Account (Email Only) -->
+<div id="step1" class="space-y-4">
+    <h2 class="text-xl font-bold text-gray-900 mb-4">Create your account</h2>
+    
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Work Email <span class="text-red-500">*</span></label>
+        <input type="email" id="email" required placeholder="you@company.com" 
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
+        <p class="text-xs text-gray-500 mt-1">🔒 We'll auto-generate a secure password and email it to you.</p>
+    </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Password <span class="text-red-500">*</span></label>
-                    <div class="relative">
-                        <input type="password" id="password" required minlength="8" 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none pr-10">
-                        <button type="button" id="togglePassword" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
-                            👁️
-                        </button>
-                    </div>
-                    <div class="mt-2 space-y-1">
-                        <div class="flex items-center gap-2 text-xs">
-                            <div id="lengthCheck" class="w-3 h-3 rounded-full bg-gray-300"></div>
-                            <span class="text-gray-600">At least 8 characters</span>
-                        </div>
-                        <div class="flex items-center gap-2 text-xs">
-                            <div id="numberCheck" class="w-3 h-3 rounded-full bg-gray-300"></div>
-                            <span class="text-gray-600">Contains a number</span>
-                        </div>
-                    </div>
-                </div>
-
-                <button type="button" onclick="goToStep2()" 
-                    class="w-full bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition mt-4">
-                    Next: Business Details →
-                </button>
-            </div>
-
+    <button type="button" onclick="goToStep2()" 
+        class="w-full bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition mt-4">
+        Next: Business Details →
+    </button>
+</div>
             <!-- STEP 2: Business -->
             <div id="step2" class="space-y-4 hidden">
                 <h2 class="text-xl font-bold text-gray-900 mb-4">Tell us about your business</h2>
@@ -69,43 +47,42 @@
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
                 </div>
 
-                <!-- 🚨 PROPER SELECT DROPDOWN (NO DATALIST) -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Industry <span class="text-red-500">*</span></label>
-                    <select id="industry" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white cursor-pointer">
-                        <option value="" disabled selected>Choose your industry...</option>
-                        <option value="General Business / Corporate Services">General Business / Corporate Services</option>
-                        <option value="Real Estate & Property Management">Real Estate & Property Management</option>
-                        <option value="Legal Services / Law Firm">Legal Services / Law Firm</option>
-                        <option value="Financial Services & Accounting">Financial Services & Accounting</option>
-                        <option value="Marketing, Advertising & Agency">Marketing, Advertising & Agency</option>
-                        <option value="IT, Software & SaaS">IT, Software & SaaS</option>
-                        <option value="HR, Recruitment & Staffing">HR, Recruitment & Staffing</option>
-                        <option value="Medical Clinic & Healthcare">Medical Clinic & Healthcare</option>
-                        <option value="Hospital & Urgent Care">Hospital & Urgent Care</option>
-                        <option value="Beauty, Salon & Spa">Beauty, Salon & Spa</option>
-                        <option value="Fitness, Gym & Personal Training">Fitness, Gym & Personal Training</option>
-                        <option value="Mental Health & Counseling">Mental Health & Counseling</option>
-                        <option value="Veterinary & Pet Care">Veterinary & Pet Care</option>
-                        <option value="E-commerce & Online Store">E-commerce & Online Store</option>
-                        <option value="Retail & Brick-and-Mortar Shop">Retail & Brick-and-Mortar Shop</option>
-                        <option value="Automotive & Dealership">Automotive & Dealership</option>
-                        <option value="Field Services & Home Maintenance">Field Services & Home Maintenance</option>
-                        <option value="Cleaning Services">Cleaning Services</option>
-                        <option value="Construction, Architecture & Contracting">Construction, Architecture & Contracting</option>
-                        <option value="Logistics, Delivery & Courier">Logistics, Delivery & Courier</option>
-                        <option value="Restaurant, Cafe & Food Delivery">Restaurant, Cafe & Food Delivery</option>
-                        <option value="Hotel, Resort & Hospitality">Hotel, Resort & Hospitality</option>
-                        <option value="Travel, Tourism & Event Ticketing">Travel, Tourism & Event Ticketing</option>
-                        <option value="Event Planning & Catering">Event Planning & Catering</option>
-                        <option value="School, University & Academy">School, University & Academy</option>
-                        <option value="Online Courses & Tutoring">Online Courses & Tutoring</option>
-                        <option value="Coaching & Consulting">Coaching & Consulting</option>
-                        <option value="Non-Profit & Community Organization">Non-Profit & Community Organization</option>
-                        <option value="Other / Not Listed">Other / Not Listed</option>
-                    </select>
-                </div>
-
+<div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">Industry <span class="text-red-500">*</span></label>
+    <select id="industry" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white cursor-pointer">
+        <option value="" disabled selected>Choose your industry...</option>
+        <option value="General Business / Corporate Services">General Business / Corporate Services</option>
+        <option value="Real Estate & Property Management">Real Estate & Property Management</option>
+        <option value="Legal Services / Law Firm">Legal Services / Law Firm</option>
+        <option value="Financial Services & Accounting">Financial Services & Accounting</option>
+        <option value="Marketing, Advertising & Agency">Marketing, Advertising & Agency</option>
+        <option value="IT, Software & SaaS">IT, Software & SaaS</option>
+        <option value="HR, Recruitment & Staffing">HR, Recruitment & Staffing</option>
+        <option value="Medical Clinic & Healthcare">Medical Clinic & Healthcare</option>
+        <option value="Hospital & Urgent Care">Hospital & Urgent Care</option>
+        <option value="Beauty, Salon & Spa">Beauty, Salon & Spa</option>
+        <option value="Fitness, Gym & Personal Training">Fitness, Gym & Personal Training</option>
+        <option value="Mental Health & Counseling">Mental Health & Counseling</option>
+        <option value="Veterinary & Pet Care">Veterinary & Pet Care</option>
+        <option value="E-commerce & Online Store">E-commerce & Online Store</option>
+        <option value="Retail & Brick-and-Mortar Shop">Retail & Brick-and-Mortar Shop</option>
+        <option value="Automotive & Dealership">Automotive & Dealership</option>
+        <option value="Field Services & Home Maintenance">Field Services & Home Maintenance</option>
+        <option value="Cleaning Services">Cleaning Services</option>
+        <option value="Construction, Architecture & Contracting">Construction, Architecture & Contracting</option>
+        <option value="Logistics, Delivery & Courier">Logistics, Delivery & Courier</option>
+        <option value="Restaurant, Cafe & Food Delivery">Restaurant, Cafe & Food Delivery</option>
+        <option value="Hotel, Resort & Hospitality">Hotel, Resort & Hospitality</option>
+        <option value="Travel, Tourism & Event Ticketing">Travel, Tourism & Event Ticketing</option>
+        <option value="Event Planning & Catering">Event Planning & Catering</option>
+        <option value="School, University & Academy">School, University & Academy</option>
+        <option value="Online Courses & Tutoring">Online Courses & Tutoring</option>
+        <option value="Coaching & Consulting">Coaching & Consulting</option>
+        <option value="Non-Profit & Community Organization">Non-Profit & Community Organization</option>
+        <option value="Other / Not Listed">Other / Not Listed</option>
+    </select>
+    <p class="text-xs text-gray-500 mt-1">💡 Select your industry from the list</p>
+</div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Website URL (Optional)</label>
                     <input type="url" id="websiteUrl" placeholder="https://yourbusiness.com" 
@@ -114,12 +91,12 @@
 
                 <div class="flex gap-3 mt-6">
                     <button type="button" onclick="goBackToStep1()" 
-                        class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-lg font-semibold hover:bg-gray-200 transition">
-                        ← Back
+                        class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-lg font-semibold hover:bg-gray-200 transition flex items-center justify-center gap-2">
+                        <span>←</span> Back
                     </button>
                     <button type="button" onclick="goToStep3()" 
-                        class="flex-1 bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition">
-                        Next: Connect WhatsApp →
+                        class="flex-1 bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition flex items-center justify-center gap-2">
+                        Next: Connect WhatsApp <span>→</span>
                     </button>
                 </div>
             </div>
@@ -129,7 +106,7 @@
                 <h2 class="text-xl font-bold text-gray-900 mb-4">Connect your WhatsApp</h2>
                 
                 <div class="bg-green-50 border border-green-200 p-4 rounded-lg">
-                    <p class="text-sm text-green-800 font-medium mb-2">📱 Enter the number you want to automate:</p>
+                    <p class="text-sm text-green-800 font-medium mb-2"> Enter the number you want to automate:</p>
                     <input type="tel" id="whatsappNumber" required placeholder="96891293119 (No + or spaces)" 
                         class="w-full px-3 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-center font-mono text-lg">
                     <p class="text-xs text-green-600 mt-2 text-center">✓ Keep your existing number. No Meta verification required.</p>
@@ -137,11 +114,11 @@
 
                 <div class="flex gap-3 mt-6">
                     <button type="button" onclick="goBackToStep2()" 
-                        class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-lg font-semibold hover:bg-gray-200 transition">
-                        ← Back
+                        class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-lg font-semibold hover:bg-gray-200 transition flex items-center justify-center gap-2">
+                        <span>←</span> Back
                     </button>
                     <button type="submit" id="submitBtn" 
-                        class="flex-1 bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition">
+                        class="flex-1 bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition flex items-center justify-center gap-2">
                         🚀 Launch My AI Bot
                     </button>
                 </div>
@@ -154,12 +131,14 @@
     <script>
         let currentStep = 1;
 
+        // Password visibility toggle
         document.getElementById('togglePassword').addEventListener('click', function() {
             const passwordInput = document.getElementById('password');
             const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordInput.setAttribute('type', type);
         });
 
+        // Password strength checker
         document.getElementById('password').addEventListener('input', function() {
             const password = this.value;
             const lengthCheck = document.getElementById('lengthCheck');
@@ -182,26 +161,22 @@
             }
         });
 
-        function goToStep2() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!email || !emailRegex.test(email)) {
-                alert('Please enter a valid email address');
-                return;
-            }
-            if (!password || password.length < 8) {
-                alert('Password must be at least 8 characters');
-                return;
-            }
-            
-            document.getElementById('step1').classList.add('hidden');
-            document.getElementById('step2').classList.remove('hidden');
-            currentStep = 2;
-            document.getElementById('stepIndicator').textContent = currentStep;
-            document.getElementById('progressBar').style.width = `${currentStep * 33.33}%`;
-        }
+function goToStep2() {
+    const email = document.getElementById('email').value;
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+        alert('Please enter a valid email address');
+        return;
+    }
+    
+    // Move to Step 2
+    document.getElementById('step1').classList.add('hidden');
+    document.getElementById('step2').classList.remove('hidden');
+    currentStep = 2;
+    document.getElementById('stepIndicator').textContent = currentStep;
+    document.getElementById('progressBar').style.width = `${currentStep * 33.33}%`;
+}
 
         function goBackToStep1() {
             document.getElementById('step2').classList.add('hidden');
@@ -216,19 +191,19 @@
             const industry = document.getElementById('industry').value;
             
             if (!businessName) {
-                alert('Please enter your business name');
-                return;
+                return showError('Please enter your business name.');
             }
-            if (!industry || industry === '') {
-                alert('Please select your industry');
-                return;
+            if (!industry) {
+                return showError('Please select your industry.');
             }
             
+            // Move to Step 3
             document.getElementById('step2').classList.add('hidden');
             document.getElementById('step3').classList.remove('hidden');
             currentStep = 3;
             document.getElementById('stepIndicator').textContent = currentStep;
             document.getElementById('progressBar').style.width = `${currentStep * 33.33}%`;
+            document.getElementById('errorMsg').classList.add('hidden');
         }
 
         function goBackToStep2() {
@@ -239,9 +214,19 @@
             document.getElementById('progressBar').style.width = `${currentStep * 33.33}%`;
         }
 
+        function showError(msg) {
+            const err = document.getElementById('errorMsg');
+            err.textContent = msg;
+            err.classList.remove('hidden');
+            setTimeout(() => {
+                err.classList.add('hidden');
+            }, 5000);
+        }
+
         document.getElementById('wizardForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
+            const originalText = btn.innerHTML;
             btn.innerHTML = '⏳ Creating your AI Employee...';
             btn.disabled = true;
 
@@ -250,13 +235,13 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        email: document.getElementById('email').value,
-                        password: document.getElementById('password').value,
-                        businessName: document.getElementById('businessName').value,
-                        industry: document.getElementById('industry').value,
-                        websiteUrl: document.getElementById('websiteUrl').value,
-                        whatsappNumber: document.getElementById('whatsappNumber').value.replace(/\D/g, '')
-                    })
+    email: document.getElementById('email').value,
+    // No password - will be auto-generated
+    businessName: document.getElementById('businessName').value,
+    industry: document.getElementById('industry').value,
+    websiteUrl: document.getElementById('websiteUrl').value,
+    whatsappNumber: document.getElementById('whatsappNumber').value.replace(/\D/g, '')
+})
                 });
 
                 const data = await res.json();
@@ -268,13 +253,13 @@
                         window.location.href = data.redirectUrl;
                     }, 1000);
                 } else {
-                    alert(data.error || 'Failed to create account.');
-                    btn.innerHTML = '🚀 Launch My AI Bot';
+                    showError(data.error || 'Failed to create account.');
+                    btn.innerHTML = originalText;
                     btn.disabled = false;
                 }
             } catch (err) {
-                alert('Server error. Please try again.');
-                btn.innerHTML = '🚀 Launch My AI Bot';
+                showError('Server error. Please try again.');
+                btn.innerHTML = originalText;
                 btn.disabled = false;
             }
         });

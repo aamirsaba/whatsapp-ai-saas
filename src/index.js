@@ -44,17 +44,20 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-// 🚀 5-MINUTE MVP WIZARD REGISTRATION
+// 🚀 5-MINUTE MVP WIZARD REGISTRATION (AUTO-GENERATE PASSWORD)
 app.post('/api/register-wizard', async (req, res) => {
   try {
-    const { email, password, businessName, industry, websiteUrl, whatsappNumber } = req.body;
+    const { email, businessName, industry, websiteUrl, whatsappNumber } = req.body;
 
     // 1. Check if user exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) return res.status(400).json({ error: 'Email already in use.' });
 
-    // 2. Hash password and create User
-    const hashedPassword = await require('bcryptjs').hash(password, 10);
+    // 2. 🚨 AUTO-GENERATE SECURE 12-CHARACTER PASSWORD
+    const crypto = require('crypto');
+    const autoPassword = crypto.randomBytes(6).toString('hex'); // Generates 12-char hex password
+    const hashedPassword = await require('bcryptjs').hash(autoPassword, 10);
+    
     const newUser = await prisma.user.create({
       data: { email, password: hashedPassword, role: 'TENANT' }
     });
@@ -127,7 +130,7 @@ app.post('/api/register-wizard', async (req, res) => {
       autoPrompt = "You are a Law Firm AI Assistant. Help with practice areas, attorney info, consultation bookings, and general inquiries. Be professional and discreet. ⚠️ Never provide specific legal advice - always direct to an attorney.";
     }
     else if (ind.includes('financial') || ind.includes('accounting') || ind.includes('tax') || ind.includes('wealth')) {
-      autoPrompt = "You are a Financial Services AI Assistant. Help with service info, appointment bookings, and general inquiries. Be professional and trustworthy. ️ Never provide specific financial or investment advice.";
+      autoPrompt = "You are a Financial Services AI Assistant. Help with service info, appointment bookings, and general inquiries. Be professional and trustworthy. ⚠️ Never provide specific financial or investment advice.";
     }
     else if (ind.includes('marketing') || ind.includes('advertising') || ind.includes('agency')) {
       autoPrompt = "You are a Marketing Agency AI Assistant. Help potential clients with service offerings, case studies, pricing, and consultation bookings. Be creative and results-focused.";
@@ -179,9 +182,15 @@ app.post('/api/register-wizard', async (req, res) => {
     const jwt = require('jsonwebtoken');
     const token = jwt.sign({ userId: newUser.id, role: newUser.role }, process.env.JWT_SECRET || 'your-super-secret-jwt-key', { expiresIn: '7d' });
 
-    // 7. Send Welcome Email
-    const { sendWelcomeEmail } = require('./email');
-    sendWelcomeEmail(email, businessName, password);
+    // 7. 🚨 SEND WELCOME EMAIL WITH AUTO-GENERATED PASSWORD
+    try {
+      const { sendWelcomeEmail } = require('./email');
+      await sendWelcomeEmail(email, businessName, autoPassword);
+      console.log(`✅ Welcome email sent to ${email} with auto-generated password`);
+    } catch (emailError) {
+      console.error('❌ Failed to send welcome email:', emailError);
+      // Don't fail the registration if email fails
+    }
 
     res.json({ 
       success: true, 
@@ -194,6 +203,7 @@ app.post('/api/register-wizard', async (req, res) => {
     res.status(500).json({ error: 'Failed to create account.' });
   }
 });
+
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
