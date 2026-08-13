@@ -683,6 +683,27 @@ app.get('/api/dashboard/analytics', authenticateToken, async (req, res) => {
   }
 });
 
+
+//  MANAGE SERVICE ZONES
+app.put('/api/dashboard/service-areas', authenticateToken, async (req, res) => {
+  try {
+    const { areas } = req.body; // Expects an array of strings
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    // Save as JSON string
+    await prisma.tenant.update({
+      where: { id: tenant.id },
+      data: { serviceAreas: JSON.stringify(areas) }
+    });
+
+    res.json({ success: true, message: 'Service zones updated!' });
+  } catch (error) {
+    console.error('❌ Update service areas error:', error);
+    res.status(500).json({ error: 'Failed to update zones.' });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 WhatsApp AI SaaS Backend is running!`);

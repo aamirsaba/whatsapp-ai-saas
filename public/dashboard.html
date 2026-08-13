@@ -140,6 +140,18 @@
               <textarea id="businessContext" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm transition"></textarea>
             </div>
 
+            <!-- 📍 NEW: Service Zone Manager Trigger -->
+            <div class="flex items-center justify-between bg-blue-50 p-4 rounded-lg border border-blue-100 mt-4">
+              <div>
+                <h4 class="text-sm font-bold text-blue-900">📍 Service Zones Manager</h4>
+                <p class="text-xs text-blue-700 mt-1">Manage locations where you operate. Upload CSV or add manually.</p>
+              </div>
+              <button type="button" onclick="openZoneModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition">
+                Manage Zones
+              </button>
+            </div>
+            <p id="currentZonesDisplay" class="text-xs text-gray-500 mt-2 italic">Loading zones...</p>
+
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">LLM API Key <span class="text-red-500">*</span></label>
               <div class="flex gap-2">
@@ -799,8 +811,153 @@
       } catch (err) { console.error('Failed to load analytics', err); }
     }
 
+    // 📍 SERVICE ZONE MANAGER LOGIC
+    let currentZones = [];
+
+    function openZoneModal() {
+      document.getElementById('zoneModal').classList.remove('hidden');
+      // Load existing zones from the display text or fetch them
+      const displayText = document.getElementById('currentZonesDisplay').textContent;
+      if (displayText.includes('[')) {
+        try { currentZones = JSON.parse(displayText.replace('Current Zones: ', '')); } catch(e) { currentZones = []; }
+      } else {
+        currentZones = [];
+      }
+      renderZonesList();
+    }
+
+    function closeZoneModal() { document.getElementById('zoneModal').classList.add('hidden'); }
+
+    function renderZonesList() {
+      const container = document.getElementById('zonesListContainer');
+      document.getElementById('zoneCount').textContent = currentZones.length;
+      
+      if (currentZones.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 text-sm w-full text-center py-4">No zones added yet.</p>';
+        return;
+      }
+
+      container.innerHTML = currentZones.map((zone, index) => `
+        <div class="bg-white border border-gray-300 text-gray-700 px-3 py-1 rounded-full text-sm flex items-center gap-2 shadow-sm">
+          <span>${zone}</span>
+          <button onclick="removeZone(${index})" class="text-red-500 hover:text-red-700 font-bold">&times;</button>
+        </div>
+      `).join('');
+    }
+
+    function addZoneManual() {
+      const input = document.getElementById('newZoneInput');
+      const val = input.value.trim();
+      if (val && !currentZones.includes(val)) {
+        currentZones.push(val);
+        input.value = '';
+        renderZonesList();
+      }
+    }
+
+    function removeZone(index) {
+      currentZones.splice(index, 1);
+      renderZonesList();
+    }
+
+    function clearAllZones() {
+      if(confirm('Clear all zones?')) { currentZones = []; renderZonesList(); }
+    }
+
+    //  CSV / TXT FILE PARSER
+    function handleFileUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        // Split by comma, newline, or carriage return
+        const lines = text.split(/[\n,]+/).map(l => l.trim()).filter(l => l.length > 0);
+        
+        let addedCount = 0;
+        lines.forEach(line => {
+          if (!currentZones.includes(line)) {
+            currentZones.push(line);
+            addedCount++;
+          }
+        });
+        
+        alert(`✅ Successfully added ${addedCount} new locations from file!`);
+        renderZonesList();
+        input.value = ''; // Reset input
+      };
+      reader.readAsText(file);
+    }
+
+    async function saveZones() {
+      try {
+        const res = await fetch('/api/dashboard/service-areas', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ areas: currentZones })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('✅ Service Zones Saved Successfully!');
+          document.getElementById('currentZonesDisplay').textContent = `Current Zones: ${JSON.stringify(currentZones)}`;
+          closeZoneModal();
+        } else {
+          alert('❌ Failed to save.');
+        }
+      } catch (err) { alert('❌ Server error.'); }
+    }
+
     function logout() { localStorage.clear(); window.location.href = '/login'; }
 
   </script>
+    <!--  SERVICE ZONE MANAGER MODAL -->
+    <div id="zoneModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+        
+        <!-- Header -->
+        <div class="bg-blue-600 text-white p-6 flex justify-between items-center">
+          <h3 class="text-xl font-bold flex items-center gap-2">📍 Service Zone Manager</h3>
+          <button onclick="closeZoneModal()" class="text-white hover:text-gray-200 text-2xl">&times;</button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6 overflow-y-auto flex-1">
+          
+          <!-- Add Single City -->
+          <div class="mb-6">
+            <label class="block text-sm font-bold text-gray-700 mb-2">Add Location Manually</label>
+            <div class="flex gap-2">
+              <input type="text" id="newZoneInput" placeholder="e.g., Olaya, Riyadh" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+              <button onclick="addZoneManual()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700">Add</button>
+            </div>
+          </div>
+
+          <!-- Upload CSV -->
+          <div class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <label class="block text-sm font-bold text-gray-700 mb-2">📂 Bulk Upload via CSV</label>
+            <p class="text-xs text-gray-500 mb-2">Upload a .csv or .txt file with one city/area per line.</p>
+            <input type="file" id="csvFileInput" accept=".csv, .txt" onchange="handleFileUpload(this)" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+          </div>
+
+          <!-- Current Zones List -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <label class="block text-sm font-bold text-gray-700">Active Zones (<span id="zoneCount">0</span>)</label>
+              <button onclick="clearAllZones()" class="text-xs text-red-600 hover:text-red-800 underline">Clear All</button>
+            </div>
+            <div id="zonesListContainer" class="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 bg-gray-50 rounded-lg border border-gray-200">
+              <p class="text-gray-400 text-sm w-full text-center py-4">No zones added yet.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="bg-gray-50 p-4 border-t border-gray-200 flex justify-end gap-3">
+          <button onclick="closeZoneModal()" class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-lg">Cancel</button>
+          <button onclick="saveZones()" class="px-6 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-md">💾 Save All Zones</button>
+        </div>
+      </div>
+    </div>
 </body>
 </html>

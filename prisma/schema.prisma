@@ -72,6 +72,9 @@ model Tenant {
   messages         Message[]
   leads            Lead[]
   teamMembers      TeamMember[]
+
+// 🚨 NEW: Store service areas as a JSON string (e.g., '["Riyadh", "Jeddah"]')
+  serviceAreas   String?     @db.Text 
 }
 
 // 5. The Message Model
