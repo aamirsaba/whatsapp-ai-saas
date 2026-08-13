@@ -58,7 +58,7 @@
                     <p id="passwordError" class="text-xs text-red-600 mt-1 hidden"></p>
                 </div>
 
-                <button type="button" onclick="validateStep1()" 
+                <button type="button" onclick="goToStep2()" 
                     class="w-full bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition mt-4 flex items-center justify-center gap-2">
                     Next: Business Details <span>→</span>
                 </button>
@@ -119,11 +119,11 @@
                 </div>
 
                 <div class="flex gap-3 mt-6">
-                    <button type="button" onclick="prevStep(1)" 
+                    <button type="button" onclick="goBackToStep1()" 
                         class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-lg font-semibold hover:bg-gray-200 transition flex items-center justify-center gap-2">
                         <span>←</span> Back
                     </button>
-                    <button type="button" onclick="nextStep(3)" 
+                    <button type="button" onclick="goToStep3()" 
                         class="flex-1 bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition flex items-center justify-center gap-2">
                         Next: Connect WhatsApp <span>→</span>
                     </button>
@@ -135,14 +135,14 @@
                 <h2 class="text-xl font-bold text-gray-900 mb-4">Connect your WhatsApp</h2>
                 
                 <div class="bg-green-50 border border-green-200 p-4 rounded-lg">
-                    <p class="text-sm text-green-800 font-medium mb-2">📱 Enter the number you want to automate:</p>
+                    <p class="text-sm text-green-800 font-medium mb-2"> Enter the number you want to automate:</p>
                     <input type="tel" id="whatsappNumber" required placeholder="96891293119 (No + or spaces)" 
                         class="w-full px-3 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-center font-mono text-lg">
                     <p class="text-xs text-green-600 mt-2 text-center">✓ Keep your existing number. No Meta verification required.</p>
                 </div>
 
                 <div class="flex gap-3 mt-6">
-                    <button type="button" onclick="prevStep(2)" 
+                    <button type="button" onclick="goBackToStep2()" 
                         class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-lg font-semibold hover:bg-gray-200 transition flex items-center justify-center gap-2">
                         <span>←</span> Back
                     </button>
@@ -173,7 +173,6 @@
             const lengthCheck = document.getElementById('lengthCheck');
             const numberCheck = document.getElementById('numberCheck');
             
-            // Check length
             if (password.length >= 8) {
                 lengthCheck.classList.remove('bg-gray-300');
                 lengthCheck.classList.add('bg-green-500');
@@ -182,7 +181,6 @@
                 lengthCheck.classList.add('bg-gray-300');
             }
             
-            // Check for number
             if (/\d/.test(password)) {
                 numberCheck.classList.remove('bg-gray-300');
                 numberCheck.classList.add('bg-green-500');
@@ -192,7 +190,7 @@
             }
         });
 
-        function validateStep1() {
+        function goToStep2() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const emailError = document.getElementById('emailError');
@@ -232,42 +230,48 @@
             }
             
             if (isValid) {
-                nextStep(2);
+                // Move to Step 2
+                document.getElementById('step1').classList.add('hidden');
+                document.getElementById('step2').classList.remove('hidden');
+                currentStep = 2;
+                document.getElementById('stepIndicator').textContent = currentStep;
+                document.getElementById('progressBar').style.width = `${currentStep * 33.33}%`;
+                document.getElementById('errorMsg').classList.add('hidden');
             }
         }
 
-        function nextStep(step) {
-            if (step === 2) {
-                const businessName = document.getElementById('businessName').value;
-                const industry = document.getElementById('industry').value;
-                
-                if (!businessName) {
-                    return showError('Please enter your business name.');
-                }
-                if (!industry) {
-                    return showError('Please select your industry.');
-                }
+        function goBackToStep1() {
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step1').classList.remove('hidden');
+            currentStep = 1;
+            document.getElementById('stepIndicator').textContent = currentStep;
+            document.getElementById('progressBar').style.width = `${currentStep * 33.33}%`;
+        }
+
+        function goToStep3() {
+            const businessName = document.getElementById('businessName').value;
+            const industry = document.getElementById('industry').value;
+            
+            if (!businessName) {
+                return showError('Please enter your business name.');
+            }
+            if (!industry) {
+                return showError('Please select your industry.');
             }
             
-            if (step === 3) {
-                const whatsappNumber = document.getElementById('whatsappNumber').value.replace(/\D/g, '');
-                if (!whatsappNumber || whatsappNumber.length < 10) {
-                    return showError('Please enter a valid WhatsApp number with country code.');
-                }
-            }
-            
-            document.getElementById(`step${currentStep}`).classList.add('hidden');
-            currentStep = step;
-            document.getElementById(`step${currentStep}`).classList.remove('hidden');
+            // Move to Step 3
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step3').classList.remove('hidden');
+            currentStep = 3;
             document.getElementById('stepIndicator').textContent = currentStep;
             document.getElementById('progressBar').style.width = `${currentStep * 33.33}%`;
             document.getElementById('errorMsg').classList.add('hidden');
         }
 
-        function prevStep(step) {
-            document.getElementById(`step${currentStep}`).classList.add('hidden');
-            currentStep = step;
-            document.getElementById(`step${currentStep}`).classList.remove('hidden');
+        function goBackToStep2() {
+            document.getElementById('step3').classList.add('hidden');
+            document.getElementById('step2').classList.remove('hidden');
+            currentStep = 2;
             document.getElementById('stepIndicator').textContent = currentStep;
             document.getElementById('progressBar').style.width = `${currentStep * 33.33}%`;
         }
