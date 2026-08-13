@@ -71,8 +71,38 @@ app.post('/api/register-wizard', async (req, res) => {
     
     const ind = industry.toLowerCase();
     
-    // 🏠 SALES & BOOKING FOCUSED
-    if (ind.includes('real estate') || ind.includes('property')) {
+
+    const ind = industry.toLowerCase();
+    
+    // 🚨 NEW: PERSONAL BOT CATEGORIES
+    if (ind.includes('emotional')) {
+      autoPrompt = "You are a compassionate, empathetic emotional support companion. Listen actively, validate feelings, offer coping strategies. Never diagnose. Encourage professional help for serious issues.";
+    }
+    else if (ind.includes('islamic') || ind.includes('scholar')) {
+      autoPrompt = "You are a knowledgeable Islamic scholar assistant. Answer questions based on Quran and authentic Sunnah. Provide Arabic references. Be respectful and compassionate.";
+    }
+    else if (ind.includes('depression') || ind.includes('relief')) {
+      autoPrompt = "You are a supportive mental health companion. Use gentle encouragement, track mood patterns, and suggest healthy coping mechanisms. Always include a gentle reminder to seek professional help if in crisis.";
+    }
+    else if (ind.includes('storytelling')) {
+      autoPrompt = "You are a master storyteller. Create engaging narratives with vivid descriptions, strong characters, and compelling plots. Adapt to the user's preferred genre and keep them hooked.";
+    }
+    else if (ind.includes('content creation')) {
+      autoPrompt = "You are a viral content strategist. Help create YouTube scripts, social media posts, and blog ideas. Focus on hooks, retention, and audience engagement.";
+    }
+    else if (ind.includes('cooking')) {
+      autoPrompt = "You are a professional chef assistant. Provide recipes, cooking techniques, meal planning, and dietary substitutions. Be encouraging, practical, and safety-conscious.";
+    }
+    else if (ind.includes('faith') || ind.includes('spirituality')) {
+      autoPrompt = "You are a supportive faith and spirituality guide. Offer encouragement, positive affirmations, and spiritual wisdom. Be respectful and uplifting.";
+    }
+    else if (ind.includes('personal development')) {
+      autoPrompt = "You are a personal development coach. Help set goals, track progress, build habits, and stay motivated. Be encouraging, practical, and action-oriented.";
+    }
+    
+    // 🏠 SALES & BOOKING FOCUSED (Your existing business checks go here...)
+    else if (ind.includes('real estate') || ind.includes('property')) {
+
       autoPrompt = "You are a top-tier Real Estate AI Sales Agent. Your goal is to qualify buyers/renters, answer property questions, showcase listings, and proactively book property viewings. Always ask about their budget and preferred location.";
     }
     else if (ind.includes('automotive') || ind.includes('dealership')) {
@@ -182,13 +212,20 @@ app.post('/api/register-wizard', async (req, res) => {
     const jwt = require('jsonwebtoken');
     const token = jwt.sign({ userId: newUser.id, role: newUser.role }, process.env.JWT_SECRET || 'your-super-secret-jwt-key', { expiresIn: '7d' });
 
-    // 7. 🚨 SEND WELCOME EMAIL WITH AUTO-GENERATED PASSWORD
+    // 7. 🚨 SEND WELCOME EMAIL & ADMIN NOTIFICATION
     try {
-      const { sendWelcomeEmail } = require('./email');
+      const { sendWelcomeEmail, sendAdminNotificationEmail } = require('./email');
+      
+      // Send password to the new user
       await sendWelcomeEmail(email, businessName, autoPassword);
-      console.log(`✅ Welcome email sent to ${email} with auto-generated password`);
+      console.log(`✅ Welcome email sent to ${email}`);
+      
+      // 🚨 NEW: Send notification to YOU (the admin/owner)
+      await sendAdminNotificationEmail(email, businessName, whatsappNumber);
+      console.log(`✅ Admin notification sent for ${businessName}`);
+      
     } catch (emailError) {
-      console.error('❌ Failed to send welcome email:', emailError);
+      console.error('❌ Failed to send emails:', emailError);
       // Don't fail the registration if email fails
     }
 
@@ -200,7 +237,7 @@ app.post('/api/register-wizard', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Wizard registration error:', error);
-    res.status(500).json({ error: 'Failed to create account.' });
+    res.status(500).json({ error: 'Failed to create account: ' + error.message });
   }
 });
 
