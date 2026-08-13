@@ -14,16 +14,24 @@ async function getAIResponse(userMessage, systemPrompt, tenant) {
     const model = tenant.llmModel || 'gpt-3.5-turbo';
     
     let baseUrl = tenant.llmBaseUrl;
+    
+    // 🚨 FIXED: Smart routing based on the EXACT provider name saved in DB
     if (!baseUrl) {
-      if (tenant.llmProvider === 'QWEN') {
+      if (tenant.llmProvider === 'QWEN' || tenant.llmProvider === 'ALIBABA') {
         baseUrl = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1';
+      } else if (tenant.llmProvider === 'DEEPSEEK') {
+        baseUrl = 'https://api.deepseek.com/v1';
+      } else if (tenant.llmProvider === 'GROQ') {
+        baseUrl = 'https://api.groq.com/openai/v1';
+      } else if (tenant.llmProvider === 'ANTHROPIC') {
+        baseUrl = 'https://api.anthropic.com/v1';
       } else {
-        baseUrl = 'https://api.openai.com/v1';
+        baseUrl = 'https://api.openai.com/v1'; // Default fallback
       }
     }
 
     const apiUrl = `${baseUrl}/chat/completions`;
-    console.log(`🧠 Calling AI: ${tenant.llmProvider} | Model: ${model}`);
+    console.log(`🧠 Calling AI: ${tenant.llmProvider} | Model: ${model} | URL: ${baseUrl}`);
 
     // 2. Add a 15-second timeout to prevent silent hanging
     const controller = new AbortController();
@@ -42,7 +50,7 @@ async function getAIResponse(userMessage, systemPrompt, tenant) {
           { role: 'user', content: userMessage }
         ],
         temperature: 0.7,
-        max_tokens: 800 // 🚨 INCREASED: Prevents cut-offs during detailed sales/contact replies
+        max_tokens: 800
       }),
       signal: controller.signal
     });
