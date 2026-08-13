@@ -940,9 +940,30 @@ app.post('/api/fetch-models', authenticateToken, async (req, res) => {
     }
 
     let models = [];
-    let baseUrl = '';
 
-    // 1. Define Base URLs
+    // 1. HARDCODED FALLBACKS FOR PROVIDERS WITHOUT STANDARD /models ENDPOINTS
+    if (provider === 'anthropic') {
+      return res.json({ 
+        success: true,
+        models: [
+          { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', isRecommended: true },
+          { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', isRecommended: false }
+        ] 
+      });
+    } 
+    
+    if (provider === 'google') {
+      return res.json({
+        success: true,
+        models: [
+          { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', isRecommended: true },
+          { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', isRecommended: false }
+        ]
+      });
+    }
+
+    // 2. DEFINE BASE URL FOR FETCHABLE PROVIDERS
+    let baseUrl = '';
     if (provider === 'openai') {
       baseUrl = 'https://api.openai.com/v1';
     } else if (provider === 'deepseek') {
@@ -951,56 +972,36 @@ app.post('/api/fetch-models', authenticateToken, async (req, res) => {
       baseUrl = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1';
     } else if (provider === 'groq') {
       baseUrl = 'https://api.groq.com/openai/v1';
-    } else if (provider === 'anthropic') {
-      // Anthropic doesn't have a standard /models endpoint, use hardcoded safe defaults
-      return res.json({ 
-        models: [
-          { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', isRecommended: true },
-          { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', isRecommended: false }
-        ] 
-      });
-    } else if (provider === 'google') {
-      // Google Gemini safe defaults
-      return res.json({
-        models: [
-          { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', isRecommended: true },
-          { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', isRecommended: false }
-        ]
-      });
     } else {
       return res.status(400).json({ error: 'Unsupported provider for model fetching.' });
     }
 
-    // 2. Fetch models from the provider's API
-    const response = await fetch(`${baseUrl}/models`, {
-      headers: { 'Authorization': `Bearer ${apiKey}` }
-    });
+    // 3. FETCH MODELS FROM PROVIDER
+    try {
+      const response = await fetch(`${baseUrl}/models`, {
+        headers: { 'Authorization': `Bearer ${apiKey}` }
+      });
 
-    if (response.ok) {
-      const data = await response.json();
-      const rawModels = data.data || [];
-      
-      // Filter for chat models and map to our format
-      models = rawModels.map(m => {
-        const isRecommended = m.id.includes('gpt-4o') || m.id.includes('deepseek-chat') || m.id.includes('llama-3') || m.id.includes('qwen-plus');
-        return {
-          id: m.id,
-          name: m.id,
-          isRecommended: isRecommended
-        };
-      }).filter(m => 
-        m.id.includes('chat') || m.id.includes('gpt') || m.id.includes('qwen') || 
-        m.id.includes('deepseek') || m.id.includes('llama') || m.id.includes('claude') || m.id.includes('gemini')
-      );
+      if (response.ok) {
+        const data = await response.json();
+        const rawModels = data.data || [];
+        
+        models = rawModels.map(m => {
+          const isRecommended = m.id.includes('gpt-4o') || m.id.includes('deepseek-chat') || m.id.includes('llama-3') || m.id.includes('qwen-plus');
+          return { id: m.id, name: m.id, isRecommended: isRecommended };
+        }).filter(m => 
+          m.id.includes('chat') || m.id.includes('gpt') || m.id.includes('qwen') || 
+          m.id.includes('deepseek') || m.id.includes('llama') || m.id.includes('claude') || m.id.includes('gemini')
+        );
 
-      // Sort recommended to top
-      models.sort((a, b) => (b.isRecommended === a.isRecommended) ? 0 : b.isRecommended ? 1 : -1);
-      
-      // Limit to top 20 to keep dropdown clean
-      models = models.slice(0, 20);
-    } 
+        models.sort((a, b) => (b.isRecommended === a.isRecommended) ? 0 : b.isRecommended ? 1 : -1);
+        models = models.slice(0, 20); // Limit to top 20
+      }
+    } catch (fetchError) {
+      console.log('Fetch models endpoint failed, using fallbacks:', fetchError.message);
+    }
 
-    // 3. Fallback to hardcoded recommended models if the /models endpoint fails (but key might still be valid)
+    // 4. FINAL FALLBACK IF FETCH FAILED BUT KEY MIGHT BE VALID
     if (models.length === 0) {
       if (provider === 'openai') {
         models = [{ id: 'gpt-4o-mini', name: 'GPT-4o Mini', isRecommended: true }, { id: 'gpt-4o', name: 'GPT-4o', isRecommended: false }];
@@ -1014,7 +1015,7 @@ app.post('/api/fetch-models', authenticateToken, async (req, res) => {
     }
 
     if (models.length === 0) {
-      return res.status(400).json({ error: 'No chat models found for this provider/key.' });
+      return res.status(400).json({ error: 'No chat models found. Please check your API Key.' });
     }
 
     res.json({ success: true, models });

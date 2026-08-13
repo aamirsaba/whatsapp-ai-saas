@@ -49,9 +49,10 @@ async function sendWelcomeEmail(userEmail, businessName, password) {
   }
 }
 
-// 2. 🚨 ADMIN NOTIFICATION EMAIL (Updated for Personal & Business)
+// 🚨 ADMIN NOTIFICATION EMAIL
 async function sendAdminNotificationEmail(newEmail, nameOrBusiness, whatsappNumber, botType = 'business') {
-  const adminEmail = process.env.ADMIN_EMAIL || 'your-admin-email@gmail.com'; 
+  // 🚨 FOOLPROOF FALLBACK: Uses .env if available, otherwise defaults to your email
+  const adminEmail = process.env.ADMIN_EMAIL || 'aamir@aamirsaba.com'; 
   
   const botTypeEmoji = botType === 'personal' ? '👤 Personal' : '🏢 Business';
   const accountLabel = botType === 'personal' ? 'Personal Account' : 'Business';
@@ -117,5 +118,3 @@ async function sendPasswordResetEmail(userEmail, newPassword) {
 
 // 🚨 UPDATE THIS LINE AT THE VERY BOTTOM OF email.js:
 module.exports = { sendWelcomeEmail, sendAdminNotificationEmail, sendPasswordResetEmail };
-// 🚨 CRITICAL: Export BOTH functions
-module.exports = { sendWelcomeEmail, sendAdminNotificationEmail };
