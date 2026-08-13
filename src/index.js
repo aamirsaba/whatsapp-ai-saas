@@ -44,6 +44,61 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
+// 🚀 5-MINUTE MVP WIZARD REGISTRATION
+app.post('/api/register-wizard', async (req, res) => {
+  try {
+    const { email, password, businessName, industry, websiteUrl, whatsappNumber } = req.body;
+
+    // 1. Check if user exists
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) return res.status(400).json({ error: 'Email already in use.' });
+
+    // 2. Hash password and create User
+    const hashedPassword = await require('bcryptjs').hash(password, 10);
+    const newUser = await prisma.user.create({
+      data: { email, password: hashedPassword, role: 'TENANT' }
+    });
+
+    // 3. Auto-generate Context & Prompt based on Industry
+    let autoContext = `This business operates in the ${industry} industry.`;
+    if (websiteUrl) autoContext += ` Their website is ${websiteUrl}. Use this context to answer questions accurately.`;
+    
+    let autoPrompt = "You are a helpful, professional AI assistant for this business.";
+    if (industry === 'Real Estate') autoPrompt = "You are a top-tier Real Estate AI Sales Agent. Your goal is to qualify buyers, answer property questions, and proactively book property viewings.";
+    if (industry === 'Clinic') autoPrompt = "You are a professional Medical Clinic Receptionist AI. Your goal is to answer patient questions, provide clinic hours, and proactively book appointments.";
+    if (industry === 'E-commerce') autoPrompt = "You are an E-commerce AI Sales Assistant. Your goal is to answer product questions, handle shipping inquiries, and drive sales.";
+    if (industry === 'Services') autoPrompt = "You are a Field Service AI Dispatcher. Your goal is to confirm service areas, answer pricing questions, and book technician visits.";
+
+    // 4. Create Tenant
+    const newTenant = await prisma.tenant.create({
+      data: {
+        businessName,
+        whatsappNumber,
+        websiteUrl,
+        userId: newUser.id,
+        systemPrompt: autoPrompt,
+        businessContext: autoContext,
+        isActive: false, // Requires QR scan to activate
+        isHumanMode: false
+      }
+    });
+
+    // 5. Generate JWT
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign({ userId: newUser.id, role: newUser.role }, process.env.JWT_SECRET || 'your-super-secret-jwt-key', { expiresIn: '7d' });
+
+    res.json({ 
+      success: true, 
+      token, 
+      user: { id: newUser.id, email: newUser.email, role: newUser.role },
+      redirectUrl: `/connect/${whatsappNumber}` // Send them straight to QR scan!
+    });
+  } catch (error) {
+    console.error('❌ Wizard registration error:', error);
+    res.status(500).json({ error: 'Failed to create account.' });
+  }
+});
+
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -55,6 +110,8 @@ app.post('/api/auth/login', async (req, res) => {
     res.status(401).json({ success: false, error: error.message });
   }
 });
+
+
 
 // ==========================================
 // 🚀 DASHBOARD ROUTES (Protected)
@@ -274,7 +331,11 @@ app.get('/connect/:phoneNumber', async (req, res) => {
 // 🌐 STATIC PAGES & LEGACY ROUTES
 // ==========================================
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html')); // The new Landing Page
+});
+
+app.get('/register', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'register.html')); // The new 3-Step Wizard
 });
 
 app.get('/login', (req, res) => {
