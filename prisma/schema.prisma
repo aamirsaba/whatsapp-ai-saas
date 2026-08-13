@@ -54,7 +54,7 @@ model Tenant {
   systemPrompt     String         @default("You are a helpful AI assistant.")
   businessContext  String?        @db.Text
   contactInfo      String?        @db.Text
-  serviceAreas     String?        @db.Text
+  serviceAreas     String?        @db.Text // 🚨 KEPT ONLY ONE INSTANCE OF THIS
 
   isActive         Boolean        @default(true)
   isHumanMode      Boolean        @default(false)
@@ -72,9 +72,6 @@ model Tenant {
   messages         Message[]
   leads            Lead[]
   teamMembers      TeamMember[]
-
-// 🚨 NEW: Store service areas as a JSON string (e.g., '["Riyadh", "Jeddah"]')
-  serviceAreas   String?     @db.Text 
 }
 
 // 5. The Message Model
@@ -111,7 +108,7 @@ model TeamMember {
   tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role      String   @default("AGENT") // "OWNER" or "AGENT"
+  role      String   @default("AGENT") 
   createdAt DateTime @default(now())
 
   @@unique([tenantId, userId])

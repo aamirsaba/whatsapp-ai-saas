@@ -47,7 +47,7 @@ app.post('/api/auth/register', async (req, res) => {
 // 🚀 5-MINUTE MVP WIZARD REGISTRATION (AUTO-GENERATE PASSWORD)
 app.post('/api/register-wizard', async (req, res) => {
   try {
-    const { email, businessName, industry, websiteUrl, whatsappNumber } = req.body;
+    const { email, businessName, industry, websiteUrl, whatsappNumber, botType } = req.body;
 
     // 1. Check if user exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -55,7 +55,7 @@ app.post('/api/register-wizard', async (req, res) => {
 
     // 2. 🚨 AUTO-GENERATE SECURE 12-CHARACTER PASSWORD
     const crypto = require('crypto');
-    const autoPassword = crypto.randomBytes(6).toString('hex'); // Generates 12-char hex password
+    const autoPassword = crypto.randomBytes(6).toString('hex');
     const hashedPassword = await require('bcryptjs').hash(autoPassword, 10);
     
     const newUser = await prisma.user.create({
@@ -66,15 +66,13 @@ app.post('/api/register-wizard', async (req, res) => {
     let autoContext = `This business operates in the ${industry} industry.`;
     if (websiteUrl) autoContext += ` Their website is ${websiteUrl}. Use this context to answer questions accurately.`;
     
-    // 4. 🚨 SMART INDUSTRY-TO-PROMPT MAPPING (30+ industries covered)
+    // 4. 🚨 SMART INDUSTRY-TO-PROMPT MAPPING
     let autoPrompt = "You are a helpful, professional AI assistant for this business. Be concise, polite, and accurate.";
     
+    // 🚨 DECLARE 'ind' ONLY ONCE HERE:
     const ind = industry.toLowerCase();
     
-
-    const ind = industry.toLowerCase();
-    
-    // 🚨 NEW: PERSONAL BOT CATEGORIES
+    // 🎭 PERSONAL BOT CATEGORIES
     if (ind.includes('emotional')) {
       autoPrompt = "You are a compassionate, empathetic emotional support companion. Listen actively, validate feelings, offer coping strategies. Never diagnose. Encourage professional help for serious issues.";
     }
@@ -85,7 +83,7 @@ app.post('/api/register-wizard', async (req, res) => {
       autoPrompt = "You are a supportive mental health companion. Use gentle encouragement, track mood patterns, and suggest healthy coping mechanisms. Always include a gentle reminder to seek professional help if in crisis.";
     }
     else if (ind.includes('storytelling')) {
-      autoPrompt = "You are a master storyteller. Create engaging narratives with vivid descriptions, strong characters, and compelling plots. Adapt to the user's preferred genre and keep them hooked.";
+      autoPrompt = "You are a master storyteller. Create engaging narratives with vivid descriptions, strong characters, and compelling plots. Adapt to the user's preferred genre.";
     }
     else if (ind.includes('content creation')) {
       autoPrompt = "You are a viral content strategist. Help create YouTube scripts, social media posts, and blog ideas. Focus on hooks, retention, and audience engagement.";
@@ -99,10 +97,8 @@ app.post('/api/register-wizard', async (req, res) => {
     else if (ind.includes('personal development')) {
       autoPrompt = "You are a personal development coach. Help set goals, track progress, build habits, and stay motivated. Be encouraging, practical, and action-oriented.";
     }
-    
-    // 🏠 SALES & BOOKING FOCUSED (Your existing business checks go here...)
+    // 🏠 BUSINESS BOT CATEGORIES
     else if (ind.includes('real estate') || ind.includes('property')) {
-
       autoPrompt = "You are a top-tier Real Estate AI Sales Agent. Your goal is to qualify buyers/renters, answer property questions, showcase listings, and proactively book property viewings. Always ask about their budget and preferred location.";
     }
     else if (ind.includes('automotive') || ind.includes('dealership')) {
@@ -123,8 +119,6 @@ app.post('/api/register-wizard', async (req, res) => {
     else if (ind.includes('event')) {
       autoPrompt = "You are an Event Planning AI Coordinator. Help clients with venue options, packages, catering, guest management, and booking consultations. Be organized and creative.";
     }
-    
-    // 🏥 APPOINTMENT & SERVICE BOOKING FOCUSED
     else if (ind.includes('medical') || ind.includes('clinic') || ind.includes('healthcare') || ind.includes('hospital')) {
       autoPrompt = "You are a professional Medical Clinic AI Receptionist. Answer patient questions, provide clinic hours, help with appointment booking, and handle general inquiries. ⚠️ CRITICAL: Never provide medical diagnoses. Always advise consulting a doctor for health concerns.";
     }
@@ -140,8 +134,6 @@ app.post('/api/register-wizard', async (req, res) => {
     else if (ind.includes('vet') || ind.includes('pet')) {
       autoPrompt = "You are a Veterinary Clinic AI Assistant. Help pet owners with appointment booking, service info, and general pet care questions. Be caring and knowledgeable. ⚠️ Never provide emergency medical advice - direct to the vet immediately for urgent issues.";
     }
-    
-    // 🔧 FIELD & HOME SERVICES
     else if (ind.includes('field service') || ind.includes('home maintenance') || ind.includes('plumbing') || ind.includes('ac') || ind.includes('electrical')) {
       autoPrompt = "You are a Field Service AI Dispatcher. Confirm service areas, answer pricing questions, book technician visits, and handle emergency requests. Be efficient and reassuring.";
     }
@@ -154,8 +146,6 @@ app.post('/api/register-wizard', async (req, res) => {
     else if (ind.includes('logistics') || ind.includes('delivery') || ind.includes('courier')) {
       autoPrompt = "You are a Logistics & Delivery AI Assistant. Help with shipping quotes, tracking, service areas, and booking pickups. Be fast and accurate.";
     }
-    
-    // 💼 PROFESSIONAL SERVICES
     else if (ind.includes('legal') || ind.includes('law')) {
       autoPrompt = "You are a Law Firm AI Assistant. Help with practice areas, attorney info, consultation bookings, and general inquiries. Be professional and discreet. ⚠️ Never provide specific legal advice - always direct to an attorney.";
     }
@@ -171,8 +161,6 @@ app.post('/api/register-wizard', async (req, res) => {
     else if (ind.includes('hr') || ind.includes('recruitment') || ind.includes('staffing')) {
       autoPrompt = "You are an HR & Recruitment AI Assistant. Help with service info, candidate inquiries, client bookings, and general questions. Be professional and people-focused.";
     }
-    
-    // 🎓 EDUCATION
     else if (ind.includes('school') || ind.includes('university') || ind.includes('academy')) {
       autoPrompt = "You are an Educational Institution AI Assistant. Help with admissions, programs, fees, campus info, and enrollment. Be informative and welcoming.";
     }
@@ -182,8 +170,6 @@ app.post('/api/register-wizard', async (req, res) => {
     else if (ind.includes('coaching') || ind.includes('consulting')) {
       autoPrompt = "You are a Coaching & Consulting AI Assistant. Help potential clients understand your services, book discovery calls, and answer FAQs. Be inspiring and professional.";
     }
-    
-    // 🎭 MEDIA & OTHER
     else if (ind.includes('media') || ind.includes('publishing') || ind.includes('content')) {
       autoPrompt = "You are a Media & Content Creation AI Assistant. Help with service inquiries, portfolio info, collaboration requests, and bookings. Be creative and engaging.";
     }
@@ -220,13 +206,12 @@ app.post('/api/register-wizard', async (req, res) => {
       await sendWelcomeEmail(email, businessName, autoPassword);
       console.log(`✅ Welcome email sent to ${email}`);
       
-      // 🚨 NEW: Send notification to YOU (the admin/owner)
+      // Send notification to YOU (the admin/owner)
       await sendAdminNotificationEmail(email, businessName, whatsappNumber);
       console.log(`✅ Admin notification sent for ${businessName}`);
       
     } catch (emailError) {
       console.error('❌ Failed to send emails:', emailError);
-      // Don't fail the registration if email fails
     }
 
     res.json({ 
