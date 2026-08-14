@@ -3,7 +3,7 @@
  * Note: Language mirroring, service zones, and industry personas 
  * are dynamically injected via the 'systemPrompt' parameter.
  */
-async function getAIResponse(userMessage, systemPrompt, tenant) {
+async function getAIResponse(chatHistory, systemPrompt, tenant) {
   try {
     // 1. Strict check for API Key
     if (!tenant || !tenant.llmApiKey) {
@@ -47,7 +47,7 @@ async function getAIResponse(userMessage, systemPrompt, tenant) {
         model: model,
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage }
+          ...chatHistory // 🚨 THIS IS THE MAGIC: Spreads the entire conversation history!
         ],
         temperature: 0.7,
         max_tokens: 800

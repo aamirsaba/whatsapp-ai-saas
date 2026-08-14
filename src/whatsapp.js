@@ -122,7 +122,31 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
 
       // 🚨 UPDATED: Added zoneRule to the final prompt
       const finalSystemPrompt = basePrompt + contextRule + contactRule + zoneRule + strictRules;
-      const aiReply = await getAIResponse(text, finalSystemPrompt, tenant);
+      // 🧠 NEW: Fetch recent chat history to give the AI memory (last 10 messages)
+      const recentMessages = await prisma.message.findMany({
+        where: { 
+          tenantId: tenant.id,
+          OR: [
+            { fromNumber: fromNumber, toNumber: phoneNumber },
+            { fromNumber: phoneNumber, toNumber: fromNumber }
+          ]
+        },
+        orderBy: { createdAt: 'asc' },
+        take: 10 // Keeps context fresh without overloading the AI or hitting token limits
+      });
+
+      // Format history for the AI (user = customer, assistant = AI)
+      const chatHistory = recentMessages.map(msg => ({
+        role: msg.direction === 'inbound' ? 'user' : 'assistant',
+        content: msg.content
+      }));
+
+      // Add the brand new message to the very end of the history
+      chatHistory.push({ role: 'user', content: text });
+
+      // 🚨 PASS THE FULL HISTORY TO THE AI, NOT JUST THE SINGLE TEXT
+      const aiReply = await getAIResponse(chatHistory, finalSystemPrompt, tenant);
+
       console.log(`🗣️ AI Reply: ${aiReply}`);
 
       await sock.sendMessage(msg.key.remoteJid, { text: aiReply });
