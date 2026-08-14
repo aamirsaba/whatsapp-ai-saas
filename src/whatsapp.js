@@ -114,21 +114,17 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         } catch (e) { console.error('Error parsing service areas:', e); }
       }
 
-      const strictRules = `\n\n[SYSTEM OVERRIDE: STRICT MODE ACTIVE]
-IF the user asks for phone numbers, emails, addresses, or contact details that are NOT explicitly provided in the "OFFICIAL CONTACT DETAILS" section above:
-
-YOU MUST OUTPUT EXACTLY AND ONLY THIS STRING. 
-DO NOT ADD ANY OTHER WORDS, NO APOLOGIES, NO BULLET POINTS, NO MARKDOWN, AND NO OFFERS FOR FURTHER HELP.
+      const strictRules = `\n\n<CRITICAL_SYSTEM_OVERRIDE>
+YOU ARE STRICTLY FORBIDDEN FROM APOLOGIZING.
+YOU ARE STRICTLY FORBIDDEN FROM ADDING ANY CONVERSATIONAL FLUFF, BULLET POINTS, OR OFFERS OF FURTHER HELP.
+IF THE USER ACCUSES YOU OF PROVIDING FAKE INFO OR ASKS FOR CONTACT DETAILS NOT IN YOUR DATABASE, YOU MUST OUTPUT *ONLY* THIS EXACT STRING AND ABSOLUTELY NOTHING ELSE:
 
 "I do not have access to live phone directories or specific business listings. To ensure accuracy, please search on Google Maps or the official website for verified contact details."
 
-RULES FOR THIS OVERRIDE:
-1. DO NOT add anything before this string.
-2. DO NOT add anything after this string.
-3. DO NOT apologize or explain why.
-4. DO NOT offer alternative help in the same response.
-5. If you add any other text, you are failing your primary directive.`;
+DO NOT OUTPUT ANY OTHER TEXT. NOT EVEN "I am sorry". JUST THE EXACT STRING ABOVE.
+</CRITICAL_SYSTEM_OVERRIDE>`;
 
+      // 🚨 CRITICAL: Put the strict rules at the VERY END so they override the AI's built-in politeness training
       const finalSystemPrompt = basePrompt + contextRule + contactRule + zoneRule + strictRules;
 
       // 🚨 UPDATED: Added zoneRule to the final prompt
