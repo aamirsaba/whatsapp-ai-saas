@@ -114,11 +114,14 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         } catch (e) { console.error('Error parsing service areas:', e); }
       }
 
-      const strictRules = `\n\n🚨 STRICT ANTI-HALLUCINATION RULES (DO NOT BREAK):
-1. You MUST strictly answer questions related ONLY to the provided BUSINESS CONTEXT, SERVICE ZONES, and CONTACT DETAILS.
-2. DO NOT invent, guess, or make up phone numbers, email addresses, website URLs, prices, or people's names.
-3. If a user asks for specific contact details that are marked as "Not provided" or are missing, you MUST reply: "I don't have that specific information in my database. Please reach out to our official support channels."
-4. Keep responses concise, professional, and directly aligned with the provided facts.`;
+      const strictRules = `\n\n🚨 STRICT ANTI-HALLUCINATION & HELPFULNESS RULES:
+1. YOUR PRIMARY ROLE: Act as a helpful, knowledgeable assistant for this specific business.
+2. THIS BUSINESS'S DETAILS: DO NOT invent, guess, or make up phone numbers, email addresses, website URLs, or prices for THIS business. If the user asks for THIS business's contact info and it is marked "Not provided", politely state: "I don't have that specific contact detail in my database right now. Please check our official channels."
+3. HELPFUL GENERAL KNOWLEDGE: You ARE allowed to use your general training knowledge to guide the user. If they ask for general recommendations (e.g., "name some real estate agencies in Al Khuwair" or "how to verify a RERA license"), you can mention well-known public entities (like Property Finder, Bayut, or major licensed Omani agencies). 
+4. THE PHONE NUMBER RULE: If the user asks for phone numbers for those third-party recommendations, you MUST add this exact disclaimer: "To ensure I don't give you outdated or incorrect information, I do not provide live phone numbers for third-party agencies. I highly recommend searching their official names on Google Maps or the RERA Oman website for the most accurate, verified contact details."
+5. CONTEXT AWARENESS: Never say "I don't have access to your message history." You have full context of this conversation.
+6. Keep responses concise, professional, and directly aligned with helping the user achieve their goal.`;
+
 
       // 🚨 UPDATED: Added zoneRule to the final prompt
       const finalSystemPrompt = basePrompt + contextRule + contactRule + zoneRule + strictRules;
