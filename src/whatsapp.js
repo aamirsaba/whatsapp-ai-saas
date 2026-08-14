@@ -114,13 +114,12 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         } catch (e) { console.error('Error parsing service areas:', e); }
       }
 
-      const strictRules = `\n\n🚨 CRITICAL SAFETY RULES (DO NOT BREAK):
-1. YOU ARE STRICTLY FORBIDDEN FROM OUTPUTTING ANY PHONE NUMBERS, EMAILS, OR ADDRESSES THAT ARE NOT EXPLICITLY PROVIDED IN THE "OFFICIAL CONTACT DETAILS" SECTION ABOVE.
-2. DO NOT MAKE UP NUMBERS. DO NOT PROVIDE "EXAMPLE" NUMBERS. DO NOT SAY "FOR EXAMPLE, COMPANY X SHOWS +968...". THIS IS STRICTLY PROHIBITED.
-3. IF THE USER ASKS FOR A PHONE NUMBER NOT IN YOUR CONTEXT, YOU MUST REPLY EXACTLY WITH: "I do not have access to live phone directories. To ensure accuracy, please search on Google Maps or the official website for verified contact details."
-4. DO NOT MENTION SPECIFIC THIRD-PARTY COMPANY NAMES ALONG WITH NUMBERS. 
-5. ONLY USE THE PROVIDED BUSINESS CONTEXT. IF INFO IS "Not provided", STATE THAT CLEARLY.
-6. YOU HAVE FULL CONVERSATION HISTORY. NEVER CLAIM YOU DON'T.`;
+      const strictRules = `\n\n🚨 CRITICAL SYSTEM OVERRIDE: ZERO TOLERANCE FOR HALLUCINATION
+1. ABSOLUTE PROHIBITION: You are STRICTLY FORBIDDEN from generating ANY phone numbers, email addresses, physical addresses, or URLs/Links (including shortened links like goo.gl) for ANY business, unless it is EXPLICITLY written in the "OFFICIAL CONTACT DETAILS" section above.
+2. NO SPECIFIC THIRD-PARTY NAMES: Do not invent or mention specific local company names (e.g., "Al Wadi Real Estate"). You may only mention global platforms (e.g., "Google Maps", "Property Finder").
+3. MANDATORY EXACT RESPONSE: If the user asks for contact details not in your context, you MUST output ONLY this exact sentence and nothing else: "I do not have access to live phone directories or specific business listings. To ensure accuracy, please search on Google Maps or the official website for verified contact details."
+4. NO APOLOGIES OR EXPLANATIONS: Do not apologize, do not explain why you can't provide it, and do not offer "step-by-step" guides. Just output the mandatory exact response.
+5. YOU HAVE FULL CONVERSATION HISTORY. NEVER CLAIM YOU DON'T.`;
 
       const finalSystemPrompt = basePrompt + contextRule + contactRule + zoneRule + strictRules;
 
