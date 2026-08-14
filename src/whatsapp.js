@@ -114,12 +114,20 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         } catch (e) { console.error('Error parsing service areas:', e); }
       }
 
-      const strictRules = `\n\n🚨 CRITICAL SYSTEM OVERRIDE: ZERO TOLERANCE FOR HALLUCINATION
-1. ABSOLUTE PROHIBITION: You are STRICTLY FORBIDDEN from generating ANY phone numbers, email addresses, physical addresses, or URLs/Links (including shortened links like goo.gl) for ANY business, unless it is EXPLICITLY written in the "OFFICIAL CONTACT DETAILS" section above.
-2. NO SPECIFIC THIRD-PARTY NAMES: Do not invent or mention specific local company names (e.g., "Al Wadi Real Estate"). You may only mention global platforms (e.g., "Google Maps", "Property Finder").
-3. MANDATORY EXACT RESPONSE: If the user asks for contact details not in your context, you MUST output ONLY this exact sentence and nothing else: "I do not have access to live phone directories or specific business listings. To ensure accuracy, please search on Google Maps or the official website for verified contact details."
-4. NO APOLOGIES OR EXPLANATIONS: Do not apologize, do not explain why you can't provide it, and do not offer "step-by-step" guides. Just output the mandatory exact response.
-5. YOU HAVE FULL CONVERSATION HISTORY. NEVER CLAIM YOU DON'T.`;
+      const strictRules = `\n\n[SYSTEM OVERRIDE: STRICT MODE ACTIVE]
+IF the user asks for phone numbers, emails, addresses, or contact details that are NOT explicitly provided in the "OFFICIAL CONTACT DETAILS" section above:
+
+YOU MUST OUTPUT EXACTLY AND ONLY THIS STRING. 
+DO NOT ADD ANY OTHER WORDS, NO APOLOGIES, NO BULLET POINTS, NO MARKDOWN, AND NO OFFERS FOR FURTHER HELP.
+
+"I do not have access to live phone directories or specific business listings. To ensure accuracy, please search on Google Maps or the official website for verified contact details."
+
+RULES FOR THIS OVERRIDE:
+1. DO NOT add anything before this string.
+2. DO NOT add anything after this string.
+3. DO NOT apologize or explain why.
+4. DO NOT offer alternative help in the same response.
+5. If you add any other text, you are failing your primary directive.`;
 
       const finalSystemPrompt = basePrompt + contextRule + contactRule + zoneRule + strictRules;
 
