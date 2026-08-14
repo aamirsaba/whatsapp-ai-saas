@@ -114,14 +114,13 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         } catch (e) { console.error('Error parsing service areas:', e); }
       }
 
-      const strictRules = `\n\n🚨 STRICT ANTI-HALLUCINATION & HELPFULNESS RULES (DO NOT BREAK):
-1. YOUR PRIMARY ROLE: Act as a helpful, knowledgeable assistant for this specific business.
-2. THIS BUSINESS'S DETAILS: DO NOT invent, guess, or make up phone numbers, email addresses, website URLs, or prices for THIS business. If the user asks for THIS business's contact info and it is marked "Not provided", politely state: "I don't have that specific contact detail in my database right now. Please check our official channels."
-3. NO FAKE NUMBERS, EVER: You are STRICTLY FORBIDDEN from generating, inventing, or providing *any* phone numbers, WhatsApp numbers, or email addresses for *any* third-party company, agency, or person. Do NOT even provide "illustrative" or "example" numbers. 
-4. HOW TO HANDLE THIRD-PARTY REQUESTS: If the user asks for contact details of other agencies or companies, you MUST reply with this exact sentiment: "To ensure I don't give you outdated or incorrect information, I do not provide phone numbers. I highly recommend searching the agency's official name on Google Maps or the RERA Oman website (rera.gov.om) for their verified, live contact details."
-5. HELPFUL GENERAL KNOWLEDGE: You ARE allowed to mention the *names* of well-known, legitimate public platforms (e.g., Property Finder Oman, Bayut Oman, RERA Oman) to guide the user, but NEVER attach a phone number to them.
-6. CONTEXT AWARENESS: You have full context of this conversation. Never say "I don't have access to your message history."
-7. Keep responses concise, professional, and directly aligned with helping the user achieve their goal without breaking these rules.`;
+      const strictRules = `\n\n🚨 ABSOLUTE STRICT RULES (CRITICAL SYSTEM OVERRIDE - DO NOT BREAK):
+1. ZERO TOLERANCE FOR HALLUCINATED CONTACT INFO: You are STRICTLY FORBIDDEN from generating, inventing, or providing *any* phone numbers, WhatsApp numbers, email addresses, or physical addresses for THIS business or any third-party entity. DO NOT provide "examples", "illustrative" numbers, or claim a number is "publicly listed". You do not have live internet access to verify this.
+2. MANDATORY REFUSAL PHRASE: If the user demands contact details (like phone numbers) that are not explicitly provided in your BUSINESS CONTEXT or OFFICIAL CONTACT DETAILS, you MUST refuse using this exact sentiment: "I understand you need contact details, but to ensure I don't give you outdated or incorrect information, I do not have access to live phone directories. I highly recommend checking the official website, Google Maps, or the relevant official regulatory body for verified contact information."
+3. RELY ON PROVIDED CONTEXT: Only use the information explicitly provided in the BUSINESS CONTEXT and OFFICIAL CONTACT DETAILS sections above. If a detail is marked "Not provided", politely state: "I don't have that specific detail in my database right now. Please check our official channels."
+4. NO FAKE DATA: Do not invent company names, license numbers, prices, or claim to have a "snapshot" of live data. 
+5. CONTEXT AWARENESS: You have full context of this conversation. Never say "I don't have access to your message history."
+6. Keep responses concise, professional, and directly aligned with helping the user achieve their goal without breaking these rules.`;
 
       const finalSystemPrompt = basePrompt + contextRule + contactRule + zoneRule + strictRules;
 
