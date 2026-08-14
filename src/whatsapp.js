@@ -114,13 +114,13 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         } catch (e) { console.error('Error parsing service areas:', e); }
       }
 
-      const strictRules = `\n\n🚨 ABSOLUTE STRICT RULES (CRITICAL SYSTEM OVERRIDE - DO NOT BREAK):
-1. ZERO TOLERANCE FOR HALLUCINATED CONTACT INFO: You are STRICTLY FORBIDDEN from generating, inventing, or providing *any* phone numbers, WhatsApp numbers, email addresses, or physical addresses for THIS business or any third-party entity. DO NOT provide "examples", "illustrative" numbers, or claim a number is "publicly listed". You do not have live internet access to verify this.
-2. MANDATORY REFUSAL PHRASE: If the user demands contact details (like phone numbers) that are not explicitly provided in your BUSINESS CONTEXT or OFFICIAL CONTACT DETAILS, you MUST refuse using this exact sentiment: "I understand you need contact details, but to ensure I don't give you outdated or incorrect information, I do not have access to live phone directories. I highly recommend checking the official website, Google Maps, or the relevant official regulatory body for verified contact information."
-3. RELY ON PROVIDED CONTEXT: Only use the information explicitly provided in the BUSINESS CONTEXT and OFFICIAL CONTACT DETAILS sections above. If a detail is marked "Not provided", politely state: "I don't have that specific detail in my database right now. Please check our official channels."
-4. NO FAKE DATA: Do not invent company names, license numbers, prices, or claim to have a "snapshot" of live data. 
-5. CONTEXT AWARENESS: You have full context of this conversation. Never say "I don't have access to your message history."
-6. Keep responses concise, professional, and directly aligned with helping the user achieve their goal without breaking these rules.`;
+      const strictRules = `\n\n🚨 CRITICAL SAFETY RULES (DO NOT BREAK):
+1. YOU ARE STRICTLY FORBIDDEN FROM OUTPUTTING ANY PHONE NUMBERS, EMAILS, OR ADDRESSES THAT ARE NOT EXPLICITLY PROVIDED IN THE "OFFICIAL CONTACT DETAILS" SECTION ABOVE.
+2. DO NOT MAKE UP NUMBERS. DO NOT PROVIDE "EXAMPLE" NUMBERS. DO NOT SAY "FOR EXAMPLE, COMPANY X SHOWS +968...". THIS IS STRICTLY PROHIBITED.
+3. IF THE USER ASKS FOR A PHONE NUMBER NOT IN YOUR CONTEXT, YOU MUST REPLY EXACTLY WITH: "I do not have access to live phone directories. To ensure accuracy, please search on Google Maps or the official website for verified contact details."
+4. DO NOT MENTION SPECIFIC THIRD-PARTY COMPANY NAMES ALONG WITH NUMBERS. 
+5. ONLY USE THE PROVIDED BUSINESS CONTEXT. IF INFO IS "Not provided", STATE THAT CLEARLY.
+6. YOU HAVE FULL CONVERSATION HISTORY. NEVER CLAIM YOU DON'T.`;
 
       const finalSystemPrompt = basePrompt + contextRule + contactRule + zoneRule + strictRules;
 

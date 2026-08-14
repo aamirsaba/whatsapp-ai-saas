@@ -47,9 +47,9 @@ async function getAIResponse(chatHistory, systemPrompt, tenant) {
         model: model,
         messages: [
           { role: 'system', content: systemPrompt },
-          ...chatHistory // 🚨 THIS IS THE MAGIC: Spreads the entire conversation history!
+          ...chatHistory
         ],
-        temperature: 0.7,
+        temperature: 0.1, // 🚨 CHANGED FROM 0.7 TO 0.1 FOR STRICT RULE ADHERENCE
         max_tokens: 800
       }),
       signal: controller.signal
