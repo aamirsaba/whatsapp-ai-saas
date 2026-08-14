@@ -131,9 +131,12 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
             { fromNumber: phoneNumber, toNumber: fromNumber }
           ]
         },
-        orderBy: { createdAt: 'asc' },
-        take: 10 // Keeps context fresh without overloading the AI or hitting token limits
+        orderBy: { createdAt: 'desc' }, // 🚨 CRITICAL FIX: Get the NEWEST messages first
+        take: 10 
       });
+
+      // 🚨 CRITICAL FIX: Reverse the array so it's in chronological order (oldest to newest) for the AI
+      recentMessages.reverse();
 
       // Format history for the AI (user = customer, assistant = AI)
       const chatHistory = recentMessages.map(msg => ({
@@ -144,7 +147,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       // Add the brand new message to the very end of the history
       chatHistory.push({ role: 'user', content: text });
 
-      // 🚨 PASS THE FULL HISTORY TO THE AI, NOT JUST THE SINGLE TEXT
+      // 🚨 PASS THE FULL HISTORY TO THE AI
       const aiReply = await getAIResponse(chatHistory, finalSystemPrompt, tenant);
 
       console.log(`🗣️ AI Reply: ${aiReply}`);
