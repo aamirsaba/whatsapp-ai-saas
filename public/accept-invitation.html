@@ -86,11 +86,19 @@
         });
         const data = await res.json();
 
-        if (res.ok) {
-          document.getElementById('acceptForm').style.display = 'none';
-          document.getElementById('successBox').classList.remove('hidden');
-          setTimeout(() => { window.location.href = '/login'; }, 2500);
-        } else {
+// Inside the fetch success block, replace the redirect:
+if (res.ok) {
+  // Store the token
+  localStorage.setItem('token', data.token);
+  
+  document.getElementById('acceptForm').style.display = 'none';
+  document.getElementById('successBox').classList.remove('hidden');
+  
+  // 🚨 Redirect to AGENT dashboard (not regular tenant dashboard)
+  setTimeout(() => { 
+    window.location.href = '/agent-dashboard'; 
+  }, 2000);
+} else {
           statusBox.className = 'mb-4 p-3 rounded-lg text-sm font-medium bg-red-100 text-red-700';
           statusBox.textContent = '❌ ' + (data.error || 'Failed to accept invitation.');
           submitBtn.disabled = false;

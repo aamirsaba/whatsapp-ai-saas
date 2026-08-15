@@ -500,6 +500,7 @@ app.get('/accept-invitation', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'accept-invitation.html'));
 });
 
+
 app.get('/forgot-password', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'forgot-password.html'));
 });
@@ -1169,7 +1170,8 @@ app.post('/api/auth/accept-invitation', async (req, res) => {
 
     // Verify invitation
     const invitation = await prisma.teamInvitation.findFirst({
-      where: { email, token, accepted: false, expiresAt: { gt: new Date() } }
+      where: { email, token, accepted: false, expiresAt: { gt: new Date() } },
+      include: { tenant: { select: { id: true, businessName: true } } }
     });
 
     if (!invitation) {
@@ -1182,11 +1184,15 @@ app.post('/api/auth/accept-invitation', async (req, res) => {
       return res.status(400).json({ error: 'An account with this email already exists. Please log in instead.' });
     }
 
-    // Create user
+    // Create user with AGENT role
     const bcrypt = require('bcryptjs');
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await prisma.user.create({
-      data: { email, password: hashedPassword, role: 'AGENT' }
+      data: { 
+        email, 
+        password: hashedPassword, 
+        role: 'AGENT' //  CRITICAL: Set role to AGENT, not TENANT
+      }
     });
 
     // Add to team
@@ -1200,11 +1206,136 @@ app.post('/api/auth/accept-invitation', async (req, res) => {
       data: { accepted: true }
     });
 
-    res.json({ success: true, message: 'Account created and added to team!' });
+    // Generate JWT token for login
+    const jwt = require('jsonwebtoken');
+    const authToken = jwt.sign(
+      { userId: newUser.id, email: newUser.email, role: newUser.role },
+      process.env.JWT_SECRET || 'your-secret-key-change-this',
+      { expiresIn: '7d' }
+    );
+
+    res.json({ 
+      success: true, 
+      message: 'Account created and added to team!',
+      token: authToken,
+      user: { email: newUser.email, role: newUser.role }
+    });
   } catch (error) {
     console.error('❌ Accept invitation error:', error);
     res.status(500).json({ error: 'Failed to accept invitation.' });
   }
+});
+
+
+//  AGENT: Get team chats
+app.get('/api/agent/chats', authenticateToken, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({ 
+      where: { id: req.user.userId },
+      include: { 
+        teamMemberships: { 
+          include: { 
+            tenant: { 
+              include: { 
+                messages: {
+                  orderBy: { createdAt: 'desc' },
+                  take: 50
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!user || user.teamMemberships.length === 0) {
+      return res.status(404).json({ error: 'No team access found.' });
+    }
+
+    // Get all messages from tenant(s)
+    const allMessages = [];
+    user.teamMemberships.forEach(membership => {
+      allMessages.push(...membership.tenant.messages);
+    });
+
+    // Group by phone number
+    const chatsMap = new Map();
+    allMessages.forEach(msg => {
+      if (msg.direction === 'inbound') {
+        if (!chatsMap.has(msg.fromNumber)) {
+          chatsMap.set(msg.fromNumber, {
+            phoneNumber: msg.fromNumber,
+            lastMessage: msg.content,
+            createdAt: msg.createdAt
+          });
+        }
+      }
+    });
+
+    const chats = Array.from(chatsMap.values()).sort((a, b) => 
+      new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    res.json({ success: true, chats });
+  } catch (error) {
+    console.error(' Agent chats error:', error);
+    res.status(500).json({ error: 'Failed to load chats.' });
+  }
+});
+
+// 🚀 AGENT: Send message
+app.post('/api/agent/send-message', authenticateToken, async (req, res) => {
+  try {
+    const { phoneNumber, message } = req.body;
+    if (!phoneNumber || !message) {
+      return res.status(400).json({ error: 'Phone number and message are required.' });
+    }
+
+    const user = await prisma.user.findUnique({ 
+      where: { id: req.user.userId },
+      include: { teamMemberships: true }
+    });
+
+    if (!user || user.teamMemberships.length === 0) {
+      return res.status(403).json({ error: 'No team access.' });
+    }
+
+    // Get first tenant's WhatsApp number (for MVP)
+    const tenantId = user.teamMemberships[0].tenantId;
+    const tenant = await prisma.tenant.findUnique({ 
+      where: { id: tenantId },
+      select: { whatsappNumber: true }
+    });
+
+    // Save message to database
+    await prisma.message.create({
+      data: {
+        tenantId,
+        fromNumber: tenant.whatsappNumber,
+        toNumber: phoneNumber,
+        direction: 'outbound',
+        content: message,
+        isAiReply: false
+      }
+    });
+
+    // Send via WhatsApp (using activeSockets map)
+    const sock = activeSockets.get(tenant.whatsappNumber);
+    if (sock) {
+      await sock.sendMessage(phoneNumber + '@s.whatsapp.net', { text: message });
+      res.json({ success: true, message: 'Message sent!' });
+    } else {
+      res.status(500).json({ error: 'WhatsApp session not active.' });
+    }
+  } catch (error) {
+    console.error(' Agent send message error:', error);
+    res.status(500).json({ error: 'Failed to send message.' });
+  }
+});
+
+//  Serve agent dashboard
+app.get('/agent-dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'agent-dashboard.html'));
 });
 
 const PORT = process.env.PORT || 3000;
