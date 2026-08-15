@@ -1450,6 +1450,49 @@ app.post('/api/dashboard/upload-knowledge', authenticateToken, upload.single('fi
   }
 });
 
+
+// 🚀 OWNER DASHBOARD: Get recent chats
+app.get('/api/dashboard/chats', authenticateToken, async (req, res) => {
+  try {
+    const tenant = await prisma.tenant.findFirst({ 
+      where: { userId: req.user.userId },
+      include: {
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 50
+        }
+      }
+    });
+
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant not found.' });
+    }
+
+    // Group messages by phone number (only inbound)
+    const chatsMap = new Map();
+    tenant.messages.forEach(msg => {
+      if (msg.direction === 'inbound') {
+        if (!chatsMap.has(msg.fromNumber)) {
+          chatsMap.set(msg.fromNumber, {
+            phoneNumber: msg.fromNumber,
+            lastMessage: msg.content,
+            createdAt: msg.createdAt
+          });
+        }
+      }
+    });
+
+    const chats = Array.from(chatsMap.values()).sort((a, b) => 
+      new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    res.json({ success: true, chats });
+  } catch (error) {
+    console.error('❌ Dashboard chats error:', error);
+    res.status(500).json({ error: 'Failed to load chats.' });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 WhatsApp AI SaaS Backend is running!`);

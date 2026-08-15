@@ -144,7 +144,7 @@
               <textarea id="businessContext" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm transition"></textarea>
             </div>
 
-<!--  NEW: Knowledge Base Upload -->
+<!-- 📄 Knowledge Base Upload -->
 <div class="mt-4">
   <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
     📄 Knowledge Base (PDF/TXT)
@@ -152,10 +152,10 @@
   </label>
   <p class="text-xs text-gray-500 mb-2">Upload a PDF or TXT file (like a menu, price list, or FAQ). The AI will read it and use it to answer questions.</p>
   
-  <div class="flex gap-2">
+  <div class="flex flex-col sm:flex-row gap-2">
     <input type="file" id="knowledgeFile" accept=".pdf,.txt" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
-    <button onclick="uploadKnowledge()" id="uploadBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition flex items-center gap-2">
-      <span>📤</span> Upload & Train
+    <button onclick="uploadKnowledge()" id="uploadBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition whitespace-nowrap">
+      <span></span> Upload & Train
     </button>
   </div>
   <p id="uploadStatus" class="text-xs mt-2 font-medium"></p>
@@ -1158,6 +1158,41 @@
         uploadBtn.innerHTML = '<span>📤</span> Upload & Train';
       }
     }
+
+    // 🚀 Load Recent Chats for Owner Dashboard
+    async function loadOwnerChats() {
+      try {
+        const res = await fetch('/api/dashboard/chats', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        const data = await res.json();
+        
+        const chatContainer = document.getElementById('recentChats');
+        if (!chatContainer) return; // Not on owner dashboard
+        
+        if (res.ok && data.chats && data.chats.length > 0) {
+          chatContainer.innerHTML = data.chats.map(chat => `
+            <div onclick="openReplyBox('${chat.phoneNumber}')" class="p-4 border border-gray-200 rounded-lg hover:border-indigo-300 cursor-pointer transition bg-gray-50 hover:bg-white">
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-semibold text-gray-800">${chat.phoneNumber}</span>
+                <span class="text-xs text-gray-500">${new Date(chat.createdAt).toLocaleString()}</span>
+              </div>
+              <p class="text-sm text-gray-600 truncate">${chat.lastMessage}</p>
+            </div>
+          `).join('');
+        } else {
+          chatContainer.innerHTML = '<div class="text-center text-gray-400 py-8">No recent conversations</div>';
+        }
+      } catch (error) {
+        console.error('Load owner chats error:', error);
+      }
+    }
+
+    // Call this function when dashboard loads
+    document.addEventListener('DOMContentLoaded', () => {
+      loadOwnerChats();
+      loadTeamMembers(); // Existing function
+    });
 
     function logout() { localStorage.clear(); window.location.href = '/login'; }
 
