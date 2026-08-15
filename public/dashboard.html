@@ -9,11 +9,16 @@
 </head>
 <body class="bg-gray-50 min-h-screen">
   
-  <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-    <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
       <h1 class="text-xl font-bold text-green-600">Universal AI SaaS</h1>
-      <div class="flex items-center space-x-4">
-        <span id="userEmail" class="text-sm text-gray-600 font-medium hidden sm:block"></span>
+      <div class="flex items-center space-x-3">
+        <!-- 🚨 FIXED: Shows Business Name, not "User" -->
+        <span id="topBusinessName" class="text-sm text-gray-600 font-medium hidden sm:block">Loading...</span>
+        
+        <!-- 🚨 NEW: Change Password Button -->
+        <button onclick="alert('Password change feature coming in next update!')" class="text-sm bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition font-medium hidden sm:block">🔑 Change Password</button>
+        
         <button onclick="logout()" class="text-sm bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition font-medium">Logout</button>
       </div>
     </div>
@@ -488,12 +493,23 @@
     };
 
 
-    async function loadDashboard() {
+        async function loadDashboard() {
       try {
         const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
         if (data.success) {
           
+          // 🚨 CRITICAL FIX: Force these to load from database
+          document.getElementById('topBusinessName').textContent = data.tenant.businessName || 'My Business';
+          document.getElementById('businessName').textContent = data.tenant.businessName || 'My Business';
+          
+          // 🚨 CRITICAL FIX: Ensure API Key persists
+          document.getElementById('llmApiKey').value = data.tenant.llmApiKey || '';
+          
+          document.getElementById('systemPrompt').value = data.tenant.systemPrompt || '';
+          document.getElementById('businessContext').value = data.tenant.businessContext || '';
+          // ... (keep the rest of your existing code below this)
+       
           // 🚨 NEW: Filter personas based on botType from database
           const botType = data.tenant.botType || 'business';
           const personaDropdown = document.getElementById('personaTemplate');
@@ -844,6 +860,11 @@
       currentTenantIdForReply = document.getElementById('clientSelector') ? document.getElementById('clientSelector').value : null;
       document.getElementById('replyToNumber').textContent = number;
       document.getElementById('replyBox').classList.remove('hidden');
+      
+      // 🚨 NEW: Smooth scroll to the reply box on mobile so it doesn't disappear
+      setTimeout(() => {
+        document.getElementById('replyBox').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
     }
 
     function insertQuickReply() {
@@ -1036,6 +1057,8 @@
         if (chatContainer) { chatContainer.innerHTML = '<div class="text-center text-red-400 py-8">Failed to load chat history</div>'; }
       }
     }
+
+
 
     // 🚨 CLEANED: SINGLE DOMContentLoaded listener at the very end
     document.addEventListener('DOMContentLoaded', () => {
