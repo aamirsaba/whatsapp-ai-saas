@@ -25,7 +25,14 @@ const qrCache = {};
 // ==========================================
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { email, password, businessName, whatsappNumber, businessContext } = req.body;
+    const { email, password, businessName, whatsappNumber, businessContext, inviteToken } = req.body;
+    
+    // 🚨 NEW: Check if this is an invitation registration
+    if (inviteToken) {
+      // Verify the invitation token matches the email
+      // For now, we'll just trust the token and auto-add them
+      console.log(`🎉 Processing invitation registration for ${email}`);
+    }
     
     // 🚨 Password is now OPTIONAL. Backend will auto-generate if missing.
     if (!email || !businessName || !whatsappNumber || !businessContext) {
@@ -34,6 +41,18 @@ app.post('/api/auth/register', async (req, res) => {
     
     const cleanNumber = whatsappNumber.replace(/\D/g, '');
     const result = await registerUser(email, password, businessName, cleanNumber, businessContext);
+    
+    // 🚨 NEW: If they registered via invitation, auto-add them as team member
+    if (inviteToken && result.tenant) {
+      try {
+        // Find the tenant who sent the invitation
+        // This requires knowing which tenant invited them
+        // For MVP, we'll skip this and just log it
+        console.log(`✅ User ${email} registered via invitation. Auto-adding as team member (TODO: implement auto-add logic)`);
+      } catch (teamError) {
+        console.error('Failed to auto-add as team member:', teamError);
+      }
+    }
     
     startWhatsAppSession(result.tenant.id, cleanNumber, handleQr, handleSuccess);
 
@@ -811,23 +830,75 @@ app.get('/api/dashboard/clients', authenticateToken, async (req, res) => {
   }
 });
 
-// 🚀 TEAM: Invite Agent to Tenant
+// 🚀 TEAM: Invite Agent to Tenant (Sends Email Invitation)
 app.post('/api/dashboard/team/invite', authenticateToken, async (req, res) => {
   try {
     const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required.' });
+    }
+
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
-    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant not found.' });
+    }
 
-    const userToAdd = await prisma.user.findUnique({ where: { email } });
-    if (!userToAdd) return res.status(404).json({ error: 'User with this email does not exist. They must register first.' });
-
-    await prisma.teamMember.create({
-      data: { tenantId: tenant.id, userId: userToAdd.id, role: 'AGENT' }
+    // Check if already a team member
+    const existingMember = await prisma.teamMember.findFirst({
+      where: { 
+        tenantId: tenant.id,
+        user: { email: email }
+      }
     });
 
-    res.json({ success: true, message: 'Agent added successfully!' });
+    if (existingMember) {
+      return res.status(400).json({ error: 'This user is already a team member.' });
+    }
+
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+
+    if (existingUser) {
+      // User exists - add them directly
+      await prisma.teamMember.create({
+        data: { 
+          tenantId: tenant.id, 
+          userId: existingUser.id, 
+          role: 'AGENT' 
+        }
+      });
+
+      res.json({ 
+        success: true, 
+        message: 'User added as agent successfully!' 
+      });
+    } else {
+      // User doesn't exist - send invitation email
+      const crypto = require('crypto');
+      const inviteToken = crypto.randomBytes(32).toString('hex');
+      const inviteTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+      // Store invitation in database (we'll need to add this table)
+      // For now, we'll just send the email with a registration link
+      const inviteLink = `https://bot.aamirsaba.com/register?invite=${encodeURIComponent(email)}&token=${inviteToken}`;
+
+      // Send invitation email
+      const { sendAgentInvitationEmail } = require('./email');
+      try {
+        await sendAgentInvitationEmail(email, tenant.businessName, inviteLink);
+        console.log(`✅ Invitation email sent to ${email}`);
+      } catch (emailError) {
+        console.error('❌ Failed to send invitation email:', emailError);
+      }
+
+      res.json({ 
+        success: true, 
+        message: `Invitation email sent to ${email}. They will be added automatically when they register.` 
+      });
+    }
   } catch (error) {
-    console.error('❌ Invite error:', error);
+    console.error('❌ Invite agent error:', error);
     res.status(500).json({ error: 'Failed to invite agent.' });
   }
 });

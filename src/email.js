@@ -116,5 +116,47 @@ async function sendPasswordResetEmail(userEmail, newPassword) {
   }
 }
 
-// 🚨 UPDATE THIS LINE AT THE VERY BOTTOM OF email.js:
-module.exports = { sendWelcomeEmail, sendAdminNotificationEmail, sendPasswordResetEmail };
+// 🚀 AGENT INVITATION EMAIL
+async function sendAgentInvitationEmail(email, businessName, inviteLink) {
+  const mailOptions = {
+    from: `"${process.env.SMTP_FROM_NAME || 'Universal AI SaaS'}" <${process.env.SMTP_USER}>`,
+    to: email,
+    subject: ` You've been invited to join ${businessName}'s team!`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; background-color: #f9fafb;">
+        <h2 style="color: #16a34a;">🎉 You're Invited!</h2>
+        <p>Hello,</p>
+        <p>You've been invited to join <strong>${businessName}</strong>'s team as an AI Agent on Universal AI SaaS.</p>
+        
+        <div style="background: white; padding: 20px; border-radius: 6px; margin: 20px 0; text-align: center;">
+          <a href="${inviteLink}" 
+             style="display: inline-block; background: #4f46e5; color: white; padding: 12px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+            Accept Invitation & Register
+          </a>
+        </div>
+
+        <p style="color: #6b7280; font-size: 14px;">
+          This invitation link will expire in 7 days. If you have any questions, please contact the team.
+        </p>
+
+        <br>
+        <p style="color: #6b7280; font-size: 14px;">Best regards,<br><strong>Universal AI SaaS Team</strong></p>
+      </div>
+    `
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Agent invitation email sent to ${email}`);
+  } catch (error) {
+    console.error('❌ Failed to send agent invitation email:', error.message);
+    throw error;
+  }
+}
+
+module.exports = { 
+  sendWelcomeEmail, 
+  sendAdminNotificationEmail, 
+  sendPasswordResetEmail,
+  sendAgentInvitationEmail  // 🚨 ADD THIS
+};
