@@ -1493,6 +1493,30 @@ app.get('/api/dashboard/chats', authenticateToken, async (req, res) => {
   }
 });
 
+//  DASHBOARD: Get recent chat history (last 20 messages)
+app.get('/api/dashboard/chat-history', authenticateToken, async (req, res) => {
+  try {
+    const tenant = await prisma.tenant.findFirst({ 
+      where: { userId: req.user.userId },
+      include: {
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 20
+        }
+      }
+    });
+
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant not found.' });
+    }
+
+    res.json({ success: true, messages: tenant.messages });
+  } catch (error) {
+    console.error(' Chat history error:', error);
+    res.status(500).json({ error: 'Failed to load chat history.' });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 WhatsApp AI SaaS Backend is running!`);
