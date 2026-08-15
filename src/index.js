@@ -276,20 +276,26 @@ app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html'));
 });
 
+// 🚀 GET DASHBOARD DATA (Tenant Info & Leads)
 app.get('/api/dashboard', authenticateToken, async (req, res) => {
   try {
-    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
-    if (!tenant) return res.status(404).json({ error: 'No business found for this user.' });
+    const tenant = await prisma.tenant.findFirst({ 
+      where: { userId: req.user.userId }
+    });
+    
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant not found.' });
+    }
 
-    const messages = await prisma.message.findMany({
+    const leads = await prisma.lead.findMany({
       where: { tenantId: tenant.id },
       orderBy: { createdAt: 'desc' },
-      take: 20
+      take: 50
     });
 
-    res.json({ success: true, tenant, messages });
+    res.json({ success: true, tenant, leads });
   } catch (error) {
-    console.error('Dashboard load error:', error);
+    console.error('❌ Dashboard data error:', error);
     res.status(500).json({ error: 'Failed to load dashboard data.' });
   }
 });
@@ -902,16 +908,23 @@ app.post('/api/dashboard/team/invite', authenticateToken, async (req, res) => {
 app.get('/api/dashboard/team', authenticateToken, async (req, res) => {
   try {
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
-    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant not found.' });
+    }
 
     const members = await prisma.teamMember.findMany({
       where: { tenantId: tenant.id },
-      include: { user: { select: { email: true } } }
+      include: { 
+        user: { 
+          select: { id: true, email: true, role: true } 
+        } 
+      }
     });
+
     res.json({ success: true, members });
   } catch (error) {
     console.error('❌ Fetch team error:', error);
-    res.status(500).json({ error: 'Failed to fetch team.' });
+    res.status(500).json({ error: 'Failed to fetch team members.' });
   }
 });
 
