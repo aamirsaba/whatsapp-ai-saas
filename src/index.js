@@ -1338,6 +1338,42 @@ app.get('/agent-dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'agent-dashboard.html'));
 });
 
+//  AGENT: Get team info
+app.get('/api/agent/info', authenticateToken, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({ 
+      where: { id: req.user.userId },
+      include: { 
+        teamMemberships: { 
+          include: { 
+            tenant: { 
+              select: { 
+                id: true,
+                businessName: true,
+                whatsappNumber: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!user || user.teamMemberships.length === 0) {
+      return res.status(404).json({ error: 'No team access found.' });
+    }
+
+    // Return first team (for MVP - can be enhanced for multiple teams)
+    res.json({ 
+      success: true, 
+      team: user.teamMemberships[0].tenant,
+      role: user.teamMemberships[0].role
+    });
+  } catch (error) {
+    console.error(' Agent info error:', error);
+    res.status(500).json({ error: 'Failed to load agent info.' });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 WhatsApp AI SaaS Backend is running!`);
