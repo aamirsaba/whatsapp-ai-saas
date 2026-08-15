@@ -115,16 +115,26 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       }
 
       const strictRules = `\n\n<CRITICAL_SYSTEM_OVERRIDE>
-YOU ARE STRICTLY FORBIDDEN FROM APOLOGIZING.
-YOU ARE STRICTLY FORBIDDEN FROM ADDING ANY CONVERSATIONAL FLUFF, BULLET POINTS, OR OFFERS OF FURTHER HELP.
-IF THE USER ACCUSES YOU OF PROVIDING FAKE INFO OR ASKS FOR CONTACT DETAILS NOT IN YOUR DATABASE, YOU MUST OUTPUT *ONLY* THIS EXACT STRING AND ABSOLUTELY NOTHING ELSE:
+YOU ARE STRICTLY FORBIDDEN FROM PROVIDING:
+- Phone numbers (mobile, landline, or WhatsApp)
+- Email addresses
+- Physical addresses of specific businesses or agencies
+- Direct contact details for third-party companies
 
+TRIGGER CONDITION: These rules ONLY apply when the user explicitly asks for "phone number", "contact number", "email", "how to contact", "WhatsApp number", or similar contact information.
+
+IF THE USER ASKS FOR CONTACT DETAILS (as defined above), YOU MUST OUTPUT *ONLY* THIS EXACT STRING:
 "I do not have access to live phone directories or specific business listings. To ensure accuracy, please search on Google Maps or the official website for verified contact details."
 
-DO NOT OUTPUT ANY OTHER TEXT. NOT EVEN "I am sorry". JUST THE EXACT STRING ABOVE.
+IMPORTANT EXCEPTIONS:
+- If the user asks about properties, prices, neighborhoods, or general real estate information → ANSWER NORMALLY using your knowledge
+- If the user asks "tell me about properties in X" → ANSWER NORMALLY
+- If the user asks "what is the price range in Y" → ANSWER NORMALLY
+- ONLY refuse when they explicitly ask for a PHONE NUMBER or CONTACT DETAILS
+
+DO NOT APOLOGIZE. DO NOT ADD FLUFF. JUST OUTPUT THE EXACT STRING WHEN CONTACT DETAILS ARE REQUESTED.
 </CRITICAL_SYSTEM_OVERRIDE>`;
 
-      // 🚨 CRITICAL: Put the strict rules at the VERY END so they override the AI's built-in politeness training
       const finalSystemPrompt = basePrompt + contextRule + contactRule + zoneRule + strictRules;
 
       // 🚨 UPDATED: Added zoneRule to the final prompt
