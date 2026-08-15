@@ -282,17 +282,19 @@ app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
     await prisma.tenant.update({
       where: { id: tenant.id },
       data: { 
-        systemPrompt: systemPrompt !== undefined ? systemPrompt : tenant.systemPrompt,
+        // 🚨 NEW: Completely ignore systemPrompt from user input. Keep the original auto-generated one.
+        systemPrompt: tenant.systemPrompt, 
         businessContext: businessContext !== undefined ? businessContext : tenant.businessContext,
         contactInfo: contactInfo !== undefined ? contactInfo : tenant.contactInfo,
         llmApiKey: llmApiKey,
         llmModel: llmModel || tenant.llmModel,
         llmProvider: llmProvider || tenant.llmProvider || 'OPENAI',
         llmBaseUrl: llmBaseUrl,
-        isHumanMode: isHumanMode === true || isHumanMode === 'true', // 🚨 CRITICAL: This saves the toggle state
-	leadWebhookUrl: leadWebhookUrl || null //  Save the webhook URL
+        isHumanMode: isHumanMode === true || isHumanMode === 'true',
+        leadWebhookUrl: leadWebhookUrl || null
       }
     });
+       
 
     res.json({ success: true, message: '✨ AI Settings updated successfully!' });
   } catch (error) {
