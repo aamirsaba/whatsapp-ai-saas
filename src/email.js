@@ -129,10 +129,11 @@ async function sendAgentInvitationEmail(email, businessName, inviteLink) {
         <p>You've been invited to join <strong>${businessName}</strong>'s team as an AI Agent on Universal AI SaaS.</p>
         
         <div style="background: white; padding: 20px; border-radius: 6px; margin: 20px 0; text-align: center;">
-          <a href="${inviteLink}" 
-             style="display: inline-block; background: #4f46e5; color: white; padding: 12px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
-            Accept Invitation & Register
-          </a>
+          // In sendAgentInvitationEmail, update the button text:
+<a href="${inviteLink}" 
+   style="display: inline-block; background: #16a34a; color: white; padding: 12px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+  Accept Invitation & Set Password
+</a>
         </div>
 
         <p style="color: #6b7280; font-size: 14px;">

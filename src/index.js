@@ -496,6 +496,9 @@ app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
 });
 
+app.get('/accept-invitation', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'accept-invitation.html'));
+});
 
 app.get('/forgot-password', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'forgot-password.html'));
@@ -830,75 +833,56 @@ app.get('/api/dashboard/clients', authenticateToken, async (req, res) => {
   }
 });
 
-// 🚀 TEAM: Invite Agent to Tenant (Sends Email Invitation)
+// 🚀 TEAM: Invite Agent (Creates DB Record + Sends Email)
 app.post('/api/dashboard/team/invite', authenticateToken, async (req, res) => {
   try {
     const { email } = req.body;
-    
-    if (!email) {
-      return res.status(400).json({ error: 'Email is required.' });
-    }
+    if (!email) return res.status(400).json({ error: 'Email is required.' });
 
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
-    if (!tenant) {
-      return res.status(404).json({ error: 'Tenant not found.' });
-    }
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
 
     // Check if already a team member
-    const existingMember = await prisma.teamMember.findFirst({
-      where: { 
-        tenantId: tenant.id,
-        user: { email: email }
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      const existingMember = await prisma.teamMember.findFirst({
+        where: { tenantId: tenant.id, userId: existingUser.id }
+      });
+      if (existingMember) {
+        return res.status(400).json({ error: 'This user is already a team member.' });
       }
+      // Auto-add existing user
+      await prisma.teamMember.create({
+        data: { tenantId: tenant.id, userId: existingUser.id, role: 'AGENT' }
+      });
+      return res.json({ success: true, message: `${email} added as agent successfully!` });
+    }
+
+    // Check for pending invitation
+    const pendingInvite = await prisma.teamInvitation.findFirst({
+      where: { email, tenantId: tenant.id, accepted: false, expiresAt: { gt: new Date() } }
+    });
+    if (pendingInvite) {
+      return res.json({ success: true, message: `Invitation already sent to ${email}. Link expires in 7 days.` });
+    }
+
+    // Create invitation record
+    const crypto = require('crypto');
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    await prisma.teamInvitation.create({
+      data: { email, tenantId: tenant.id, token, expiresAt }
     });
 
-    if (existingMember) {
-      return res.status(400).json({ error: 'This user is already a team member.' });
-    }
+    // Send email
+    const inviteLink = `https://bot.aamirsaba.com/accept-invitation?email=${encodeURIComponent(email)}&token=${token}`;
+    const { sendAgentInvitationEmail } = require('./email');
+    await sendAgentInvitationEmail(email, tenant.businessName, inviteLink);
 
-    // Check if user exists
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-
-    if (existingUser) {
-      // User exists - add them directly
-      await prisma.teamMember.create({
-        data: { 
-          tenantId: tenant.id, 
-          userId: existingUser.id, 
-          role: 'AGENT' 
-        }
-      });
-
-      res.json({ 
-        success: true, 
-        message: 'User added as agent successfully!' 
-      });
-    } else {
-      // User doesn't exist - send invitation email
-      const crypto = require('crypto');
-      const inviteToken = crypto.randomBytes(32).toString('hex');
-      const inviteTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-
-      // Store invitation in database (we'll need to add this table)
-      // For now, we'll just send the email with a registration link
-      const inviteLink = `https://bot.aamirsaba.com/register?invite=${encodeURIComponent(email)}&token=${inviteToken}`;
-
-      // Send invitation email
-      const { sendAgentInvitationEmail } = require('./email');
-      try {
-        await sendAgentInvitationEmail(email, tenant.businessName, inviteLink);
-        console.log(`✅ Invitation email sent to ${email}`);
-      } catch (emailError) {
-        console.error('❌ Failed to send invitation email:', emailError);
-      }
-
-      res.json({ 
-        success: true, 
-        message: `Invitation email sent to ${email}. They will be added automatically when they register.` 
-      });
-    }
+    res.json({ success: true, message: `Invitation email sent to ${email}.` });
   } catch (error) {
-    console.error('❌ Invite agent error:', error);
+    console.error(' Invite error:', error);
     res.status(500).json({ error: 'Failed to invite agent.' });
   }
 });
@@ -1171,6 +1155,55 @@ app.get('/api/dashboard/team', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('❌ Fetch team error:', error);
     res.status(500).json({ error: 'Failed to fetch team members.' });
+  }
+});
+
+
+//  ACCEPT INVITATION: Create account + add to team
+app.post('/api/auth/accept-invitation', async (req, res) => {
+  try {
+    const { email, token, password } = req.body;
+    if (!email || !token || !password) {
+      return res.status(400).json({ error: 'Email, token, and password are required.' });
+    }
+
+    // Verify invitation
+    const invitation = await prisma.teamInvitation.findFirst({
+      where: { email, token, accepted: false, expiresAt: { gt: new Date() } }
+    });
+
+    if (!invitation) {
+      return res.status(400).json({ error: 'Invalid or expired invitation link.' });
+    }
+
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ error: 'An account with this email already exists. Please log in instead.' });
+    }
+
+    // Create user
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await prisma.user.create({
+      data: { email, password: hashedPassword, role: 'AGENT' }
+    });
+
+    // Add to team
+    await prisma.teamMember.create({
+      data: { tenantId: invitation.tenantId, userId: newUser.id, role: 'AGENT' }
+    });
+
+    // Mark invitation as accepted
+    await prisma.teamInvitation.update({
+      where: { id: invitation.id },
+      data: { accepted: true }
+    });
+
+    res.json({ success: true, message: 'Account created and added to team!' });
+  } catch (error) {
+    console.error('❌ Accept invitation error:', error);
+    res.status(500).json({ error: 'Failed to accept invitation.' });
   }
 });
 

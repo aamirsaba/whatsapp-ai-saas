@@ -11,6 +11,7 @@ datasource db {
 enum Role {
   ADMIN
   TENANT
+  AGENT // 🚨 ADDED: So invited team members get the correct role
 }
 
 // 2. Define Supported AI Providers
@@ -54,7 +55,7 @@ model Tenant {
   systemPrompt     String         @default("You are a helpful AI assistant.")
   businessContext  String?        @db.Text
   contactInfo      String?        @db.Text
-  serviceAreas     String?        @db.Text // 🚨 KEPT ONLY ONE INSTANCE OF THIS
+  serviceAreas     String?        @db.Text 
 
   isActive         Boolean        @default(true)
   isHumanMode      Boolean        @default(false)
@@ -65,6 +66,7 @@ model Tenant {
   llmModel         String?
   llmBaseUrl       String?
   leadWebhookUrl   String?
+  botPolicy        String?        @db.Text // Stores custom rules/policy (optional for future use)
 
   userId           String?
   user             User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -72,9 +74,7 @@ model Tenant {
   messages         Message[]
   leads            Lead[]
   teamMembers      TeamMember[]
-
-botPolicy String? @db.Text // 🚨 NEW: Stores the custom rules/policy for this bot
-
+  invitations      TeamInvitation[] // 🚨 ADDED: Relation to invitations
 }
 
 // 5. The Message Model
@@ -115,4 +115,20 @@ model TeamMember {
   createdAt DateTime @default(now())
 
   @@unique([tenantId, userId])
+}
+
+// 8. 🚨 NEW: The Team Invitation Model
+model TeamInvitation {
+  id        String   @id @default(cuid())
+  email     String
+  tenantId  String
+  token     String   @unique
+  expiresAt DateTime
+  accepted  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([token])
 }

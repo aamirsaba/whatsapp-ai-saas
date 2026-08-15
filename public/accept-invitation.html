@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accept Invitation - Universal AI SaaS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
+  <div class="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
+    <div class="text-center mb-6">
+      <div class="text-5xl mb-3">🎉</div>
+      <h1 class="text-2xl font-bold text-gray-800">You're Invited!</h1>
+      <p class="text-gray-600 mt-2 text-sm">Join the team as an AI Agent</p>
+    </div>
+
+    <div id="statusBox" class="hidden mb-4 p-3 rounded-lg text-sm font-medium"></div>
+
+    <form id="acceptForm" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <input type="email" id="email" readonly 
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 text-sm cursor-not-allowed">
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Create Password</label>
+        <input type="password" id="password" required minlength="6" placeholder="At least 6 characters"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none">
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+        <input type="password" id="confirmPassword" required minlength="6" placeholder="Re-enter password"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none">
+      </div>
+
+      <button type="submit" id="submitBtn"
+        class="w-full bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition">
+        ✅ Accept & Create Account
+      </button>
+    </form>
+
+    <div id="successBox" class="hidden text-center mt-4">
+      <div class="text-4xl mb-2">✅</div>
+      <p class="text-green-700 font-semibold">Account created!</p>
+      <p class="text-sm text-gray-600 mt-1">You've been added to the team. Redirecting to login...</p>
+    </div>
+  </div>
+
+  <script>
+    // Parse URL params
+    const params = new URLSearchParams(window.location.search);
+    const email = params.get('email');
+    const token = params.get('token');
+
+    if (!email || !token) {
+      document.getElementById('statusBox').className = 'mb-4 p-3 rounded-lg text-sm font-medium bg-red-100 text-red-700';
+      document.getElementById('statusBox').textContent = '❌ Invalid invitation link. Please check the URL.';
+      document.getElementById('acceptForm').style.display = 'none';
+    } else {
+      document.getElementById('email').value = email;
+    }
+
+    document.getElementById('acceptForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const statusBox = document.getElementById('statusBox');
+      const submitBtn = document.getElementById('submitBtn');
+
+      if (password !== confirmPassword) {
+        statusBox.className = 'mb-4 p-3 rounded-lg text-sm font-medium bg-red-100 text-red-700';
+        statusBox.textContent = '❌ Passwords do not match.';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating account...';
+
+      try {
+        const res = await fetch('/api/auth/accept-invitation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, token, password })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          document.getElementById('acceptForm').style.display = 'none';
+          document.getElementById('successBox').classList.remove('hidden');
+          setTimeout(() => { window.location.href = '/login'; }, 2500);
+        } else {
+          statusBox.className = 'mb-4 p-3 rounded-lg text-sm font-medium bg-red-100 text-red-700';
+          statusBox.textContent = '❌ ' + (data.error || 'Failed to accept invitation.');
+          submitBtn.disabled = false;
+          submitBtn.textContent = '✅ Accept & Create Account';
+        }
+      } catch (err) {
+        statusBox.className = 'mb-4 p-3 rounded-lg text-sm font-medium bg-red-100 text-red-700';
+        statusBox.textContent = '❌ Network error. Please try again.';
+        submitBtn.disabled = false;
+        submitBtn.textContent = '✅ Accept & Create Account';
+      }
+    });
+  </script>
+</body>
+</html>
