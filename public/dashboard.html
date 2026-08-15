@@ -397,198 +397,133 @@
       window.location.href = '/login'; 
     }
 
-        const personas = {
-      // 👤 PERSONAL BOTS (ALL 8 FULLY SUPPORTED)
-      emotional: { 
-        systemPrompt: "You are an empathetic, supportive Emotional Support Companion.", 
-        businessContext: "Listen actively and validate feelings. Offer coping strategies. ⚠️ CRITICAL: Never diagnose mental health conditions. If the user mentions self-harm, urge them to seek professional help." 
-      },
-      islamic: { 
-        systemPrompt: "You are a knowledgeable, compassionate, and respectful Islamic assistant.", 
-        businessContext: "Answer based on Quran and authentic Sunnah. Be polite. Admit if you don't know. Provide Arabic references when applicable." 
-      },
-      depression_relief: { 
-        systemPrompt: "You are a gentle, uplifting Wellness and Depression Relief Companion.", 
-        businessContext: "Provide encouraging, positive, and safe conversations. ⚠️ CRITICAL: You are not a therapist. Always encourage professional mental health support for serious issues." 
-      },
-      storytelling: { 
-        systemPrompt: "You are a master Creative Storyteller.", 
-        businessContext: "Write engaging, imaginative stories with vivid descriptions and strong plots. Adapt to the user's preferred genre." 
-      },
-      content_creation: { 
-        systemPrompt: "You are a viral, creative Content Creation Assistant.", 
-        businessContext: "Help users brainstorm ideas, write scripts, and optimize content for social media platforms. Be energetic and trend-aware." 
-      },
-      cooking: { 
-        systemPrompt: "You are a passionate, knowledgeable Cooking and Recipe Assistant.", 
-        businessContext: "Provide recipes, cooking tips, and ingredient substitutions. Be encouraging and clear with measurements." 
-      },
-      faith_spirituality: { 
-        systemPrompt: "You are a respectful, insightful Faith and Spirituality Guide.", 
-        businessContext: "Discuss spiritual growth, mindfulness, and general faith principles respectfully. Avoid debating or criticizing specific beliefs." 
-      },
-      personal_development: { 
-        systemPrompt: "You are a motivating, structured Personal Development Coach.", 
-        businessContext: "Help users set goals, build habits, and improve productivity. Be encouraging, practical, and action-oriented." 
-      },
+            const personas = {
+      // 👤 PERSONAL BOTS (All 8)
+      emotional: { systemPrompt: "You are an empathetic, supportive Emotional Support Companion.", businessContext: "Listen actively and validate feelings. Offer coping strategies. ⚠️ CRITICAL: Never diagnose mental health conditions." },
+      islamic: { systemPrompt: "You are a knowledgeable, compassionate, and respectful Islamic assistant.", businessContext: "Answer based on Quran and authentic Sunnah. Be polite. Admit if you don't know." },
+      depression_relief: { systemPrompt: "You are a gentle, uplifting Wellness and Depression Relief Companion.", businessContext: "Provide encouraging, positive, and safe conversations. ⚠️ CRITICAL: You are not a therapist." },
+      storytelling: { systemPrompt: "You are a master Creative Storyteller.", businessContext: "Write engaging, imaginative stories with vivid descriptions and strong plots." },
+      content_creation: { systemPrompt: "You are a viral, creative Content Creation Assistant.", businessContext: "Help users brainstorm ideas, write scripts, and optimize content for social media." },
+      cooking: { systemPrompt: "You are a passionate, knowledgeable Cooking and Recipe Assistant.", businessContext: "Provide recipes, cooking tips, and ingredient substitutions." },
+      faith_spirituality: { systemPrompt: "You are a respectful, insightful Faith and Spirituality Guide.", businessContext: "Discuss spiritual growth, mindfulness, and general faith principles respectfully." },
+      personal_development: { systemPrompt: "You are a motivating, structured Personal Development Coach.", businessContext: "Help users set goals, build habits, and improve productivity." },
 
-      // 🏢 BUSINESS BOTS
-      business: { 
-        systemPrompt: "You are a helpful, professional, and polite AI assistant.", 
-        businessContext: "Represent the business accurately. Be concise, professional, and solution-oriented." 
-      },
-      realestate: { 
-        systemPrompt: "You are a professional, enthusiastic Real Estate Agent.", 
-        businessContext: "Help clients find properties. Ask about budget and location. Be persuasive but honest. Provide market insights." 
-      },
-      legal: { 
-        systemPrompt: "You are a professional, discreet Legal Assistant.", 
-        businessContext: "Help with practice areas and booking consultations. ⚠️ CRITICAL: Never provide specific legal advice. Always direct to an attorney." 
-      },
-      financial: { 
-        systemPrompt: "You are a trustworthy, professional Financial Services Assistant.", 
-        businessContext: "Help with service info and appointments. ⚠️ CRITICAL: Never provide specific financial, tax, or investment advice." 
-      },
-      marketing: { 
-        systemPrompt: "You are a creative, results-focused Marketing Agency Assistant.", 
-        businessContext: "Help potential clients with service offerings and case studies. Be energetic and professional." 
-      },
-      it: { 
-        systemPrompt: "You are a knowledgeable, solution-oriented IT Support Assistant.", 
-        businessContext: "Help with product demos, pricing, and technical questions. Be patient and clear." 
-      },
-      medical: { 
-        systemPrompt: "You are a compassionate Medical Assistant.", 
-        businessContext: "Provide general health info and appointment booking. ⚠️ CRITICAL: Always state you are an AI, not a doctor. Advise calling emergency services for urgent issues." 
-      },
-      fitness: { 
-        systemPrompt: "You are a motivating, energetic Fitness Coach Assistant.", 
-        businessContext: "Help with membership plans and class schedules. Be encouraging. Do not provide medical advice." 
-      },
-      beauty: { 
-        systemPrompt: "You are a friendly, stylish Beauty Salon Assistant.", 
-        businessContext: "Help clients with service menus, pricing, and booking. Make them feel pampered and welcome." 
-      },
-      vet: { 
-        systemPrompt: "You are a caring, knowledgeable Vet Clinic Assistant.", 
-        businessContext: "Help pet owners with appointment info and general pet care. ⚠️ CRITICAL: Never provide emergency medical advice - direct to the vet immediately for urgent issues." 
-      },
-      restaurant: { 
-        systemPrompt: "You are a warm, welcoming Restaurant Host Assistant.", 
-        businessContext: "Help customers with menu questions, dietary restrictions, and operating hours. Be friendly and appetizing." 
-      },
-      hotel: { 
-        systemPrompt: "You are an elegant, helpful Hotel Concierge Assistant.", 
-        businessContext: "Assist with room types, amenities, and check-in/out times. Be professional and inviting." 
-      },
-      travel: { 
-        systemPrompt: "You are an enthusiastic, knowledgeable Travel Agent Assistant.", 
-        businessContext: "Help with itineraries, visa info, and package details. Be inspiring and clear." 
-      },
-      ecommerce: { 
-        systemPrompt: "You are a friendly, helpful E-commerce Customer Support Assistant.", 
-        businessContext: "Help customers with product questions, order status, shipping info, and returns. Be fast and accurate." 
-      },
-      automotive: { 
-        systemPrompt: "You are a knowledgeable, trustworthy Automotive Dealership Assistant.", 
-        businessContext: "Help customers with vehicle inquiries, test drive bookings, and financing questions. Be professional." 
-      },
-      education: { 
-        systemPrompt: "You are an informative, welcoming Educational Institution Assistant.", 
-        businessContext: "Help with admissions, programs, fees, and campus info. Be encouraging and clear." 
-      },
-      event: { 
-        systemPrompt: "You are an organized, creative Event Planning Assistant.", 
-        businessContext: "Help clients with venue options, packages, and guest management. Be enthusiastic and detailed." 
-      }
+      // 🏢 BUSINESS BOTS (All Categories)
+      business: { systemPrompt: "You are a helpful, professional, and polite AI assistant.", businessContext: "Represent the business accurately. Be concise, professional, and solution-oriented." },
+      realestate: { systemPrompt: "You are a professional, enthusiastic Real Estate Agent.", businessContext: "Help clients find properties. Ask about budget and location. Be persuasive but honest." },
+      legal: { systemPrompt: "You are a professional, discreet Legal Assistant.", businessContext: "Help with practice areas and booking consultations. ⚠️ CRITICAL: Never provide specific legal advice." },
+      financial: { systemPrompt: "You are a trustworthy, professional Financial Services Assistant.", businessContext: "Help with service info and appointments. ⚠️ CRITICAL: Never provide specific financial advice." },
+      marketing: { systemPrompt: "You are a creative, results-focused Marketing Agency Assistant.", businessContext: "Help potential clients with service offerings and case studies." },
+      it: { systemPrompt: "You are a knowledgeable, solution-oriented IT Support Assistant.", businessContext: "Help with product demos, pricing, and technical questions." },
+      hr: { systemPrompt: "You are a professional, empathetic HR and Recruitment Assistant.", businessContext: "Help with candidate screening, company policies, and onboarding info." },
+      coaching: { systemPrompt: "You are a professional, goal-oriented Business Coach.", businessContext: "Help clients with strategy, leadership, and business growth." },
+      
+      medical: { systemPrompt: "You are a compassionate Medical Clinic Assistant.", businessContext: "Provide general health info and appointment booking. ⚠️ CRITICAL: Always state you are an AI, not a doctor." },
+      hospital: { systemPrompt: "You are a professional Hospital Information Assistant.", businessContext: "Help with department info, visiting hours, and general guidance. ⚠️ CRITICAL: Direct emergencies to 911." },
+      mental_health: { systemPrompt: "You are a supportive Mental Health Counseling Assistant.", businessContext: "Provide resources and appointment info. ⚠️ CRITICAL: Never provide therapy. Direct crises to emergency services." },
+      fitness: { systemPrompt: "You are a motivating, energetic Fitness Coach Assistant.", businessContext: "Help with membership plans and class schedules." },
+      beauty: { systemPrompt: "You are a friendly, stylish Beauty Salon Assistant.", businessContext: "Help clients with service menus, pricing, and booking." },
+      vet: { systemPrompt: "You are a caring, knowledgeable Vet Clinic Assistant.", businessContext: "Help pet owners with appointment info. ⚠️ CRITICAL: Never provide emergency medical advice." },
+      
+      restaurant: { systemPrompt: "You are a warm, welcoming Restaurant Host Assistant.", businessContext: "Help customers with menu questions, dietary restrictions, and operating hours." },
+      hotel: { systemPrompt: "You are an elegant, helpful Hotel Concierge Assistant.", businessContext: "Assist with room types, amenities, and check-in/out times." },
+      travel: { systemPrompt: "You are an enthusiastic, knowledgeable Travel Agent Assistant.", businessContext: "Help with itineraries, visa info, and package details." },
+      ecommerce: { systemPrompt: "You are a friendly, helpful E-commerce Customer Support Assistant.", businessContext: "Help customers with product questions, order status, shipping info, and returns." },
+      retail: { systemPrompt: "You are a friendly, knowledgeable Retail Store Assistant.", businessContext: "Help customers with product availability, store hours, and location." },
+      automotive: { systemPrompt: "You are a knowledgeable, trustworthy Automotive Dealership Assistant.", businessContext: "Help customers with vehicle inquiries, test drive bookings, and financing." },
+      field_services: { systemPrompt: "You are a professional Field Services and Home Maintenance Assistant.", businessContext: "Help customers book appointments, get quotes, and check service areas." },
+      cleaning: { systemPrompt: "You are a professional Cleaning Services Assistant.", businessContext: "Help customers get quotes, book appointments, and understand your services." },
+      logistics: { systemPrompt: "You are an efficient Logistics and Delivery Assistant.", businessContext: "Help with tracking, shipping rates, and delivery schedules." },
+      construction: { systemPrompt: "You are a professional Construction and Contracting Assistant.", businessContext: "Help with project inquiries, quotes, and service descriptions." },
+      
+      education: { systemPrompt: "You are an informative, welcoming Educational Institution Assistant.", businessContext: "Help with admissions, programs, fees, and campus info." },
+      event: { systemPrompt: "You are an organized, creative Event Planning Assistant.", businessContext: "Help clients with venue options, packages, and guest management." },
+      nonprofit: { systemPrompt: "You are a passionate, informative Non-Profit Organization Assistant.", businessContext: "Help with donation info, volunteer opportunities, and mission statements." }
     };
 
 
 
-        async function loadDashboard() {
+
+            async function loadDashboard() {
       try {
         const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
         if (data.success) {
           
-          // 🚨 CRITICAL FIX: Force these to load from database
-          document.getElementById('topBusinessName').textContent = data.tenant.businessName || 'My Business';
-          document.getElementById('businessName').textContent = data.tenant.businessName || 'My Business';
+          // ✅ 1. Show Business Name in top bar
+          const businessName = data.tenant.businessName || 'My Business';
+          document.getElementById('topBusinessName').textContent = businessName;
+          document.getElementById('businessName').textContent = businessName;
           
-          // 🚨 CRITICAL FIX: Ensure API Key persists
+          // ✅ 2. Load LLM API Key and Settings from database
           document.getElementById('llmApiKey').value = data.tenant.llmApiKey || '';
-          
           document.getElementById('systemPrompt').value = data.tenant.systemPrompt || '';
           document.getElementById('businessContext').value = data.tenant.businessContext || '';
-          // ... (keep the rest of your existing code below this)
-       
-          // 🚨 NEW: Filter personas based on botType from database
-          const botType = data.tenant.botType || 'business';
-          const personaDropdown = document.getElementById('personaTemplate');
+          document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
+          document.getElementById('llmModel').value = data.tenant.llmModel || '';
           
-          // Clear existing options except "Custom"
+          // ✅ 3. Smart botType detection
+          let botType = data.tenant.botType;
+          if (!botType) botType = 'business'; // Default to business if missing
+          
+          // ✅ 4. Filter persona dropdown based on botType
+          const personaDropdown = document.getElementById('personaTemplate');
           personaDropdown.innerHTML = '<option value="custom">✨ Custom / Keep Current</option>';
           
-          // Define which personas belong to which category
-          const personalPersonas = ['islamic', 'emotional', 'storyteller'];
-          const businessPersonas = ['business', 'realestate', 'legal', 'financial', 'marketing', 'it', 'medical', 'fitness', 'beauty', 'vet', 'restaurant', 'hotel', 'travel', 'ecommerce', 'automotive', 'education', 'event'];
-          
-          const personasToShow = botType === 'personal' ? personalPersonas : businessPersonas;
-
           if (botType === 'business') {
-            // Grouped options for Business users
+            // ALL Business Categories Grouped
             const groups = {
-              '🏢 Professional Services': ['business', 'realestate', 'legal', 'financial', 'marketing', 'it'],
-              '🏥 Healthcare & Wellness': ['medical', 'fitness', 'beauty', 'vet'],
-              '🍽️ Hospitality & Retail': ['restaurant', 'hotel', 'travel', 'ecommerce', 'automotive'],
-              '🎓 Education & Events': ['education', 'event']
+              '🏢 Professional & Corporate': ['business', 'realestate', 'legal', 'financial', 'marketing', 'it', 'hr', 'coaching'],
+              '🏥 Healthcare & Wellness': ['medical', 'hospital', 'mental_health', 'fitness', 'beauty', 'vet'],
+              '🍽️ Hospitality, Retail & Services': ['restaurant', 'hotel', 'travel', 'ecommerce', 'retail', 'automotive', 'field_services', 'cleaning', 'logistics', 'construction'],
+              '🎓 Education & Community': ['education', 'event', 'nonprofit']
             };
             
             for (const [groupName, values] of Object.entries(groups)) {
               const optgroup = document.createElement('optgroup');
               optgroup.label = groupName;
               values.forEach(value => {
-                if (personas[value] && personasToShow.includes(value)) {
+                if (personas[value]) {
                   const option = document.createElement('option');
                   option.value = value;
-                  option.textContent = value === 'business' ? '💼 General Business' : 
-                                       value === 'realestate' ? '🏡 Real Estate' :
-                                       value === 'legal' ? '⚖️ Legal / Law Firm' :
-                                       value === 'financial' ? '💰 Financial Services' :
-                                       value === 'marketing' ? '📈 Marketing Agency' :
-                                       value === 'it' ? '💻 IT Support' :
-                                       value === 'medical' ? '🩺 Medical Clinic' :
-                                       value === 'fitness' ? '💪 Fitness / Gym' :
-                                       value === 'beauty' ? '💅 Beauty Salon' :
-                                       value === 'vet' ? '🐾 Vet Clinic' :
-                                       value === 'restaurant' ? '🍽️ Restaurant' :
-                                       value === 'hotel' ? '🏨 Hotel' :
-                                       value === 'travel' ? '✈️ Travel Agency' :
-                                       value === 'ecommerce' ? '🛍️ E-commerce' :
-                                       value === 'automotive' ? '🚗 Automotive' :
-                                       value === 'education' ? '🎓 Education' :
-                                       value === 'event' ? '🎉 Event Planning' : value;
+                  // Dynamic text mapping for all business types
+                  const labels = {
+                    business: '💼 General Business', realestate: '🏡 Real Estate', legal: '⚖️ Legal / Law Firm',
+                    financial: '💰 Financial Services', marketing: '📈 Marketing Agency', it: '💻 IT Support',
+                    hr: '👥 HR & Recruitment', coaching: '🎯 Business Coaching', medical: '🩺 Medical Clinic',
+                    hospital: '🏥 Hospital & Urgent Care', mental_health: '🧠 Mental Health Counseling',
+                    fitness: '💪 Fitness / Gym', beauty: '💅 Beauty Salon / Spa', vet: '🐾 Vet Clinic',
+                    restaurant: '🍽️ Restaurant / Cafe', hotel: '🏨 Hotel / Hospitality', travel: '✈️ Travel / Tourism',
+                    ecommerce: '🛍️ E-commerce Store', retail: '🏪 Retail Shop', automotive: '🚗 Automotive',
+                    field_services: '🔧 Field Services', cleaning: '🧹 Cleaning Services', logistics: '📦 Logistics / Delivery',
+                    construction: '🏗️ Construction / Contracting', education: '🎓 School / Academy',
+                    event: '🎉 Event Planning', nonprofit: '🤝 Non-Profit / Community'
+                  };
+                  option.textContent = labels[value] || value;
                   optgroup.appendChild(option);
                 }
               });
               personaDropdown.appendChild(optgroup);
             }
           } else {
-            // Grouped options for Personal users
+            // ALL Personal Categories
             const personalGroups = {
-              '👤 Personal & Niche': ['islamic', 'emotional', 'storyteller']
+              '👤 Personal & Niche': ['emotional', 'islamic', 'depression_relief', 'storytelling', 'content_creation', 'cooking', 'faith_spirituality', 'personal_development']
             };
             
             for (const [groupName, values] of Object.entries(personalGroups)) {
               const optgroup = document.createElement('optgroup');
               optgroup.label = groupName;
               values.forEach(value => {
-                if (personas[value] && personasToShow.includes(value)) {
+                if (personas[value]) {
                   const option = document.createElement('option');
                   option.value = value;
-                  option.textContent = value === 'islamic' ? '🕌 Islamic Scholar' :
-                                       value === 'emotional' ? '💬 Emotional Support' :
-                                       value === 'storyteller' ? '📚 Storyteller' : value;
+                  const pLabels = {
+                    emotional: '💙 Emotional Support', islamic: '🕌 Islamic Scholar', depression_relief: '🌱 Depression Relief',
+                    storytelling: '📚 Creative Storyteller', content_creation: '🎬 Content Creation', cooking: '🍳 Cooking Assistant',
+                    faith_spirituality: '🙏 Faith & Spirituality', personal_development: '📈 Personal Development'
+                  };
+                  option.textContent = pLabels[value] || value;
                   optgroup.appendChild(option);
                 }
               });
@@ -596,7 +531,7 @@
             }
           }
 
-          // Restore saved selection if it matches a template
+          // ✅ 5. Restore saved selection if it matches a template
           let foundMatch = false;
           if (data.tenant.systemPrompt) {
             for (const [key, value] of Object.entries(personas)) {
@@ -606,23 +541,10 @@
                 break;
               }
             }
-            if (!foundMatch) {
-              personaDropdown.value = 'custom';
-            }
+            if (!foundMatch) personaDropdown.value = 'custom';
           }
 
-          // --- YOUR ORIGINAL CODE CONTINUES HERE ---
-          document.getElementById('businessName').textContent = data.tenant.businessName;
-          document.getElementById('systemPrompt').value = data.tenant.systemPrompt || '';
-          document.getElementById('businessContext').value = data.tenant.businessContext || '';
-          document.getElementById('llmApiKey').value = data.tenant.llmApiKey || '';
-          document.getElementById('llmModel').value = data.tenant.llmModel || '';
-          document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
-          document.getElementById('humanModeToggle').checked = data.tenant.isHumanMode || false;
-          document.getElementById('isSummaryEnabled').checked = data.tenant.isSummaryEnabled || false;
-          document.getElementById('summaryTime').value = data.tenant.summaryTime || '21:00';
-          document.getElementById('leadWebhookUrl').value = data.tenant.leadWebhookUrl || '';          
-          
+          // ✅ 6. Load contact info
           if (data.tenant.contactInfo) {
             const lines = data.tenant.contactInfo.split('\n');
             const getValue = (prefix) => lines.find(l => l.startsWith(prefix))?.split(': ')[1]?.trim() || '';
@@ -633,10 +555,17 @@
             document.getElementById('contactNotes').value = getValue('Notes');
           }
 
+          // ✅ 7. Load other settings
+          document.getElementById('humanModeToggle').checked = data.tenant.isHumanMode || false;
+          document.getElementById('isSummaryEnabled').checked = data.tenant.isSummaryEnabled || false;
+          document.getElementById('summaryTime').value = data.tenant.summaryTime || '21:00';
+          document.getElementById('leadWebhookUrl').value = data.tenant.leadWebhookUrl || '';
+          
           if (data.tenant.llmProvider) {
             document.getElementById('llmProviderSelect').value = data.tenant.llmProvider.toLowerCase();
           }
 
+          // ✅ 8. Connection status
           const statusContainer = document.getElementById('connectionStatusSection');
           if (data.tenant.isActive) {
             const humanModeText = data.tenant.isHumanMode ? "⚠️ Human Takeover Mode is ON - AI is paused." : " Your AI bot is currently active and replying.";
@@ -650,12 +579,16 @@
               <a href="/connect/${data.tenant.whatsappNumber}" class="block w-full bg-green-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-green-700 transition shadow-md flex items-center justify-center gap-2 text-center">📱 Reconnect & Scan QR Code</a>
               <p class="text-xs text-red-500 font-medium mt-2 text-center flex items-center justify-center gap-1"><span class="w-2 h-2 bg-red-500 rounded-full"></span> Your AI bot is currently paused. Click to reactivate.</p>`;
           }
+          
+          // ✅ 9. Load other data
           renderChatHistory(data.messages);
           loadLeads();
           loadAnalytics();
+          loadOwnerChats();
         }
       } catch (err) { console.error('Failed to load dashboard', err); }
     }
+
 
     document.getElementById('personaTemplate').addEventListener('change', function() {
       if (personas[this.value]) {
