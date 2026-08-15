@@ -1026,6 +1026,76 @@
       document.getElementById('replyBox').classList.add('hidden');
     }
 
+    // 🚀 Invite Agent Function
+    async function inviteAgent() {
+      const emailInput = document.getElementById('agentEmail');
+      const email = emailInput.value.trim();
+
+      if (!email) {
+        alert('Please enter an email address.');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/dashboard/team/invite', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({ email })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert(data.message);
+          emailInput.value = '';
+          loadTeamMembers(); // Refresh the list
+        } else {
+          alert('❌ ' + data.error);
+        }
+      } catch (error) {
+        console.error('Invite agent error:', error);
+        alert('Failed to invite agent. Please try again.');
+      }
+    }
+
+    // 🚀 Load Team Members
+    async function loadTeamMembers() {
+      try {
+        const response = await fetch('/api/dashboard/team', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.members) {
+          const agentList = document.getElementById('agentList');
+          
+          if (data.members.length === 0) {
+            agentList.innerHTML = '<li class="text-gray-400">No agents added yet.</li>';
+          } else {
+            agentList.innerHTML = data.members.map(member => `
+              <li class="flex items-center justify-between bg-white p-2 rounded border border-gray-200">
+                <span class="text-sm text-gray-700">${member.user.email}</span>
+                <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">${member.role}</span>
+              </li>
+            `).join('');
+          }
+        }
+      } catch (error) {
+        console.error('Load team error:', error);
+      }
+    }
+
+    // Load team members when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      loadTeamMembers();
+    });
+
     function logout() { localStorage.clear(); window.location.href = '/login'; }
 
   </script>
