@@ -963,31 +963,51 @@ app.post('/api/dashboard/send-message', authenticateToken, async (req, res) => {
   }
 });
 
-// 📊 ANALYTICS: Get Dashboard Stats for Charts
+// 🚀 DASHBOARD: Get Analytics for Charts
 app.get('/api/dashboard/analytics', authenticateToken, async (req, res) => {
   try {
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
-    if (!tenant) return res.status(404).json({ error: 'Business not found.' });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
 
+    // Get last 7 days of messages
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const messages = await prisma.message.findMany({ where: { tenantId: tenant.id, createdAt: { gte: sevenDaysAgo } } });
-    const leads = await prisma.lead.findMany({ where: { tenantId: tenant.id, createdAt: { gte: sevenDaysAgo } } });
+    const messages = await prisma.message.findMany({
+      where: { tenantId: tenant.id, createdAt: { gte: sevenDaysAgo } },
+      orderBy: { createdAt: 'asc' }
+    });
 
-    const labels = [], messageCounts = [], leadCounts = [];
+    const leads = await prisma.lead.findMany({
+      where: { tenantId: tenant.id, createdAt: { gte: sevenDaysAgo } },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    // Group by date (simplified for chart.js)
+    const labels = [];
+    const messageCounts = [];
+    const leadCounts = [];
+    
     for (let i = 6; i >= 0; i--) {
-      const d = new Date(); d.setDate(d.getDate() - i);
-      labels.push(d.toLocaleDateString('en-US', { weekday: 'short' }));
-      const dayStart = new Date(d); dayStart.setHours(0,0,0,0);
-      const dayEnd = new Date(d); dayEnd.setHours(23,59,59,999);
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      labels.push(dateStr);
+      
+      const dayStart = new Date(d.setHours(0,0,0,0));
+      const dayEnd = new Date(d.setHours(23,59,59,999));
+      
       messageCounts.push(messages.filter(m => m.createdAt >= dayStart && m.createdAt <= dayEnd).length);
       leadCounts.push(leads.filter(l => l.createdAt >= dayStart && l.createdAt <= dayEnd).length);
     }
 
-    res.json({ success: true, chartData: { labels, messageCounts, leadCounts } });
+    res.json({ 
+      success: true, 
+      chartData: { labels, messageCounts, leadCounts } 
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch analytics.' });
+    console.error('❌ Analytics error:', error);
+    res.status(500).json({ error: 'Failed to load analytics.' });
   }
 });
 
