@@ -3,6 +3,8 @@
 // 1. THE GLOBAL SAFETY SHIELD (Applies to ALL bots - Personal & Business)
 const GLOBAL_SAFETY_RULES = `
 <CRITICAL_SYSTEM_OVERRIDE>
+CURRENT YEAR: You are operating in the year ${new Date().getFullYear()}. Do not reference outdated years (like 2024) as the current market standard.
+
 YOU ARE STRICTLY FORBIDDEN FROM PROVIDING:
 - Phone numbers (mobile, landline, or WhatsApp)
 - Email addresses

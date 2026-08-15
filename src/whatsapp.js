@@ -115,10 +115,14 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         } catch (e) { console.error('Error parsing service areas:', e); }
       }
 
-            // 🚨 DYNAMIC RULE ENGINE INJECTION
+      // 🚨 DYNAMIC RULE ENGINE INJECTION
       const activePolicy = getPolicyForTenant(tenant.businessContext || tenant.industry || '');
+      
+      // 🚨 INJECT CURRENT YEAR TO PREVENT OUTDATED "2024" REFERENCES
+      const currentYear = new Date().getFullYear();
+      const timeContext = `\n\n⏰ CURRENT TIME CONTEXT: The current year is ${currentYear}. When providing market data, prices, or trends, you must frame them as current as of ${currentYear}. Do not default to outdated years like 2023 or 2024. If you lack real-time ${currentYear} data, state: "While I don't have live ${currentYear} market feeds, historically this area trends around..."`;
 
-      const finalSystemPrompt = basePrompt + contextRule + contactRule + zoneRule + activePolicy;
+      const finalSystemPrompt = timeContext + basePrompt + contextRule + contactRule + zoneRule + activePolicy;
 
 
       // 🚨 UPDATED: Added zoneRule to the final prompt
