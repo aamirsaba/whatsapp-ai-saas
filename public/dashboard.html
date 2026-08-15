@@ -144,6 +144,23 @@
               <textarea id="businessContext" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm transition"></textarea>
             </div>
 
+<!--  NEW: Knowledge Base Upload -->
+<div class="mt-4">
+  <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+    📄 Knowledge Base (PDF/TXT)
+    <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Premium</span>
+  </label>
+  <p class="text-xs text-gray-500 mb-2">Upload a PDF or TXT file (like a menu, price list, or FAQ). The AI will read it and use it to answer questions.</p>
+  
+  <div class="flex gap-2">
+    <input type="file" id="knowledgeFile" accept=".pdf,.txt" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+    <button onclick="uploadKnowledge()" id="uploadBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition flex items-center gap-2">
+      <span>📤</span> Upload & Train
+    </button>
+  </div>
+  <p id="uploadStatus" class="text-xs mt-2 font-medium"></p>
+</div>
+
             <!-- 📍 NEW: Service Zone Manager Trigger -->
             <div class="flex items-center justify-between bg-blue-50 p-4 rounded-lg border border-blue-100 mt-4">
               <div>
@@ -1095,6 +1112,52 @@
     document.addEventListener('DOMContentLoaded', () => {
       loadTeamMembers();
     });
+
+    // 🚀 Upload Knowledge Base Function
+    async function uploadKnowledge() {
+      const fileInput = document.getElementById('knowledgeFile');
+      const statusText = document.getElementById('uploadStatus');
+      const uploadBtn = document.getElementById('uploadBtn');
+      const file = fileInput.files[0];
+
+      if (!file) {
+        statusText.textContent = '❌ Please select a file first.';
+        statusText.className = 'text-xs mt-2 font-medium text-red-600';
+        return;
+      }
+
+      uploadBtn.disabled = true;
+      uploadBtn.innerHTML = '<span class="animate-spin">⏳</span> Processing...';
+      statusText.textContent = '';
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await fetch('/api/dashboard/upload-knowledge', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+          body: formData
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          statusText.textContent = `✅ ${data.message}`;
+          statusText.className = 'text-xs mt-2 font-medium text-green-600';
+          fileInput.value = ''; // Clear input
+        } else {
+          statusText.textContent = `❌ ${data.error}`;
+          statusText.className = 'text-xs mt-2 font-medium text-red-600';
+        }
+      } catch (error) {
+        statusText.textContent = '❌ Network error. Please try again.';
+        statusText.className = 'text-xs mt-2 font-medium text-red-600';
+      } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = '<span>📤</span> Upload & Train';
+      }
+    }
 
     function logout() { localStorage.clear(); window.location.href = '/login'; }
 

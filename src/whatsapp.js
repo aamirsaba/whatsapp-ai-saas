@@ -97,7 +97,16 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       }
 
       const basePrompt = tenant.systemPrompt || "You are a helpful, professional AI assistant.";
-      const contextRule = tenant.businessContext ? `\n\nBUSINESS CONTEXT:\n${tenant.businessContext}` : '';
+      
+      // 🚨 UPDATED: Combine Business Context AND Knowledge Base
+      let contextRule = '';
+      if (tenant.businessContext) {
+        contextRule += `\n\nBUSINESS CONTEXT:\n${tenant.businessContext}`;
+      }
+      if (tenant.knowledgeBase) {
+        contextRule += `\n\n📄 KNOWLEDGE BASE (USE THIS DATA TO ANSWER QUESTIONS):\n${tenant.knowledgeBase}`;
+      }
+      
       const contactRule = tenant.contactInfo ? `\n\nOFFICIAL CONTACT DETAILS (USE EXACTLY AS WRITTEN):\n${tenant.contactInfo}` : '';
       
       // 🚨 NEW: Dynamic Service Zones Logic

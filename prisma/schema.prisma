@@ -67,6 +67,7 @@ model Tenant {
   llmBaseUrl       String?
   leadWebhookUrl   String?
   botPolicy        String?        @db.Text // Stores custom rules/policy (optional for future use)
+  knowledgeBase    String?        @db.Text // 🚨 NEW: Stores extracted text from uploaded PDFs
 
   userId           String?
   user             User?          @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -10,6 +10,17 @@ const path = require('path');
 const fs = require('fs');
 const cron = require('node-cron');
 
+const multer = require('multer');
+const pdf = require('pdf-parse');
+const fs = require('fs');
+const path = require('path');
+
+// Configure Multer for file uploads
+const upload = multer({ 
+  dest: 'uploads/',
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
+
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
@@ -1371,6 +1382,59 @@ app.get('/api/agent/info', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error(' Agent info error:', error);
     res.status(500).json({ error: 'Failed to load agent info.' });
+  }
+});
+
+// 🚀 UPLOAD KNOWLEDGE BASE (PDF or TXT)
+app.post('/api/dashboard/upload-knowledge', authenticateToken, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Please upload a file.' });
+    }
+
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    let extractedText = '';
+    const filePath = req.file.path;
+    const fileExtension = req.file.originalname.split('.').pop().toLowerCase();
+
+    if (fileExtension === 'pdf') {
+      const dataBuffer = fs.readFileSync(filePath);
+      const data = await pdf(dataBuffer);
+      extractedText = data.text;
+    } else if (fileExtension === 'txt') {
+      extractedText = fs.readFileSync(filePath, 'utf8');
+    } else {
+      fs.unlinkSync(filePath); // Delete invalid file
+      return res.status(400).json({ error: 'Only PDF and TXT files are allowed.' });
+    }
+
+    // Clean up the text (remove excessive whitespace)
+    extractedText = extractedText.replace(/\s+/g, ' ').trim();
+
+    if (extractedText.length < 10) {
+      fs.unlinkSync(filePath);
+      return res.status(400).json({ error: 'Could not extract enough text from this file.' });
+    }
+
+    // Save to database
+    await prisma.tenant.update({
+      where: { id: tenant.id },
+      data: { knowledgeBase: extractedText }
+    });
+
+    // Delete the physical file to save disk space
+    fs.unlinkSync(filePath);
+
+    res.json({ 
+      success: true, 
+      message: `✅ Successfully processed! Extracted ${extractedText.length} characters of knowledge.`,
+      charCount: extractedText.length
+    });
+  } catch (error) {
+    console.error('❌ Upload knowledge error:', error);
+    res.status(500).json({ error: 'Failed to process file.' });
   }
 });
 
