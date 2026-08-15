@@ -72,6 +72,9 @@ model Tenant {
   messages         Message[]
   leads            Lead[]
   teamMembers      TeamMember[]
+
+botPolicy String? @db.Text // 🚨 NEW: Stores the custom rules/policy for this bot
+
 }
 
 // 5. The Message Model

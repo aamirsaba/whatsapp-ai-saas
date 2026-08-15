@@ -4,6 +4,7 @@ const qrcode = require('qrcode-terminal');
 const pino = require('pino');
 const { PrismaClient } = require('@prisma/client');
 const { getAIResponse } = require('./ai');
+const { getPolicyForTenant } = require('./policies'); // 🚨 ADD THIS LINE!
 
 const prisma = new PrismaClient();
 const activeSockets = new Map();
@@ -114,27 +115,11 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         } catch (e) { console.error('Error parsing service areas:', e); }
       }
 
-      const strictRules = `\n\n<CRITICAL_SYSTEM_OVERRIDE>
-YOU ARE STRICTLY FORBIDDEN FROM PROVIDING:
-- Phone numbers (mobile, landline, or WhatsApp)
-- Email addresses
-- Physical addresses of specific businesses or agencies
-- Direct contact details for third-party companies
+            // 🚨 DYNAMIC RULE ENGINE INJECTION
+      const activePolicy = getPolicyForTenant(tenant.businessContext || tenant.industry || '');
 
-TRIGGER CONDITION: These rules ONLY apply when the user explicitly asks for "phone number", "contact number", "email", "how to contact", "WhatsApp number", "call", or similar direct contact information.
+      const finalSystemPrompt = basePrompt + contextRule + contactRule + zoneRule + activePolicy;
 
-IF THE USER ASKS FOR CONTACT DETAILS (as defined above), YOU MUST OUTPUT *ONLY* THIS EXACT STRING:
-"I do not have access to live phone directories or specific business listings. To ensure accuracy, please search on Google Maps or the official website for verified contact details."
-
-IMPORTANT UNIVERSAL EXCEPTIONS (YOU MUST ANSWER THESE NORMALLY):
-- If the user asks for general advice, information, or guidance related to your assigned ROLE or the BUSINESS CONTEXT → ANSWER NORMALLY using your general knowledge.
-- If the user asks "can you find [X]" or "show me [X]" related to your industry → Provide general advice, typical ranges, standard procedures, or educational information. Do NOT provide live listings, specific third-party names, or contacts.
-- ONLY trigger the refusal string if the user explicitly asks for a PHONE NUMBER, EMAIL, or DIRECT CONTACT.
-
-DO NOT APOLOGIZE. DO NOT ADD FLUFF. JUST OUTPUT THE EXACT STRING WHEN CONTACT DETAILS ARE REQUESTED.
-</CRITICAL_SYSTEM_OVERRIDE>`;
-
-      const finalSystemPrompt = basePrompt + contextRule + contactRule + zoneRule + strictRules;
 
       // 🚨 UPDATED: Added zoneRule to the final prompt
       // 🧠 NEW: Fetch recent chat history to give the AI memory (last 10 messages)
