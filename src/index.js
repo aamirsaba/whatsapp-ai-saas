@@ -6,8 +6,7 @@ const { PrismaClient } = require('@prisma/client');
 const { startWhatsAppSession, activeSockets } = require('./whatsapp');
 const { registerUser, loginUser } = require('./auth');
 const { authenticateToken } = require('./middleware'); // 🚀 NEW: Auth Middleware
-const path = require('path');
-const fs = require('fs');
+
 const cron = require('node-cron');
 
 const multer = require('multer');
