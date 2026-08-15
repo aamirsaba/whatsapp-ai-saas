@@ -216,6 +216,7 @@ app.post('/api/register-wizard', async (req, res) => {
         whatsappNumber,
         websiteUrl,
         userId: newUser.id,
+	botType: botType || 'business', // Save their choice
         systemPrompt: autoPrompt,
         businessContext: autoContext,
         isActive: false,

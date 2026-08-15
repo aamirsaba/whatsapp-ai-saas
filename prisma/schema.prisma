@@ -48,6 +48,9 @@ model Tenant {
   businessName     String
   whatsappNumber   String         @unique
   websiteUrl       String?
+
+// 🚨 NEW: Save whether they chose personal or business during registration
+  botType          String         @default("business") 
   
   isSummaryEnabled Boolean        @default(false)
   summaryTime      String?

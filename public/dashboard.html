@@ -116,12 +116,36 @@
               <label class="block text-sm font-medium text-gray-700 mb-1">Choose a Persona Template</label>
               <select id="personaTemplate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white transition">
                 <option value="custom">✨ Custom / Keep Current</option>
-                <option value="business">💼 Professional Business Assistant</option>
-                <option value="islamic">🕌 Islamic Scholar & Assistant</option>
-                <option value="realestate">🏡 Real Estate Agent</option>
-                <option value="medical">🩺 Medical Info Assistant (with disclaimers)</option>
-                <option value="youtube">📹 YouTube Content Strategist</option>
-                <option value="storyteller">📚 Creative Storyteller</option>
+                <optgroup label="🏢 Professional Services">
+                  <option value="business"> General Business Assistant</option>
+                  <option value="realestate">🏡 Real Estate Agent</option>
+                  <option value="legal">⚖️ Legal / Law Firm</option>
+                  <option value="financial">💰 Financial / Accounting</option>
+                  <option value="marketing">📈 Marketing Agency</option>
+                  <option value="it">💻 IT / Software Support</option>
+                </optgroup>
+                <optgroup label="🏥 Healthcare & Wellness">
+                  <option value="medical">🩺 Medical Clinic (w/ Disclaimers)</option>
+                  <option value="fitness">💪 Fitness / Gym</option>
+                  <option value="beauty">💅 Beauty / Salon / Spa</option>
+                  <option value="vet">🐾 Vet / Pet Clinic</option>
+                </optgroup>
+                <optgroup label="🍽️ Hospitality & Retail">
+                  <option value="restaurant">🍽️ Restaurant / Cafe</option>
+                  <option value="hotel">🏨 Hotel / Hospitality</option>
+                  <option value="travel">✈️ Travel / Tourism</option>
+                  <option value="ecommerce">🛍️ E-commerce / Retail</option>
+                  <option value="automotive"> Automotive / Dealership</option>
+                </optgroup>
+                <optgroup label="🎓 Education & Events">
+                  <option value="education">🎓 School / Academy</option>
+                  <option value="event">🎉 Event Planning</option>
+                </optgroup>
+                <optgroup label="🕌 Personal & Niche">
+                  <option value="islamic">🕌 Islamic Scholar</option>
+                  <option value="emotional"> Emotional Support</option>
+                  <option value="storyteller">📚 Creative Storyteller</option>
+                </optgroup>
               </select>
             </div>
 
@@ -358,34 +382,208 @@
     </div>
   </main>
 
-  <script>
+    <script>
     const token = localStorage.getItem('token');
     let messageChartInstance = null;
     let leadChartInstance = null;
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    if (!token) { window.location.href = '/login'; } 
-    else { 
+    
+    if (!token) { 
+      window.location.href = '/login'; 
+    } else { 
       document.getElementById('userEmail').textContent = user.email; 
       document.getElementById('userEmail').classList.remove('hidden');
-      loadDashboard(); loadTeamInbox(); 
     }
 
-    const personas = {
-      business: { systemPrompt: "You are a helpful, professional, and polite AI assistant.", businessContext: "Represent the business accurately. Be concise and professional." },
-      islamic: { systemPrompt: "You are a knowledgeable, compassionate, and respectful Islamic assistant.", businessContext: "Answer based on Quran and authentic Sunnah. Be polite. Admit if you don't know. Provide Arabic references when applicable." },
-      realestate: { systemPrompt: "You are a professional, enthusiastic Real Estate Agent.", businessContext: "Help clients find properties. Ask about budget and location. Be persuasive but honest." },
-      medical: { systemPrompt: "You are a compassionate Medical Assistant.", businessContext: "Provide general health info. ⚠️ CRITICAL: Always state you are an AI, not a doctor. Advise calling emergency services for urgent issues." },
-      youtube: { systemPrompt: "You are a viral YouTube Content Strategist.", businessContext: "Focus on high-retention hooks, titles, and SEO. Be energetic and data-driven." },
-      storyteller: { systemPrompt: "You are a master Creative Storyteller.", businessContext: "Write engaging, imaginative stories with vivid descriptions and strong plots." }
+        const personas = {
+      // 🏢 PROFESSIONAL SERVICES
+      business: { 
+        systemPrompt: "You are a helpful, professional, and polite AI assistant.", 
+        businessContext: "Represent the business accurately. Be concise, professional, and solution-oriented." 
+      },
+      realestate: { 
+        systemPrompt: "You are a professional, enthusiastic Real Estate Agent.", 
+        businessContext: "Help clients find properties. Ask about budget and location. Be persuasive but honest. Provide market insights." 
+      },
+      legal: { 
+        systemPrompt: "You are a professional, discreet Legal Assistant.", 
+        businessContext: "Help with practice areas and booking consultations. ⚠️ CRITICAL: Never provide specific legal advice. Always direct to an attorney." 
+      },
+      financial: { 
+        systemPrompt: "You are a trustworthy, professional Financial Services Assistant.", 
+        businessContext: "Help with service info and appointments. ⚠️ CRITICAL: Never provide specific financial, tax, or investment advice." 
+      },
+      marketing: { 
+        systemPrompt: "You are a creative, results-focused Marketing Agency Assistant.", 
+        businessContext: "Help potential clients with service offerings and case studies. Be energetic and professional." 
+      },
+      it: { 
+        systemPrompt: "You are a knowledgeable, solution-oriented IT Support Assistant.", 
+        businessContext: "Help with product demos, pricing, and technical questions. Be patient and clear." 
+      },
+
+      // 🏥 HEALTHCARE & WELLNESS
+      medical: { 
+        systemPrompt: "You are a compassionate Medical Assistant.", 
+        businessContext: "Provide general health info and appointment booking. ⚠️ CRITICAL: Always state you are an AI, not a doctor. Advise calling emergency services for urgent issues." 
+      },
+      fitness: { 
+        systemPrompt: "You are a motivating, energetic Fitness Coach Assistant.", 
+        businessContext: "Help with membership plans and class schedules. Be encouraging. Do not provide medical advice." 
+      },
+      beauty: { 
+        systemPrompt: "You are a friendly, stylish Beauty Salon Assistant.", 
+        businessContext: "Help clients with service menus, pricing, and booking. Make them feel pampered and welcome." 
+      },
+      vet: { 
+        systemPrompt: "You are a caring, knowledgeable Vet Clinic Assistant.", 
+        businessContext: "Help pet owners with appointment info and general pet care. ⚠️ CRITICAL: Never provide emergency medical advice - direct to the vet immediately for urgent issues." 
+      },
+
+      // 🍽️ HOSPITALITY & RETAIL
+      restaurant: { 
+        systemPrompt: "You are a warm, welcoming Restaurant Host Assistant.", 
+        businessContext: "Help customers with menu questions, dietary restrictions, and operating hours. Be friendly and appetizing." 
+      },
+      hotel: { 
+        systemPrompt: "You are an elegant, helpful Hotel Concierge Assistant.", 
+        businessContext: "Assist with room types, amenities, and check-in/out times. Be professional and inviting." 
+      },
+      travel: { 
+        systemPrompt: "You are an enthusiastic, knowledgeable Travel Agent Assistant.", 
+        businessContext: "Help with itineraries, visa info, and package details. Be inspiring and clear." 
+      },
+      ecommerce: { 
+        systemPrompt: "You are a friendly, helpful E-commerce Customer Support Assistant.", 
+        businessContext: "Help customers with product questions, order status, shipping info, and returns. Be fast and accurate." 
+      },
+      automotive: { 
+        systemPrompt: "You are a knowledgeable, trustworthy Automotive Dealership Assistant.", 
+        businessContext: "Help customers with vehicle inquiries, test drive bookings, and financing questions. Be professional." 
+      },
+
+      // 🎓 EDUCATION & EVENTS
+      education: { 
+        systemPrompt: "You are an informative, welcoming Educational Institution Assistant.", 
+        businessContext: "Help with admissions, programs, fees, and campus info. Be encouraging and clear." 
+      },
+      event: { 
+        systemPrompt: "You are an organized, creative Event Planning Assistant.", 
+        businessContext: "Help clients with venue options, packages, and guest management. Be enthusiastic and detailed." 
+      },
+
+      //  PERSONAL & NICHE
+      islamic: { 
+        systemPrompt: "You are a knowledgeable, compassionate, and respectful Islamic assistant.", 
+        businessContext: "Answer based on Quran and authentic Sunnah. Be polite. Admit if you don't know. Provide Arabic references when applicable." 
+      },
+      emotional: { 
+        systemPrompt: "You are an empathetic, supportive Emotional Support Companion.", 
+        businessContext: "Listen actively and validate feelings. Offer coping strategies. ️ CRITICAL: Never diagnose mental health conditions. If the user mentions self-harm, urge them to seek professional help." 
+      },
+      storyteller: { 
+        systemPrompt: "You are a master Creative Storyteller.", 
+        businessContext: "Write engaging, imaginative stories with vivid descriptions and strong plots. Adapt to the user's preferred genre." 
+      }
     };
+
 
     async function loadDashboard() {
       try {
         const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
-        
         if (data.success) {
-          // 1. Set basic fields
+          
+          // 🚨 NEW: Filter personas based on botType from database
+          const botType = data.tenant.botType || 'business';
+          const personaDropdown = document.getElementById('personaTemplate');
+          
+          // Clear existing options except "Custom"
+          personaDropdown.innerHTML = '<option value="custom">✨ Custom / Keep Current</option>';
+          
+          // Define which personas belong to which category
+          const personalPersonas = ['islamic', 'emotional', 'storyteller'];
+          const businessPersonas = ['business', 'realestate', 'legal', 'financial', 'marketing', 'it', 'medical', 'fitness', 'beauty', 'vet', 'restaurant', 'hotel', 'travel', 'ecommerce', 'automotive', 'education', 'event'];
+          
+          const personasToShow = botType === 'personal' ? personalPersonas : businessPersonas;
+
+          if (botType === 'business') {
+            // Grouped options for Business users
+            const groups = {
+              '🏢 Professional Services': ['business', 'realestate', 'legal', 'financial', 'marketing', 'it'],
+              '🏥 Healthcare & Wellness': ['medical', 'fitness', 'beauty', 'vet'],
+              '🍽️ Hospitality & Retail': ['restaurant', 'hotel', 'travel', 'ecommerce', 'automotive'],
+              '🎓 Education & Events': ['education', 'event']
+            };
+            
+            for (const [groupName, values] of Object.entries(groups)) {
+              const optgroup = document.createElement('optgroup');
+              optgroup.label = groupName;
+              values.forEach(value => {
+                if (personas[value] && personasToShow.includes(value)) {
+                  const option = document.createElement('option');
+                  option.value = value;
+                  option.textContent = value === 'business' ? '💼 General Business' : 
+                                       value === 'realestate' ? '🏡 Real Estate' :
+                                       value === 'legal' ? '⚖️ Legal / Law Firm' :
+                                       value === 'financial' ? '💰 Financial Services' :
+                                       value === 'marketing' ? '📈 Marketing Agency' :
+                                       value === 'it' ? '💻 IT Support' :
+                                       value === 'medical' ? '🩺 Medical Clinic' :
+                                       value === 'fitness' ? '💪 Fitness / Gym' :
+                                       value === 'beauty' ? '💅 Beauty Salon' :
+                                       value === 'vet' ? '🐾 Vet Clinic' :
+                                       value === 'restaurant' ? '🍽️ Restaurant' :
+                                       value === 'hotel' ? '🏨 Hotel' :
+                                       value === 'travel' ? '✈️ Travel Agency' :
+                                       value === 'ecommerce' ? '🛍️ E-commerce' :
+                                       value === 'automotive' ? '🚗 Automotive' :
+                                       value === 'education' ? '🎓 Education' :
+                                       value === 'event' ? '🎉 Event Planning' : value;
+                  optgroup.appendChild(option);
+                }
+              });
+              personaDropdown.appendChild(optgroup);
+            }
+          } else {
+            // Grouped options for Personal users
+            const personalGroups = {
+              '👤 Personal & Niche': ['islamic', 'emotional', 'storyteller']
+            };
+            
+            for (const [groupName, values] of Object.entries(personalGroups)) {
+              const optgroup = document.createElement('optgroup');
+              optgroup.label = groupName;
+              values.forEach(value => {
+                if (personas[value] && personasToShow.includes(value)) {
+                  const option = document.createElement('option');
+                  option.value = value;
+                  option.textContent = value === 'islamic' ? '🕌 Islamic Scholar' :
+                                       value === 'emotional' ? '💬 Emotional Support' :
+                                       value === 'storyteller' ? '📚 Storyteller' : value;
+                  optgroup.appendChild(option);
+                }
+              });
+              personaDropdown.appendChild(optgroup);
+            }
+          }
+
+          // Restore saved selection if it matches a template
+          let foundMatch = false;
+          if (data.tenant.systemPrompt) {
+            for (const [key, value] of Object.entries(personas)) {
+              if (data.tenant.systemPrompt === value.systemPrompt) {
+                personaDropdown.value = key;
+                foundMatch = true;
+                break;
+              }
+            }
+            if (!foundMatch) {
+              personaDropdown.value = 'custom';
+            }
+          }
+
+          // --- YOUR ORIGINAL CODE CONTINUES HERE ---
           document.getElementById('businessName').textContent = data.tenant.businessName;
           document.getElementById('systemPrompt').value = data.tenant.systemPrompt || '';
           document.getElementById('businessContext').value = data.tenant.businessContext || '';
@@ -397,7 +595,6 @@
           document.getElementById('summaryTime').value = data.tenant.summaryTime || '21:00';
           document.getElementById('leadWebhookUrl').value = data.tenant.leadWebhookUrl || '';          
           
-          // 2. Parse contact info (if it exists)
           if (data.tenant.contactInfo) {
             const lines = data.tenant.contactInfo.split('\n');
             const getValue = (prefix) => lines.find(l => l.startsWith(prefix))?.split(': ')[1]?.trim() || '';
@@ -408,48 +605,28 @@
             document.getElementById('contactNotes').value = getValue('Notes');
           }
 
-          // 3. Set provider dropdown if saved
           if (data.tenant.llmProvider) {
             document.getElementById('llmProviderSelect').value = data.tenant.llmProvider.toLowerCase();
           }
 
-          // 4. DYNAMIC: Show Connect or Disconnect button based on status
           const statusContainer = document.getElementById('connectionStatusSection');
-          
           if (data.tenant.isActive) {
-            const humanModeText = data.tenant.isHumanMode 
-              ? "⚠️ Human Takeover Mode is ON - AI is paused." 
-              : " Your AI bot is currently active and replying.";
+            const humanModeText = data.tenant.isHumanMode ? "⚠️ Human Takeover Mode is ON - AI is paused." : " Your AI bot is currently active and replying.";
             const humanModeColor = data.tenant.isHumanMode ? "text-yellow-600" : "text-green-600";
             const humanModeDot = data.tenant.isHumanMode ? "bg-yellow-500" : "bg-green-500";
-            
             statusContainer.innerHTML = `
-              <button type="button" onclick="disconnectBot()" class="w-full bg-yellow-500 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-yellow-600 transition shadow-md flex items-center justify-center gap-2">
-                🔌 Disconnect WhatsApp Number
-              </button>
-              <p class="text-xs ${humanModeColor} font-medium mt-2 text-center flex items-center justify-center gap-1">
-                <span class="w-2 h-2 ${humanModeDot} rounded-full animate-pulse"></span> ${humanModeText}
-              </p>
-            `;
+              <button type="button" onclick="disconnectBot()" class="w-full bg-yellow-500 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-yellow-600 transition shadow-md flex items-center justify-center gap-2">🔌 Disconnect WhatsApp Number</button>
+              <p class="text-xs ${humanModeColor} font-medium mt-2 text-center flex items-center justify-center gap-1"><span class="w-2 h-2 ${humanModeDot} rounded-full animate-pulse"></span> ${humanModeText}</p>`;
           } else {
             statusContainer.innerHTML = `
-              <a href="/connect/${data.tenant.whatsappNumber}" class="block w-full bg-green-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-green-700 transition shadow-md flex items-center justify-center gap-2 text-center">
-                📱 Reconnect & Scan QR Code
-              </a>
-              <p class="text-xs text-red-500 font-medium mt-2 text-center flex items-center justify-center gap-1">
-                <span class="w-2 h-2 bg-red-500 rounded-full"></span> Your AI bot is currently paused. Click to reactivate.
-              </p>
-            `;
+              <a href="/connect/${data.tenant.whatsappNumber}" class="block w-full bg-green-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-green-700 transition shadow-md flex items-center justify-center gap-2 text-center">📱 Reconnect & Scan QR Code</a>
+              <p class="text-xs text-red-500 font-medium mt-2 text-center flex items-center justify-center gap-1"><span class="w-2 h-2 bg-red-500 rounded-full"></span> Your AI bot is currently paused. Click to reactivate.</p>`;
           }
-
-          // 5. Render chat history
           renderChatHistory(data.messages);
           loadLeads();
           loadAnalytics();
         }
-      } catch (err) { 
-        console.error('Failed to load dashboard', err); 
-      }
+      } catch (err) { console.error('Failed to load dashboard', err); }
     }
 
     document.getElementById('personaTemplate').addEventListener('change', function() {
@@ -471,9 +648,7 @@
       container.innerHTML = messages.reverse().map(msg => `
         <div class="flex ${msg.direction === 'inbound' ? 'justify-start' : 'justify-end'}">
           <div class="max-w-[85%] rounded-2xl p-4 shadow-sm ${msg.direction === 'inbound' ? 'bg-gray-100 text-gray-800 rounded-tl-none' : 'bg-green-100 text-green-900 rounded-tr-none'}">
-            <p class="text-[10px] font-bold mb-1.5 uppercase tracking-wide ${msg.direction === 'inbound' ? 'text-gray-500' : 'text-green-700'}">
-              ${msg.direction === 'inbound' ? ' Customer (' + msg.fromNumber + ')' : '🤖 AI Agent'}
-            </p>
+            <p class="text-[10px] font-bold mb-1.5 uppercase tracking-wide ${msg.direction === 'inbound' ? 'text-gray-500' : 'text-green-700'}">${msg.direction === 'inbound' ? ' Customer (' + msg.fromNumber + ')' : '🤖 AI Agent'}</p>
             <p class="text-sm whitespace-pre-wrap leading-relaxed">${msg.content}</p>
             <p class="text-[10px] text-gray-400 mt-2 text-right">${new Date(msg.createdAt).toLocaleString()}</p>
           </div>
@@ -486,7 +661,7 @@
       const url = document.getElementById('websiteUrl').value;
       const msg = document.getElementById('settingsMsg');
       if (!url) { msg.textContent = '⚠️ Please enter a Website URL first.'; msg.className = 'mt-3 text-center text-sm text-yellow-600 font-bold'; return; }
-      msg.textContent = '️ Reading website...'; msg.className = 'mt-3 text-center text-sm text-indigo-600 font-bold';
+      msg.textContent = '⏳ Reading website...'; msg.className = 'mt-3 text-center text-sm text-indigo-600 font-bold';
       try {
         const res = await fetch('/api/dashboard/scrape-website', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ websiteUrl: url }) });
         const data = await res.json();
@@ -497,91 +672,39 @@
       } catch (err) { msg.textContent = '❌ Server error.'; msg.className = 'mt-3 text-center text-sm text-red-600 font-bold'; }
     }
 
-    // 🚨 NEW: Load Available Models from Provider
     async function loadAvailableModels() {
       const btn = document.getElementById('loadModelsBtn');
       const provider = document.getElementById('llmProviderSelect').value;
       const apiKey = document.getElementById('llmApiKey').value.trim();
       const msgElement = document.getElementById('llmValidationMsg');
-      
-      if (!apiKey) {
-        msgElement.textContent = '❌ Please enter an API Key first.';
-        msgElement.className = 'text-red-600 text-xs mt-1';
-        return;
-      }
-      
-      btn.textContent = '🔄 Loading...';
-      btn.disabled = true;
-      msgElement.textContent = '⏳ Fetching models...';
-      msgElement.className = 'text-blue-600 text-xs mt-1';
-      
+      if (!apiKey) { msgElement.textContent = '❌ Please enter an API Key first.'; msgElement.className = 'text-red-600 text-xs mt-1'; return; }
+      btn.textContent = '🔄 Loading...'; btn.disabled = true; msgElement.textContent = '⏳ Fetching models...'; msgElement.className = 'text-blue-600 text-xs mt-1';
       try {
-        const res = await fetch('/api/fetch-models', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ provider, apiKey })
-        });
-        
+        const res = await fetch('/api/fetch-models', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ provider, apiKey }) });
         const data = await res.json();
-        
         if (res.ok && data.success) {
-          // Update the model dropdown
           const modelDropdown = document.getElementById('llmModelSelect');
-          modelDropdown.innerHTML = data.models.map(m => `
-            <option value="${m.id}" ${m.isRecommended ? 'selected' : ''}>
-              ${m.name} ${m.isRecommended ? '⭐' : ''}
-            </option>
-          `).join('');
-          
-          // Update the hidden readonly field for backend
+          modelDropdown.innerHTML = data.models.map(m => `<option value="${m.id}" ${m.isRecommended ? 'selected' : ''}>${m.name} ${m.isRecommended ? '⭐' : ''}</option>`).join('');
           document.getElementById('llmModel').value = modelDropdown.value;
           document.getElementById('llmProvider').value = provider.toUpperCase();
-          
-          msgElement.textContent = `✅ Loaded ${data.models.length} models!`;
-          msgElement.className = 'text-green-600 text-xs mt-1 font-semibold';
-        } else {
-          msgElement.textContent = `❌ ${data.error || 'Failed to load models'}`;
-          msgElement.className = 'text-red-600 text-xs mt-1';
-        }
-      } catch (error) {
-        msgElement.textContent = '❌ Network error while loading models';
-        msgElement.className = 'text-red-600 text-xs mt-1';
-      } finally {
-        btn.textContent = '🔄 Load Models';
-        btn.disabled = false;
-      }
+          msgElement.textContent = `✅ Loaded ${data.models.length} models!`; msgElement.className = 'text-green-600 text-xs mt-1 font-semibold';
+        } else { msgElement.textContent = `❌ ${data.error || 'Failed to load models'}`; msgElement.className = 'text-red-600 text-xs mt-1'; }
+      } catch (error) { msgElement.textContent = '❌ Network error while loading models'; msgElement.className = 'text-red-600 text-xs mt-1'; }
+      finally { btn.textContent = '🔄 Load Models'; btn.disabled = false; }
     }
 
-    // 🚨 Handle provider change
     document.getElementById('llmProviderSelect').addEventListener('change', function() {
       const provider = this.value;
       const customContainer = document.getElementById('customBaseUrlContainer');
       const modelSelect = document.getElementById('llmModelSelect');
       const modelInput = document.getElementById('llmModel');
-      
-      if (provider === 'custom') {
-        customContainer.classList.remove('hidden');
-        modelSelect.classList.add('hidden');
-        modelInput.classList.remove('hidden');
-        modelInput.placeholder = 'e.g., llama3, mistral';
-      } else {
-        customContainer.classList.add('hidden');
-        modelSelect.classList.remove('hidden');
-        modelInput.classList.add('hidden');
-      }
-      
-      // Clear API key when provider changes
+      if (provider === 'custom') { customContainer.classList.remove('hidden'); modelSelect.classList.add('hidden'); modelInput.classList.remove('hidden'); modelInput.placeholder = 'e.g., llama3, mistral'; } 
+      else { customContainer.classList.add('hidden'); modelSelect.classList.remove('hidden'); modelInput.classList.add('hidden'); }
       document.getElementById('llmApiKey').value = '';
       document.getElementById('llmValidationMsg').textContent = '';
     });
 
-    // 🚨 Handle model selection change
-    document.getElementById('llmModelSelect').addEventListener('change', function() {
-      document.getElementById('llmModel').value = this.value;
-    });
+    document.getElementById('llmModelSelect').addEventListener('change', function() { document.getElementById('llmModel').value = this.value; });
 
     function fillContactTemplate() {
       document.getElementById('contactPerson').value = 'Aamir Durrani';
@@ -595,43 +718,15 @@
 
     document.getElementById('settingsForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      
       const msg = document.getElementById('settingsMsg');
-      msg.textContent = 'Saving...'; 
-      msg.className = 'mt-3 text-center text-sm text-gray-600';
-      
+      msg.textContent = 'Saving...'; msg.className = 'mt-3 text-center text-sm text-gray-600';
       const contactInfo = `Contact Person: ${document.getElementById('contactPerson').value || 'Not provided'}\nEmail: ${document.getElementById('contactEmail').value || 'Not provided'}\nPhone/WhatsApp: ${document.getElementById('contactPhone').value || 'Not provided'}\nWebsite: ${document.getElementById('contactWebsite').value || 'Not provided'}\nNotes: ${document.getElementById('contactNotes').value || 'None'}`.trim();
-      
       try {
-        const res = await fetch('/api/dashboard/settings', { 
-          method: 'PUT', 
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, 
-          body: JSON.stringify({ 
-            systemPrompt: document.getElementById('systemPrompt').value, 
-            businessContext: document.getElementById('businessContext').value, 
-            contactInfo: contactInfo, 
-            llmApiKey: document.getElementById('llmApiKey').value, 
-            llmModel: document.getElementById('llmModel').value, 
-            llmProvider: document.getElementById('llmProvider').value,
-            llmBaseUrl: document.getElementById('llmBaseUrl').value,
-            isHumanMode: document.getElementById('humanModeToggle').checked,
-            leadWebhookUrl: document.getElementById('leadWebhookUrl').value,
-            isSummaryEnabled: document.getElementById('isSummaryEnabled').checked,
-            summaryTime: document.getElementById('summaryTime').value
-          }) 
-        });
+        const res = await fetch('/api/dashboard/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ systemPrompt: document.getElementById('systemPrompt').value, businessContext: document.getElementById('businessContext').value, contactInfo: contactInfo, llmApiKey: document.getElementById('llmApiKey').value, llmModel: document.getElementById('llmModel').value, llmProvider: document.getElementById('llmProvider').value, llmBaseUrl: document.getElementById('llmBaseUrl').value, isHumanMode: document.getElementById('humanModeToggle').checked, leadWebhookUrl: document.getElementById('leadWebhookUrl').value, isSummaryEnabled: document.getElementById('isSummaryEnabled').checked, summaryTime: document.getElementById('summaryTime').value }) });
         const data = await res.json();
-        if (data.success) { 
-          msg.textContent = '✅ AI reprogrammed successfully!'; 
-          msg.className = 'mt-3 text-center text-sm text-green-600 font-bold'; 
-        } else { 
-          msg.textContent = '❌ ' + data.error; 
-          msg.className = 'mt-3 text-center text-sm text-red-600 font-bold'; 
-        }
-      } catch (err) { 
-        msg.textContent = '❌ Server error.'; 
-        msg.className = 'mt-3 text-center text-sm text-red-600 font-bold'; 
-      }
+        if (data.success) { msg.textContent = '✅ AI reprogrammed successfully!'; msg.className = 'mt-3 text-center text-sm text-green-600 font-bold'; } 
+        else { msg.textContent = '❌ ' + data.error; msg.className = 'mt-3 text-center text-sm text-red-600 font-bold'; }
+      } catch (err) { msg.textContent = '❌ Server error.'; msg.className = 'mt-3 text-center text-sm text-red-600 font-bold'; }
     });
 
     async function disconnectBot() {
@@ -639,7 +734,7 @@
       try {
         const res = await fetch('/api/dashboard/disconnect', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
-        if (data.success) { alert('✅ ' + data.message); window.location.reload(); } else { alert(' ' + data.error); }
+        if (data.success) { alert('✅ ' + data.message); window.location.reload(); } else { alert('❌ ' + data.error); }
       } catch (err) { alert('Failed to disconnect.'); }
     }
 
@@ -656,204 +751,93 @@
     async function generateDailySummary(btn) {
       const summaryBox = document.getElementById('summaryBox');
       const summaryText = document.getElementById('summaryText');
-      
       const originalText = btn.innerHTML;
-      btn.innerHTML = '⏳ AI is analyzing chats...';
-      btn.disabled = true;
-
+      btn.innerHTML = '⏳ AI is analyzing chats...'; btn.disabled = true;
       try {
-        const res = await fetch('/api/dashboard/daily-summary', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await fetch('/api/dashboard/daily-summary', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
-        
         if (data.success) {
           summaryText.textContent = data.summary;
           summaryBox.classList.remove('hidden');
           btn.innerHTML = '✅ Brief Sent to WhatsApp!';
-          setTimeout(() => {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-          }, 4000);
-        } else {
-          alert('❌ ' + (data.error || 'Failed to generate summary'));
-          btn.innerHTML = originalText;
-          btn.disabled = false;
-        }
-      } catch (err) {
-        alert(' Server error while generating summary.');
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-      }
+          setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 4000);
+        } else { alert('❌ ' + (data.error || 'Failed to generate summary')); btn.innerHTML = originalText; btn.disabled = false; }
+      } catch (err) { alert('❌ Server error while generating summary.'); btn.innerHTML = originalText; btn.disabled = false; }
     }
 
     document.getElementById('humanModeToggle').addEventListener('change', async function() {
       const isChecked = this.checked;
       const statusText = document.getElementById('humanModeStatus');
-      
       const originalText = statusText ? statusText.textContent : 'Pause the AI and reply manually from your phone.';
-      if (statusText) {
-        statusText.textContent = ' Updating AI status...';
-        statusText.className = 'text-xs text-yellow-600 mt-1 font-medium';
-      }
-
+      if (statusText) { statusText.textContent = '⏳ Updating AI status...'; statusText.className = 'text-xs text-yellow-600 mt-1 font-medium'; }
       try {
-        const res = await fetch('/api/dashboard/toggle-human-mode', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ isHumanMode: isChecked })
-        });
-        
+        const res = await fetch('/api/dashboard/toggle-human-mode', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ isHumanMode: isChecked }) });
         const data = await res.json();
-        
         if (data.success) {
           if (statusText) {
-            if (isChecked) {
-              statusText.textContent = '✅ AI is PAUSED. You are in control.';
-              statusText.className = 'text-xs text-red-600 mt-1 font-bold';
-            } else {
-              statusText.textContent = '🤖 AI is ACTIVE and replying automatically.';
-              statusText.className = 'text-xs text-green-600 mt-1 font-bold';
-            }
+            if (isChecked) { statusText.textContent = '✅ AI is PAUSED. You are in control.'; statusText.className = 'text-xs text-red-600 mt-1 font-bold'; } 
+            else { statusText.textContent = '🤖 AI is ACTIVE and replying automatically.'; statusText.className = 'text-xs text-green-600 mt-1 font-bold'; }
           }
-          
           const connectionStatusSection = document.getElementById('connectionStatusSection');
           if (connectionStatusSection) {
             const bottomStatus = connectionStatusSection.querySelector('p');
             if (bottomStatus) {
-              if (isChecked) {
-                bottomStatus.innerHTML = '<span class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span> ⚠️ Human Takeover Mode is ON - AI is paused.';
-                bottomStatus.className = 'text-xs text-yellow-600 font-medium mt-2 text-center flex items-center justify-center gap-1';
-              } else {
-                bottomStatus.innerHTML = '<span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Your AI bot is currently active and replying.';
-                bottomStatus.className = 'text-xs text-green-600 font-medium mt-2 text-center flex items-center justify-center gap-1';
-              }
+              if (isChecked) { bottomStatus.innerHTML = '<span class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span> ⚠️ Human Takeover Mode is ON - AI is paused.'; bottomStatus.className = 'text-xs text-yellow-600 font-medium mt-2 text-center flex items-center justify-center gap-1'; } 
+              else { bottomStatus.innerHTML = '<span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Your AI bot is currently active and replying.'; bottomStatus.className = 'text-xs text-green-600 font-medium mt-2 text-center flex items-center justify-center gap-1'; }
             }
           }
-        } else {
-          this.checked = !isChecked;
-          if (statusText) statusText.textContent = originalText;
-          alert('❌ Failed to update mode.');
-        }
-      } catch (err) {
-        this.checked = !isChecked;
-        if (statusText) statusText.textContent = originalText;
-        alert('❌ Server error while toggling.');
-      }
+        } else { this.checked = !isChecked; if (statusText) statusText.textContent = originalText; alert('❌ Failed to update mode.'); }
+      } catch (err) { this.checked = !isChecked; if (statusText) statusText.textContent = originalText; alert('❌ Server error while toggling.'); }
     });
 
     async function loadLeads() {
       const tbody = document.getElementById('leadsTableBody');
       tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Loading leads...</td></tr>';
-      
       try {
         const res = await fetch('/api/dashboard/leads', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
-        
         if (data.success && data.leads.length > 0) {
           tbody.innerHTML = data.leads.map(lead => {
             const date = new Date(lead.createdAt).toLocaleDateString();
-            const statusColors = {
-              'NEW': 'bg-yellow-100 text-yellow-800',
-              'CONTACTED': 'bg-blue-100 text-blue-800',
-              'CONVERTED': 'bg-green-100 text-green-800',
-              'LOST': 'bg-red-100 text-red-800'
-            };
-            
-            return `
-              <tr class="bg-white border-b hover:bg-gray-50">
-                <td class="px-4 py-3 whitespace-nowrap">${date}</td>
-                <td class="px-4 py-3 font-medium text-gray-900">${lead.phoneNumber}</td>
-                <td class="px-4 py-3 max-w-xs truncate" title="${lead.firstMessage}">${lead.firstMessage}</td>
-                <td class="px-4 py-3">
-                  <select onchange="updateLead('${lead.id}', 'status', this.value)" class="text-xs font-semibold px-2 py-1 rounded-full border-0 ${statusColors[lead.status]} cursor-pointer outline-none">
-                    <option value="NEW" ${lead.status === 'NEW' ? 'selected' : ''}>🟡 New</option>
-                    <option value="CONTACTED" ${lead.status === 'CONTACTED' ? 'selected' : ''}> Contacted</option>
-                    <option value="CONVERTED" ${lead.status === 'CONVERTED' ? 'selected' : ''}> Converted</option>
-                    <option value="LOST" ${lead.status === 'LOST' ? 'selected' : ''}>🔴 Lost</option>
-                  </select>
-                </td>
-                <td class="px-4 py-3">
-                  <input type="text" id="note-${lead.id}" value="${lead.notes || ''}" placeholder="Add note..." 
-                    class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500 outline-none">
-                </td>
-                <td class="px-4 py-3">
-                  <button onclick="updateLead('${lead.id}', 'notes', document.getElementById('note-${lead.id}').value)" 
-                    class="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded hover:bg-indigo-700 transition">
-                    Save
-                  </button>
-                </td>
-              </tr>
-            `;
+            const statusColors = { 'NEW': 'bg-yellow-100 text-yellow-800', 'CONTACTED': 'bg-blue-100 text-blue-800', 'CONVERTED': 'bg-green-100 text-green-800', 'LOST': 'bg-red-100 text-red-800' };
+            return `<tr class="bg-white border-b hover:bg-gray-50">
+              <td class="px-4 py-3 whitespace-nowrap">${date}</td>
+              <td class="px-4 py-3 font-medium text-gray-900">${lead.phoneNumber}</td>
+              <td class="px-4 py-3 max-w-xs truncate" title="${lead.firstMessage}">${lead.firstMessage}</td>
+              <td class="px-4 py-3"><select onchange="updateLead('${lead.id}', 'status', this.value)" class="text-xs font-semibold px-2 py-1 rounded-full border-0 ${statusColors[lead.status]} cursor-pointer outline-none">
+                <option value="NEW" ${lead.status === 'NEW' ? 'selected' : ''}>🟡 New</option>
+                <option value="CONTACTED" ${lead.status === 'CONTACTED' ? 'selected' : ''}>🔵 Contacted</option>
+                <option value="CONVERTED" ${lead.status === 'CONVERTED' ? 'selected' : ''}>🟢 Converted</option>
+                <option value="LOST" ${lead.status === 'LOST' ? 'selected' : ''}>🔴 Lost</option>
+              </select></td>
+              <td class="px-4 py-3"><input type="text" id="note-${lead.id}" value="${lead.notes || ''}" placeholder="Add note..." class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500 outline-none"></td>
+              <td class="px-4 py-3"><button onclick="updateLead('${lead.id}', 'notes', document.getElementById('note-${lead.id}').value)" class="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded hover:bg-indigo-700 transition">Save</button></td>
+            </tr>`;
           }).join('');
-        } else {
-          tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">No leads captured yet. When a new customer messages, they will appear here!</td></tr>';
-        }
-      } catch (err) {
-        console.error('Failed to load leads', err);
-        tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-red-500">Failed to load leads.</td></tr>';
-      }
+        } else { tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">No leads captured yet. When a new customer messages, they will appear here!</td></tr>'; }
+      } catch (err) { console.error('Failed to load leads', err); tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-red-500">Failed to load leads.</td></tr>'; }
     }
 
     async function updateLead(leadId, field, value) {
       try {
-        const res = await fetch(`/api/dashboard/leads/${leadId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ [field]: value })
-        });
+        const res = await fetch(`/api/dashboard/leads/${leadId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ [field]: value }) });
         const data = await res.json();
-        if (data.success) {
-          console.log('Lead updated successfully');
-        }
-      } catch (err) {
-        console.error('Failed to update lead', err);
-        alert('Failed to save changes.');
-      }
+        if (data.success) console.log('Lead updated successfully');
+      } catch (err) { console.error('Failed to update lead', err); alert('Failed to save changes.'); }
     }
 
     let currentTenantIdForReply = null;
 
+    // 🚨 CLEANED: ONLY loads team members, NO duplicate chat loading
     async function loadTeamInbox() {
       try {
         const res = await fetch('/api/dashboard/team', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
         const agentList = document.getElementById('agentList');
         if (data.success && data.members && data.members.length > 0) {
-          agentList.innerHTML = data.members.map(m => `
-            <li class="flex justify-between items-center bg-white p-2 rounded border border-gray-100">
-              <span>${m.user.email} <span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded ml-2">${m.role}</span></span>
-            </li>
-          `).join('');
-        } else {
-          agentList.innerHTML = '<li class="text-gray-400">No agents added yet.</li>';
-        }
+          agentList.innerHTML = data.members.map(m => `<li class="flex justify-between items-center bg-white p-2 rounded border border-gray-100"><span>${m.user.email} <span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded ml-2">${m.role}</span></span></li>`).join('');
+        } else { agentList.innerHTML = '<li class="text-gray-400">No agents added yet.</li>'; }
       } catch (err) { console.error('Failed to load team', err); }
-
-      try {
-        const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
-        const data = await res.json();
-        const recentChatsDiv = document.getElementById('recentChats');
-        
-        if (data.success && data.messages && data.messages.length > 0) {
-          const uniqueNumbers = [...new Set(data.messages.filter(m => m.direction === 'inbound').map(m => m.fromNumber))];
-          
-          if (uniqueNumbers.length > 0) {
-            recentChatsDiv.innerHTML = uniqueNumbers.slice(0, 5).map(num => {
-              const lastMsg = data.messages.find(m => m.fromNumber === num);
-              return `
-                <button onclick="openReplyBox('${num}')" class="w-full text-left bg-white p-2 rounded border border-gray-100 hover:border-indigo-300 transition">
-                  <p class="text-xs font-bold text-gray-800">${num}</p>
-                  <p class="text-xs text-gray-500 truncate">${lastMsg.content}</p>
-                </button>
-              `;
-            }).join('');
-          } else {
-            recentChatsDiv.innerHTML = '<p class="text-gray-400 text-xs">No inbound messages yet.</p>';
-          }
-        }
-      } catch (err) { console.error('Failed to load chats', err); }
     }
 
     function openReplyBox(number) {
@@ -862,24 +846,14 @@
       document.getElementById('replyBox').classList.remove('hidden');
     }
 
-    // 🚨 NEW: Quick Reply Logic
     function insertQuickReply() {
       const select = document.getElementById('quickReplies');
       const textarea = document.getElementById('manualReplyText');
       const selectedText = select.value;
-
       if (selectedText) {
-        // If there is already text in the box, add a new line first
-        if (textarea.value.trim().length > 0) {
-          textarea.value = textarea.value + '\n\n' + selectedText;
-        } else {
-          textarea.value = selectedText;
-        }
-        
-        // Reset dropdown to default
+        if (textarea.value.trim().length > 0) { textarea.value = textarea.value + '\n\n' + selectedText; } 
+        else { textarea.value = selectedText; }
         select.value = "";
-        
-        // Focus back on textarea so user can edit/send immediately
         textarea.focus();
       }
     }
@@ -888,43 +862,29 @@
       const toNumber = document.getElementById('replyToNumber').textContent;
       const content = document.getElementById('manualReplyText').value;
       if (!content) return alert('Please type a message.');
-
       try {
-        const res = await fetch('/api/dashboard/send-message', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ toNumber, content, tenantId: currentTenantIdForReply })
-        });
+        const res = await fetch('/api/dashboard/send-message', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ toNumber, content, tenantId: currentTenantIdForReply }) });
         const data = await res.json();
         if (data.success) {
           alert('✅ Message sent to WhatsApp!');
           document.getElementById('manualReplyText').value = '';
-          loadTeamInbox();
-        } else {
-          alert('❌ ' + data.error);
-        }
+          closeReplyBox();
+          loadOwnerChats(); // Refresh the chat cards
+        } else { alert('❌ ' + data.error); }
       } catch (err) { alert('❌ Server error.'); }
     }
 
+    // 🚨 CLEANED: Single inviteAgent function
     async function inviteAgent() {
-      const email = document.getElementById('agentEmail').value;
-      if (!email) return alert('Please enter an email.');
-      
+      const emailInput = document.getElementById('agentEmail');
+      const email = emailInput.value.trim();
+      if (!email) { alert('Please enter an email address.'); return; }
       try {
-        const res = await fetch('/api/dashboard/team/invite', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ email })
-        });
-        const data = await res.json();
-        if (data.success) {
-          alert('✅ Agent invited!');
-          document.getElementById('agentEmail').value = '';
-          loadTeamInbox();
-        } else {
-          alert('❌ ' + data.error);
-        }
-      } catch (err) { alert('❌ Server error.'); }
+        const response = await fetch('/api/dashboard/team/invite', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ email }) });
+        const data = await response.json();
+        if (response.ok) { alert(data.message); emailInput.value = ''; loadTeamMembers(); } 
+        else { alert('❌ ' + data.error); }
+      } catch (error) { console.error('Invite agent error:', error); alert('Failed to invite agent. Please try again.'); }
     }
 
     async function loadAnalytics() {
@@ -934,352 +894,165 @@
         if (data.success) {
           if (messageChartInstance) messageChartInstance.destroy();
           if (leadChartInstance) leadChartInstance.destroy();
-
-          messageChartInstance = new Chart(document.getElementById('messageChart'), {
-            type: 'bar',
-            data: { labels: data.chartData.labels, datasets: [{ label: 'Messages', data: data.chartData.messageCounts, backgroundColor: 'rgba(59, 130, 246, 0.5)', borderColor: 'rgb(59, 130, 246)', borderWidth: 1 }] },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
-          });
-
-          leadChartInstance = new Chart(document.getElementById('leadChart'), {
-            type: 'line',
-            data: { labels: data.chartData.labels, datasets: [{ label: 'New Leads', data: data.chartData.leadCounts, borderColor: 'rgb(16, 185, 129)', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.3 }] },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
-          });
+          messageChartInstance = new Chart(document.getElementById('messageChart'), { type: 'bar', data: { labels: data.chartData.labels, datasets: [{ label: 'Messages', data: data.chartData.messageCounts, backgroundColor: 'rgba(59, 130, 246, 0.5)', borderColor: 'rgb(59, 130, 246)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } });
+          leadChartInstance = new Chart(document.getElementById('leadChart'), { type: 'line', data: { labels: data.chartData.labels, datasets: [{ label: 'New Leads', data: data.chartData.leadCounts, borderColor: 'rgb(16, 185, 129)', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } });
         }
       } catch (err) { console.error('Failed to load analytics', err); }
     }
 
     let currentZones = [];
-
     function openZoneModal() {
       document.getElementById('zoneModal').classList.remove('hidden');
       const displayText = document.getElementById('currentZonesDisplay').textContent;
-      if (displayText.includes('[')) {
-        try { currentZones = JSON.parse(displayText.replace('Current Zones: ', '')); } catch(e) { currentZones = []; }
-      } else {
-        currentZones = [];
-      }
+      if (displayText.includes('[')) { try { currentZones = JSON.parse(displayText.replace('Current Zones: ', '')); } catch(e) { currentZones = []; } } 
+      else { currentZones = []; }
       renderZonesList();
     }
-
     function closeZoneModal() { document.getElementById('zoneModal').classList.add('hidden'); }
-
     function renderZonesList() {
       const container = document.getElementById('zonesListContainer');
       document.getElementById('zoneCount').textContent = currentZones.length;
-      
-      if (currentZones.length === 0) {
-        container.innerHTML = '<p class="text-gray-400 text-sm w-full text-center py-4">No zones added yet.</p>';
-        return;
-      }
-
-      container.innerHTML = currentZones.map((zone, index) => `
-        <div class="bg-white border border-gray-300 text-gray-700 px-3 py-1 rounded-full text-sm flex items-center gap-2 shadow-sm">
-          <span>${zone}</span>
-          <button onclick="removeZone(${index})" class="text-red-500 hover:text-red-700 font-bold">&times;</button>
-        </div>
-      `).join('');
+      if (currentZones.length === 0) { container.innerHTML = '<p class="text-gray-400 text-sm w-full text-center py-4">No zones added yet.</p>'; return; }
+      container.innerHTML = currentZones.map((zone, index) => `<div class="bg-white border border-gray-300 text-gray-700 px-3 py-1 rounded-full text-sm flex items-center gap-2 shadow-sm"><span>${zone}</span><button onclick="removeZone(${index})" class="text-red-500 hover:text-red-700 font-bold">&times;</button></div>`).join('');
     }
-
     function addZoneManual() {
       const input = document.getElementById('newZoneInput');
       const val = input.value.trim();
-      if (val && !currentZones.includes(val)) {
-        currentZones.push(val);
-        input.value = '';
-        renderZonesList();
-      }
+      if (val && !currentZones.includes(val)) { currentZones.push(val); input.value = ''; renderZonesList(); }
     }
-
-    function removeZone(index) {
-      currentZones.splice(index, 1);
-      renderZonesList();
-    }
-
-    function clearAllZones() {
-      if(confirm('Clear all zones?')) { currentZones = []; renderZonesList(); }
-    }
-
+    function removeZone(index) { currentZones.splice(index, 1); renderZonesList(); }
+    function clearAllZones() { if(confirm('Clear all zones?')) { currentZones = []; renderZonesList(); } }
     function handleFileUpload(input) {
       const file = input.files[0];
       if (!file) return;
-
       const reader = new FileReader();
       reader.onload = function(e) {
         const text = e.target.result;
         const lines = text.split(/[\n,]+/).map(l => l.trim()).filter(l => l.length > 0);
-        
         let addedCount = 0;
-        lines.forEach(line => {
-          if (!currentZones.includes(line)) {
-            currentZones.push(line);
-            addedCount++;
-          }
-        });
-        
+        lines.forEach(line => { if (!currentZones.includes(line)) { currentZones.push(line); addedCount++; } });
         alert(`✅ Successfully added ${addedCount} new locations from file!`);
         renderZonesList();
         input.value = '';
       };
       reader.readAsText(file);
     }
-
     async function saveZones() {
       try {
-        const res = await fetch('/api/dashboard/service-areas', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ areas: currentZones })
-        });
+        const res = await fetch('/api/dashboard/service-areas', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ areas: currentZones }) });
         const data = await res.json();
-        if (data.success) {
-          alert('✅ Service Zones Saved Successfully!');
-          document.getElementById('currentZonesDisplay').textContent = `Current Zones: ${JSON.stringify(currentZones)}`;
-          closeZoneModal();
-        } else {
-          alert('❌ Failed to save.');
-        }
+        if (data.success) { alert('✅ Service Zones Saved Successfully!'); document.getElementById('currentZonesDisplay').textContent = `Current Zones: ${JSON.stringify(currentZones)}`; closeZoneModal(); } 
+        else { alert('❌ Failed to save.'); }
       } catch (err) { alert('❌ Server error.'); }
     }
 
-    function closeReplyBox() {
-      document.getElementById('replyBox').classList.add('hidden');
-    }
+    function closeReplyBox() { document.getElementById('replyBox').classList.add('hidden'); }
 
-    // 🚀 Invite Agent Function
-    async function inviteAgent() {
-      const emailInput = document.getElementById('agentEmail');
-      const email = emailInput.value.trim();
-
-      if (!email) {
-        alert('Please enter an email address.');
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/dashboard/team/invite', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify({ email })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          alert(data.message);
-          emailInput.value = '';
-          loadTeamMembers(); // Refresh the list
-        } else {
-          alert('❌ ' + data.error);
-        }
-      } catch (error) {
-        console.error('Invite agent error:', error);
-        alert('Failed to invite agent. Please try again.');
-      }
-    }
-
-    // 🚀 Load Team Members
+    // 🚨 CLEANED: Single loadTeamMembers function
     async function loadTeamMembers() {
       try {
-        const response = await fetch('/api/dashboard/team', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-
+        const response = await fetch('/api/dashboard/team', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await response.json();
-
         if (response.ok && data.members) {
           const agentList = document.getElementById('agentList');
-          
-          if (data.members.length === 0) {
-            agentList.innerHTML = '<li class="text-gray-400">No agents added yet.</li>';
-          } else {
-            agentList.innerHTML = data.members.map(member => `
-              <li class="flex items-center justify-between bg-white p-2 rounded border border-gray-200">
-                <span class="text-sm text-gray-700">${member.user.email}</span>
-                <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">${member.role}</span>
-              </li>
-            `).join('');
-          }
+          if (data.members.length === 0) { agentList.innerHTML = '<li class="text-gray-400">No agents added yet.</li>'; } 
+          else { agentList.innerHTML = data.members.map(member => `<li class="flex items-center justify-between bg-white p-2 rounded border border-gray-200"><span class="text-sm text-gray-700">${member.user.email}</span><span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">${member.role}</span></li>`).join(''); }
         }
-      } catch (error) {
-        console.error('Load team error:', error);
-      }
+      } catch (error) { console.error('Load team error:', error); }
     }
 
-    // Load team members when page loads
-    document.addEventListener('DOMContentLoaded', () => {
-      loadTeamMembers();
-    });
-
-    // 🚀 Upload Knowledge Base Function
     async function uploadKnowledge() {
       const fileInput = document.getElementById('knowledgeFile');
       const statusText = document.getElementById('uploadStatus');
       const uploadBtn = document.getElementById('uploadBtn');
       const file = fileInput.files[0];
-
-      if (!file) {
-        statusText.textContent = '❌ Please select a file first.';
-        statusText.className = 'text-xs mt-2 font-medium text-red-600';
-        return;
-      }
-
+      if (!file) { statusText.textContent = '❌ Please select a file first.'; statusText.className = 'text-xs mt-2 font-medium text-red-600'; return; }
       uploadBtn.disabled = true;
       uploadBtn.innerHTML = '<span class="animate-spin">⏳</span> Processing...';
       statusText.textContent = '';
-
       const formData = new FormData();
       formData.append('file', file);
-
       try {
-        const res = await fetch('/api/dashboard/upload-knowledge', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-          body: formData
-        });
-
+        const res = await fetch('/api/dashboard/upload-knowledge', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData });
         const data = await res.json();
-
-        if (res.ok) {
-          statusText.textContent = `✅ ${data.message}`;
-          statusText.className = 'text-xs mt-2 font-medium text-green-600';
-          fileInput.value = ''; // Clear input
-        } else {
-          statusText.textContent = `❌ ${data.error}`;
-          statusText.className = 'text-xs mt-2 font-medium text-red-600';
-        }
-      } catch (error) {
-        statusText.textContent = '❌ Network error. Please try again.';
-        statusText.className = 'text-xs mt-2 font-medium text-red-600';
-      } finally {
-        uploadBtn.disabled = false;
-        uploadBtn.innerHTML = '<span>📤</span> Upload & Train';
-      }
+        if (res.ok) { statusText.textContent = `✅ ${data.message}`; statusText.className = 'text-xs mt-2 font-medium text-green-600'; fileInput.value = ''; } 
+        else { statusText.textContent = `❌ ${data.error}`; statusText.className = 'text-xs mt-2 font-medium text-red-600'; }
+      } catch (error) { statusText.textContent = '❌ Network error. Please try again.'; statusText.className = 'text-xs mt-2 font-medium text-red-600'; } 
+      finally { uploadBtn.disabled = false; uploadBtn.innerHTML = '<span>📤</span> Upload & Train'; }
     }
 
-    // 🚀 Load Recent Chats for Owner Dashboard
     async function loadOwnerChats() {
       try {
-        const res = await fetch('/api/dashboard/chats', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
+        const res = await fetch('/api/dashboard/chats', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
-        
         const chatContainer = document.getElementById('recentChats');
         if (!chatContainer) return;
-        
         if (res.ok && data.chats && data.chats.length > 0) {
           chatContainer.innerHTML = data.chats.map(chat => {
-            // Truncate message to 50 characters
-            const truncatedMessage = chat.lastMessage.length > 50 
-              ? chat.lastMessage.substring(0, 50) + '...' 
-              : chat.lastMessage;
-            
-            // Format date nicely
-            const date = new Date(chat.createdAt).toLocaleString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            });
-            
-            return `
-              <div onclick="openReplyBox('${chat.phoneNumber}')" 
-                   class="p-4 border border-gray-200 rounded-xl hover:border-indigo-300 hover:shadow-md cursor-pointer transition bg-white hover:bg-gray-50 min-h-[120px] flex flex-col justify-between">
-                <div>
-                  <div class="flex items-center justify-between mb-2">
-                    <span class="font-bold text-gray-800 text-sm">${chat.phoneNumber}</span>
-                    <span class="text-xs text-gray-500">${date}</span>
-                  </div>
-                  <p class="text-sm text-gray-600 break-words">${truncatedMessage}</p>
-                </div>
-                <div class="mt-3 text-xs text-indigo-600 font-medium">Click to reply →</div>
-              </div>
-            `;
+            const truncatedMessage = chat.lastMessage.length > 50 ? chat.lastMessage.substring(0, 50) + '...' : chat.lastMessage;
+            const date = new Date(chat.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            return `<div onclick="openReplyBox('${chat.phoneNumber}')" class="p-4 border border-gray-200 rounded-xl hover:border-indigo-300 hover:shadow-md cursor-pointer transition bg-white hover:bg-gray-50 min-h-[120px] flex flex-col justify-between">
+              <div><div class="flex items-center justify-between mb-2"><span class="font-bold text-gray-800 text-sm">${chat.phoneNumber}</span><span class="text-xs text-gray-500">${date}</span></div><p class="text-sm text-gray-600 break-words">${truncatedMessage}</p></div>
+              <div class="mt-3 text-xs text-indigo-600 font-medium">Click to reply →</div>
+            </div>`;
           }).join('');
-        } else {
-          chatContainer.innerHTML = '<div class="col-span-full text-center text-gray-400 py-12">No recent conversations</div>';
-        }
+        } else { chatContainer.innerHTML = '<div class="col-span-full text-center text-gray-400 py-12">No recent conversations</div>'; }
       } catch (error) {
         console.error('Load owner chats error:', error);
         const chatContainer = document.getElementById('recentChats');
-        if (chatContainer) {
-          chatContainer.innerHTML = '<div class="col-span-full text-center text-red-400 py-8">Failed to load chats</div>';
-        }
+        if (chatContainer) { chatContainer.innerHTML = '<div class="col-span-full text-center text-red-400 py-8">Failed to load chats</div>'; }
       }
     }
 
-    // 🚀 Load Recent Chat History
     async function loadRecentChatHistory() {
       try {
-        const res = await fetch('/api/dashboard/chat-history', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
+        const res = await fetch('/api/dashboard/chat-history', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
-        
-        const chatContainer = document.getElementById('recentChatHistory');
+        const chatContainer = document.getElementById('chatHistory');
         if (!chatContainer) return;
-        
         if (res.ok && data.messages && data.messages.length > 0) {
           chatContainer.innerHTML = data.messages.map(msg => {
             const isOutbound = msg.direction === 'outbound';
-            const date = new Date(msg.createdAt).toLocaleString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            });
-            
-            return `
-              <div class="mb-4 ${isOutbound ? 'ml-8' : 'mr-8'}">
-                <div class="${isOutbound ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'} border rounded-lg p-3">
-                  <div class="flex items-start gap-3">
-                    <div class="flex-1">
-                      <div class="flex items-center justify-between mb-1">
-                        <span class="text-xs font-semibold ${isOutbound ? 'text-green-700' : 'text-gray-700'}">
-                          ${isOutbound ? '🤖 AI Agent' : '👤 Customer'} 
-                          <span class="text-gray-500 font-normal">(${msg.isAiReply ? 'AI' : 'Manual'})</span>
-                        </span>
-                        <span class="text-xs text-gray-500">${date}</span>
-                      </div>
-                      <p class="text-sm text-gray-800 break-words">${msg.content}</p>
+            const date = new Date(msg.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            return `<div class="mb-4 ${isOutbound ? 'ml-8' : 'mr-8'}">
+              <div class="${isOutbound ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'} border rounded-lg p-3">
+                <div class="flex items-start gap-3">
+                  <div class="flex-1">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-xs font-semibold ${isOutbound ? 'text-green-700' : 'text-gray-700'}">${isOutbound ? '🤖 AI Agent' : '👤 Customer'} <span class="text-gray-500 font-normal">(${msg.isAiReply ? 'AI' : 'Manual'})</span></span>
+                      <span class="text-xs text-gray-500">${date}</span>
                     </div>
+                    <p class="text-sm text-gray-800 break-words">${msg.content}</p>
                   </div>
                 </div>
-                <div class="text-xs text-gray-500 mt-1 px-2">
-                  ${isOutbound ? 'To: ' + msg.toNumber : 'From: ' + msg.fromNumber}
-                </div>
               </div>
-            `;
+              <div class="text-xs text-gray-500 mt-1 px-2">${isOutbound ? 'To: ' + msg.toNumber : 'From: ' + msg.fromNumber}</div>
+            </div>`;
           }).join('');
-        } else {
-          chatContainer.innerHTML = '<div class="text-center text-gray-400 py-12">No messages yet. Send a WhatsApp message to see it here!</div>';
-        }
+        } else { chatContainer.innerHTML = '<div class="text-center text-gray-400 py-12">No messages yet. Send a WhatsApp message to see it here!</div>'; }
       } catch (error) {
         console.error('Load chat history error:', error);
-        const chatContainer = document.getElementById('recentChatHistory');
-        if (chatContainer) {
-          chatContainer.innerHTML = '<div class="text-center text-red-400 py-8">Failed to load chat history</div>';
-        }
+        const chatContainer = document.getElementById('chatHistory');
+        if (chatContainer) { chatContainer.innerHTML = '<div class="text-center text-red-400 py-8">Failed to load chat history</div>'; }
       }
     }
 
-    // Load on page load
+    // 🚨 CLEANED: SINGLE DOMContentLoaded listener at the very end
     document.addEventListener('DOMContentLoaded', () => {
-      loadLeads();
-      loadTeamMembers();
-      loadRecentChatHistory(); // 🚨 ADD THIS
+      console.log("🚀 Dashboard loading...");
+      if (typeof loadLeads === 'function') loadLeads();
+      if (typeof loadTeamMembers === 'function') loadTeamMembers();
+      if (typeof loadOwnerChats === 'function') loadOwnerChats();
+      if (typeof loadRecentChatHistory === 'function') loadRecentChatHistory();
+      console.log("✅ All dashboard functions initialized.");
     });
 
-    function logout() { localStorage.clear(); window.location.href = '/login'; }
-
+    function logout() { 
+      localStorage.clear(); 
+      window.location.href = '/login'; 
+    }
   </script>
+
     <!--  SERVICE ZONE MANAGER MODAL -->
     <div id="zoneModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
       <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
