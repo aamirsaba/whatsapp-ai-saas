@@ -134,9 +134,49 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       });
       const pdfFileList = uploadedDocs.map(doc => doc.fileName).join(', ');
       
-      const pdfRule = pdfFileList 
-        ? `\n\n📄 AVAILABLE PDF FILES ON SERVER: [${pdfFileList}]. \n🚨 CRITICAL RULE: If the user asks for a PDF, file, brochure, or document that matches one of these names, you MUST reply with EXACTLY this format and nothing else: [SEND_PDF:filename.pdf] (replace filename.pdf with the exact name from the list). Do not add any other text.` 
-        : '';
+      const aiReply = await getAIResponse(chatHistory, finalSystemPrompt, tenant);
+      console.log(`🗣️ AI Reply: ${aiReply}`);
+
+      // 🚨 CHECK IF AI WANTS TO SEND A PDF
+      const pdfMatch = aiReply.match(/\[SEND_PDF:(.*?)\]/);
+      
+      if (pdfMatch) {
+        const fileName = pdfMatch[1].trim();
+        const filePath = path.join(__dirname, '..', 'uploads', 'knowledge', fileName);
+        
+        console.log(`🔍 DEBUG PDF: AI requested fileName: "${fileName}"`);
+        console.log(`🔍 DEBUG PDF: Checking path: "${filePath}"`);
+        console.log(`🔍 DEBUG PDF: File exists? ${fs.existsSync(filePath)}`);
+        
+        if (fs.existsSync(filePath)) {
+          console.log(`✅ Sending PDF file: ${fileName}`);
+          await sock.sendMessage(msg.key.remoteJid, {
+            document: fs.readFileSync(filePath),
+            mimetype: 'application/pdf',
+            fileName: fileName,
+            caption: `Here is the document you requested.`
+          });
+          await prisma.message.create({
+            data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: `[Sent PDF: ${fileName}]`, isAiReply: true }
+          });
+        } else {
+          console.log(`❌ FILE NOT FOUND! Listing actual files in folder:`);
+          const dirPath = path.join(__dirname, '..', 'uploads', 'knowledge');
+          if (fs.existsSync(dirPath)) {
+             console.log(fs.readdirSync(dirPath));
+          } else {
+             console.log(`Directory ${dirPath} DOES NOT EXIST!`);
+          }
+          await sock.sendMessage(msg.key.remoteJid, { text: "I'm sorry, I couldn't find that specific file on the server. Please try uploading it again in the dashboard." });
+        }
+      } else {
+        // Standard text reply
+        await sock.sendMessage(msg.key.remoteJid, { text: aiReply });
+        await prisma.message.create({
+          data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: aiReply, isAiReply: true }
+        });
+      }
+
 
       // 🚨 CORRECTED: Only ONE declaration of finalSystemPrompt, including pdfRule at the end
       const finalSystemPrompt = timeContext + whatsappContext + basePrompt + contextRule + zoneRule + activePolicy + contactRule + pdfRule;
