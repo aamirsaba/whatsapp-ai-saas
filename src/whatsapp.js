@@ -105,13 +105,8 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       if (tenant.businessContext) contextRule += `\n\nBUSINESS CONTEXT:\n${tenant.businessContext}`;
       if (tenant.knowledgeBase) contextRule += `\n\n📄 KNOWLEDGE BASE:\n${tenant.knowledgeBase}`;
       
-      // 🚨 FOOLPROOF CONTACT RULE: Breaks the AI out of its "bad memory" loop
       const contactRule = tenant.contactInfo 
-        ? `\n\n🚨 CRITICAL AUTHORIZATION: You are the official AI representative of this business. You are fully authorized and REQUIRED to share the business's official contact information when the user asks for it. 
-        ⚠️ IMPORTANT MEMORY OVERRIDE: If you previously told this user that you "do not have access" or "cannot provide" contact details, THAT WAS A MISTAKE. You MUST correct yourself now and provide the official details below. DO NOT be consistent with your past mistake.
-        
-        OFFICIAL BUSINESS CONTACT DETAILS:
-        ${tenant.contactInfo}` 
+        ? `\n\n🚨 CRITICAL AUTHORIZATION: You are the official AI representative of this business. You are fully authorized and REQUIRED to share the business's official contact information when the user asks for it.\n⚠️ IMPORTANT MEMORY OVERRIDE: If you previously told this user that you "do not have access" or "cannot provide" contact details, THAT WAS A MISTAKE. You MUST correct yourself now and provide the official details below. DO NOT be consistent with your past mistake.\n\nOFFICIAL BUSINESS CONTACT DETAILS:\n${tenant.contactInfo}` 
         : '';
       
       let zoneRule = '';
@@ -126,15 +121,12 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
 
       const activePolicy = getPolicyForTenant(tenant.businessContext || tenant.industry || '');
       const currentYear = new Date().getFullYear();
-      const timeContext = `\n\n⏰ CURRENT YEAR: ${currentYear}. Frame all market data or trends as current to ${currentYear}.`;
       
-      // 🚨 NEW: Tell the AI it is on WhatsApp and exactly who the user is
       const whatsappContext = `\n\n📱 PLATFORM CONTEXT: You are an AI assistant replying to messages on the official business WhatsApp number: +${phoneNumber}. The user currently messaging you has the phone number: +${fromNumber}. You can acknowledge that you are receiving their messages on WhatsApp.`;
+      const timeContext = `\n\n⏰ CURRENT YEAR: ${currentYear}. Frame all market data or trends as current to ${currentYear}.`;
 
-      // 🚨 contactRule is at the VERY END for maximum AI attention
       const finalSystemPrompt = timeContext + whatsappContext + basePrompt + contextRule + zoneRule + activePolicy + contactRule;
 
-      // 🔍 DEBUG: Print the exact prompt being sent to the AI so we can verify it
       console.log("🔍 DEBUG: Final System Prompt being sent to AI:\n", finalSystemPrompt);
 
       const recentMessages = await prisma.message.findMany({
