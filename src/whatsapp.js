@@ -49,9 +49,9 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       console.log('⚠️ Connection closed. Reconnecting:', shouldReconnect);
       
       if (!shouldReconnect) {
-        // If logged out, clear the QR code and socket
         qrCodes.delete(phoneNumber);
         activeSockets.delete(phoneNumber);
+        // ✅ You already have this, which is perfect:
         await prisma.tenant.update({ where: { whatsappNumber: phoneNumber }, data: { isActive: false } }).catch(() => {});
       }
       
@@ -60,11 +60,12 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       }
     } else if (connection === 'open') {
       console.log(`✅ SUCCESS! WhatsApp is connected and ready for: ${phoneNumber}`);
-      qrCodes.delete(phoneNumber); // 🚨 Clear QR code once connected
+      qrCodes.delete(phoneNumber);
       if (onConnected) onConnected(phoneNumber);
-      await prisma.tenant.update({ where: { id: tenantId }, data: { isActive: true } });
+      
+      // 🚨 SAFE UPDATE: Won't crash if tenantId is missing
+      await prisma.tenant.updateMany({ where: { id: tenantId }, data: { isActive: true } }).catch(() => {});
     }
-  });
 
   sock.ev.on('messages.upsert', async ({ messages, type }) => {
     if (type !== 'notify') return;
