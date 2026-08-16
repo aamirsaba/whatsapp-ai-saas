@@ -1424,12 +1424,10 @@ app.get('/api/agent/info', authenticateToken, async (req, res) => {
   }
 });
 
-// 🚀 UPLOAD KNOWLEDGE BASE (PDF or TXT)
+// 🚀 UPLOAD KNOWLEDGE BASE (Multi-File Support)
 app.post('/api/dashboard/upload-knowledge', authenticateToken, upload.single('file'), async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'Please upload a file.' });
-    }
+    if (!req.file) return res.status(400).json({ error: 'Please upload a file.' });
 
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
     if (!tenant) {
@@ -1441,28 +1439,17 @@ app.post('/api/dashboard/upload-knowledge', authenticateToken, upload.single('fi
     let extractedText = '';
     const filePath = req.file.path;
     const fileExtension = req.file.originalname.split('.').pop().toLowerCase();
-    
     const fs = require('fs');
     
-    if (fileExtension === 'pdf') {
-      // 🚨 BULLETPROOF LOADER: Clear cache and try all export variations
-      delete require.cache[require.resolve('pdf-parse')];
-      const pdfModule = require('pdf-parse');
-      
-      let parseFn = null;
-      if (typeof pdfModule === 'function') parseFn = pdfModule;
-      else if (typeof pdfModule.default === 'function') parseFn = pdfModule.default;
-      else if (typeof pdfModule.parse === 'function') parseFn = pdfModule.parse;
-      
-      if (!parseFn) {
-        console.error('❌ PDF MODULE DEBUG:', typeof pdfModule, Object.keys(pdfModule));
-        throw new Error('pdf-parse module did not export a valid function. Please reinstall.');
-      }
+    // Bulletproof PDF parser
+    delete require.cache[require.resolve('pdf-parse')];
+    const pdfModule = require('pdf-parse');
+    const parseFn = typeof pdfModule === 'function' ? pdfModule : (pdfModule.default || pdfModule.parse || pdfModule);
 
+    if (fileExtension === 'pdf') {
       const dataBuffer = fs.readFileSync(filePath);
       const data = await parseFn(dataBuffer);
       extractedText = data.text;
-      
     } else if (fileExtension === 'txt') {
       extractedText = fs.readFileSync(filePath, 'utf8');
     } else {
@@ -1470,7 +1457,6 @@ app.post('/api/dashboard/upload-knowledge', authenticateToken, upload.single('fi
       return res.status(400).json({ error: 'Only PDF and TXT files are allowed.' });
     }
 
-    // Clean up the text
     extractedText = extractedText.replace(/\s+/g, ' ').trim();
 
     if (extractedText.length < 10) {
@@ -1478,19 +1464,21 @@ app.post('/api/dashboard/upload-knowledge', authenticateToken, upload.single('fi
       return res.status(400).json({ error: 'Could not extract enough text. File might be image-based.' });
     }
 
-    // Save to database
-    await prisma.tenant.update({
-      where: { id: tenant.id },
-      data: { knowledgeBase: extractedText }
+    // 🚨 SAVE AS A NEW DOCUMENT (No overwriting!)
+    await prisma.knowledgeDocument.create({
+      data: {
+        tenantId: tenant.id,
+        fileName: req.file.originalname,
+        fileSize: req.file.size,
+        content: extractedText
+      }
     });
 
-    // Delete temp file
-    fs.unlinkSync(filePath);
+    fs.unlinkSync(filePath); // Delete temp file
 
     res.json({ 
       success: true, 
-      message: `✅ Successfully processed! Extracted ${extractedText.length} characters of knowledge.`,
-      charCount: extractedText.length
+      message: `✅ Successfully uploaded "${req.file.originalname}"!`
     });
   } catch (error) {
     console.error('❌ Upload knowledge error:', error);
@@ -1679,6 +1667,44 @@ app.get('/api/whatsapp/qr/:number', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('❌ QR API error:', error);
     res.status(500).json({ error: 'Failed to get QR code' });
+  }
+});
+
+// 🚀 LIST ALL KNOWLEDGE DOCUMENTS
+app.get('/api/dashboard/knowledge', authenticateToken, async (req, res) => {
+  try {
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    const documents = await prisma.knowledgeDocument.findMany({
+      where: { tenantId: tenant.id },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json({ success: true, documents });
+  } catch (error) {
+    console.error('❌ List knowledge error:', error);
+    res.status(500).json({ error: 'Failed to load documents.' });
+  }
+});
+
+// 🚀 DELETE A KNOWLEDGE DOCUMENT
+app.delete('/api/dashboard/knowledge/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    // Ensure the document belongs to this tenant
+    const doc = await prisma.knowledgeDocument.findFirst({ where: { id, tenantId: tenant.id } });
+    if (!doc) return res.status(404).json({ error: 'Document not found.' });
+
+    await prisma.knowledgeDocument.delete({ where: { id } });
+
+    res.json({ success: true, message: '✅ Document deleted successfully.' });
+  } catch (error) {
+    console.error('❌ Delete knowledge error:', error);
+    res.status(500).json({ error: 'Failed to delete document.' });
   }
 });
 

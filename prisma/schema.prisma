@@ -79,6 +79,8 @@ model Tenant {
   leads            Lead[]
   teamMembers      TeamMember[]
   invitations      TeamInvitation[] // 🚨 ADDED: Relation to invitations
+  // ... other tenant fields ...
+  knowledgeDocuments KnowledgeDocument[]
 }
 
 // 5. The Message Model
@@ -135,4 +137,14 @@ model TeamInvitation {
 
   @@index([email])
   @@index([token])
+}
+
+model KnowledgeDocument {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  fileName    String   // e.g., "Power_BI_Course.pdf"
+  fileSize    Int      // in bytes
+  content     String   @db.Text // The extracted text
+  createdAt   DateTime @default(now())
 }
