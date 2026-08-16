@@ -92,7 +92,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         include: { assignedAgent: true }
       });
 
-      // Auto-detect "talk to human" request (Added /human)
+      // Auto-detect "talk to human" request
       const humanKeywords = ['/human', 'talk to human', 'speak to human', 'human agent', 'real person', 'talk to agent', 'tawk ila insan', 'تحدث الى انسان', 'تحدث إلى شخص', 'موظف', 'شخص حقيقي', 'agent', 'human'];
       const lowerText = text.toLowerCase();
       const wantsHuman = humanKeywords.some(kw => lowerText.includes(kw));
@@ -109,7 +109,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         });
         console.log(`💬 New conversation created for ${fromNumber} (AI Mode)`);
 
-        // 🚨 NEW: Send personalized welcome message using AI Agent Name
+        // 🚨 NEW: Send Welcome & Handoff Message for new users using the custom AI name
         const agentName = tenant.aiAgentName || 'AI Assistant';
         const welcomeMsg = `Hi there! 👋 I'm *${agentName}*, your personal assistant. I'm here to help you 24/7!\n\n💡 *Need a human?* Anytime you want to speak with a real person, just type */human* or *talk to human*, and I'll connect you right away.\n\nHow can I help you today?`;
 
