@@ -1432,15 +1432,23 @@ app.post('/api/dashboard/upload-knowledge', authenticateToken, upload.single('fi
     }
 
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
-    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+    if (!tenant) {
+      const fs = require('fs');
+      fs.unlinkSync(req.file.path); // Clean up file
+      return res.status(404).json({ error: 'Tenant not found.' });
+    }
 
     let extractedText = '';
     const filePath = req.file.path;
     const fileExtension = req.file.originalname.split('.').pop().toLowerCase();
+    
+    // 🚨 REQUIRE LIBRARIES DIRECTLY HERE TO PREVENT NAMING CONFLICTS
+    const fs = require('fs');
+    const pdfParse = require('pdf-parse'); 
 
     if (fileExtension === 'pdf') {
       const dataBuffer = fs.readFileSync(filePath);
-      const data = await pdf(dataBuffer);
+      const data = await pdfParse(dataBuffer); // 🚨 MUST BE pdfParse, NOT pdf
       extractedText = data.text;
     } else if (fileExtension === 'txt') {
       extractedText = fs.readFileSync(filePath, 'utf8');
@@ -1454,7 +1462,7 @@ app.post('/api/dashboard/upload-knowledge', authenticateToken, upload.single('fi
 
     if (extractedText.length < 10) {
       fs.unlinkSync(filePath);
-      return res.status(400).json({ error: 'Could not extract enough text from this file.' });
+      return res.status(400).json({ error: 'Could not extract enough text from this file. It might be an image-based PDF.' });
     }
 
     // Save to database
@@ -1476,7 +1484,6 @@ app.post('/api/dashboard/upload-knowledge', authenticateToken, upload.single('fi
     res.status(500).json({ error: 'Failed to process file.' });
   }
 });
-
 
 // 🚀 OWNER DASHBOARD: Get recent chats
 app.get('/api/dashboard/chats', authenticateToken, async (req, res) => {
