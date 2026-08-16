@@ -10,6 +10,16 @@ const { authenticateToken } = require('./middleware'); // 🚀 NEW: Auth Middlew
 const cron = require('node-cron');
 
 const multer = require('multer');
+// 🚨 NEW: Dedicated uploader for Knowledge Base PDFs (Max 10MB, saves permanently)
+const knowledgeUpload = multer({ 
+  dest: 'uploads/knowledge/',
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit to protect server space
+});
+
+// Ensure the folder exists on startup
+if (!require('fs').existsSync('uploads/knowledge')) {
+  require('fs').mkdirSync('uploads/knowledge', { recursive: true });
+}
 const pdf = require('pdf-parse');
 const fs = require('fs');
 const path = require('path');
@@ -1425,7 +1435,7 @@ app.get('/api/agent/info', authenticateToken, async (req, res) => {
 });
 
 // 🚀 UPLOAD KNOWLEDGE BASE (Multi-File Support)
-app.post('/api/dashboard/upload-knowledge', authenticateToken, upload.single('file'), async (req, res) => {
+app.post('/api/dashboard/upload-knowledge', authenticateToken, knowledgeUpload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Please upload a file.' });
 
@@ -1453,7 +1463,7 @@ app.post('/api/dashboard/upload-knowledge', authenticateToken, upload.single('fi
     } else if (fileExtension === 'txt') {
       extractedText = fs.readFileSync(filePath, 'utf8');
     } else {
-      fs.unlinkSync(filePath);
+      
       return res.status(400).json({ error: 'Only PDF and TXT files are allowed.' });
     }
 

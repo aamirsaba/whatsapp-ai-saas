@@ -10,6 +10,8 @@ const { getPolicyForTenant } = require('./policies');
 const prisma = new PrismaClient();
 const activeSockets = new Map();
 const qrCodes = new Map();
+const fs = require('fs');
+const path = require('path');
 
 async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConnected) {  
   console.log(`🔄 Starting WhatsApp session for: ${phoneNumber}`);
@@ -125,7 +127,19 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       const whatsappContext = `\n\n📱 PLATFORM CONTEXT: You are an AI assistant replying to messages on the official business WhatsApp number: +${phoneNumber}. The user currently messaging you has the phone number: +${fromNumber}. You can acknowledge that you are receiving their messages on WhatsApp.`;
       const timeContext = `\n\n⏰ CURRENT YEAR: ${currentYear}. Frame all market data or trends as current to ${currentYear}.`;
 
-      const finalSystemPrompt = timeContext + whatsappContext + basePrompt + contextRule + zoneRule + activePolicy + contactRule;
+      // 🚨 NEW: Fetch uploaded PDFs and teach the AI how to send them
+      const uploadedDocs = await prisma.knowledgeDocument.findMany({ 
+        where: { tenantId: tenant.id },
+        select: { fileName: true }
+      });
+      const pdfFileList = uploadedDocs.map(doc => doc.fileName).join(', ');
+      
+      const pdfRule = pdfFileList 
+        ? `\n\n📄 AVAILABLE PDF FILES ON SERVER: [${pdfFileList}]. \n🚨 CRITICAL RULE: If the user asks for a PDF, file, brochure, or document that matches one of these names, you MUST reply with EXACTLY this format and nothing else: [SEND_PDF:filename.pdf] (replace filename.pdf with the exact name from the list). Do not add any other text.` 
+        : '';
+
+      // 🚨 CORRECTED: Only ONE declaration of finalSystemPrompt, including pdfRule at the end
+      const finalSystemPrompt = timeContext + whatsappContext + basePrompt + contextRule + zoneRule + activePolicy + contactRule + pdfRule;
 
       console.log("🔍 DEBUG: Final System Prompt being sent to AI:\n", finalSystemPrompt);
 
@@ -148,11 +162,34 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       const aiReply = await getAIResponse(chatHistory, finalSystemPrompt, tenant);
       console.log(`🗣️ AI Reply: ${aiReply}`);
 
-      await sock.sendMessage(msg.key.remoteJid, { text: aiReply });
-      await prisma.message.create({
-        data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: aiReply, isAiReply: true }
-      });
-
+      // 🚨 CHECK IF AI WANTS TO SEND A PDF
+      const pdfMatch = aiReply.match(/\[SEND_PDF:(.*?)\]/);
+      
+      if (pdfMatch) {
+        const fileName = pdfMatch[1].trim();
+        const filePath = path.join(__dirname, '..', 'uploads', 'knowledge', fileName);
+        
+        if (fs.existsSync(filePath)) {
+          console.log(` Sending PDF file: ${fileName}`);
+          await sock.sendMessage(msg.key.remoteJid, {
+            document: fs.readFileSync(filePath),
+            mimetype: 'application/pdf',
+            fileName: fileName,
+            caption: `Here is the document you requested: ${fileName}`
+          });
+          await prisma.message.create({
+            data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: `[Sent PDF: ${fileName}]`, isAiReply: true }
+          });
+        } else {
+          await sock.sendMessage(msg.key.remoteJid, { text: "I'm sorry, I couldn't find that file on the server." });
+        }
+      } else {
+        // Standard text reply
+        await sock.sendMessage(msg.key.remoteJid, { text: aiReply });
+        await prisma.message.create({
+          data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: aiReply, isAiReply: true }
+        });
+      }
     } catch (error) {
       console.error("❌ Error processing message:", error);
     }
