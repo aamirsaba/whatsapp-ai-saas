@@ -1474,7 +1474,7 @@ app.post('/api/dashboard/upload-knowledge', authenticateToken, knowledgeUpload.s
       return res.status(400).json({ error: 'Could not extract enough text. File might be image-based.' });
     }
 
-    // 🚨 SAVE AS A NEW DOCUMENT (No overwriting!)
+    //  SAVE AS A NEW DOCUMENT (No overwriting!)
     await prisma.knowledgeDocument.create({
       data: {
         tenantId: tenant.id,
@@ -1484,7 +1484,7 @@ app.post('/api/dashboard/upload-knowledge', authenticateToken, knowledgeUpload.s
       }
     });
 
-    fs.unlinkSync(filePath); // Delete temp file
+    // 🚨 WE DELETED THE fs.unlinkSync(filePath) LINE HERE!
 
     res.json({ 
       success: true, 
