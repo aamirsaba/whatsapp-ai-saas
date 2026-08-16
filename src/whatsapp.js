@@ -127,7 +127,6 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       const whatsappContext = `\n\n📱 PLATFORM CONTEXT: You are an AI assistant replying to messages on the official business WhatsApp number: +${phoneNumber}. The user currently messaging you has the phone number: +${fromNumber}. You can acknowledge that you are receiving their messages on WhatsApp.`;
       const timeContext = `\n\n⏰ CURRENT YEAR: ${currentYear}. Frame all market data or trends as current to ${currentYear}.`;
 
-      // 🚨 NEW: Fetch uploaded PDFs and teach the AI how to send them
       const uploadedDocs = await prisma.knowledgeDocument.findMany({ 
         where: { tenantId: tenant.id },
         select: { fileName: true }
@@ -138,13 +137,10 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         ? `\n\n📄 AVAILABLE PDF FILES: [${pdfFileList}]. \n🚨 ABSOLUTE STRICT RULE: You are FORBIDDEN from using the "[SEND_PDF:filename.pdf]" format unless the user's message explicitly contains words like "send pdf", "give me the file", "download document", or "share the pdf". If the user asks a general question (like "do you offer ITIL?", "hi", "what is X"), you MUST answer in normal plain text. NEVER output the [SEND_PDF:...] string for general questions.` 
         : '';
 
-
-      // 🚨 CORRECT ORDER: Build the prompt FIRST
+      // 🚨 1. BUILD PROMPT FIRST
       const finalSystemPrompt = timeContext + whatsappContext + basePrompt + contextRule + zoneRule + activePolicy + contactRule + pdfRule;
 
-      console.log("🔍 DEBUG: Final System Prompt being sent to AI:\n", finalSystemPrompt);
-
-      // 🚨 CORRECT ORDER: Get chat history SECOND
+      // 🚨 2. GET CHAT HISTORY SECOND
       const recentMessages = await prisma.message.findMany({
         where: { 
           tenantId: tenant.id,
@@ -161,11 +157,11 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       }));
       chatHistory.push({ role: 'user', content: text });
 
-      // 🚨 CORRECT ORDER: Get AI reply THIRD (Only declared ONCE)
+      // 🚨 3. GET AI REPLY THIRD (ONLY DECLARED ONCE!)
       const aiReply = await getAIResponse(chatHistory, finalSystemPrompt, tenant);
       console.log(`🗣️ AI Reply: ${aiReply}`);
 
-      // 🚨 CHECK IF AI WANTS TO SEND A PDF
+      // 🚨 4. CHECK FOR PDF MATCH FOURTH
       const pdfMatch = aiReply.match(/\[SEND_PDF:(.*?)\]/);
       
       if (pdfMatch) {
@@ -183,9 +179,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
           
           if (stats.size === 0) {
             console.log(`❌ FILE IS EMPTY (0 bytes)! Cannot send.`);
-            await sock.sendMessage(msg.key.remoteJid, { 
-              text: "I found the file, but it appears to be empty. Please re-upload it in the dashboard." 
-            });
+            await sock.sendMessage(msg.key.remoteJid, { text: "I found the file, but it appears to be empty. Please re-upload it in the dashboard." });
           } else {
             try {
               console.log(`✅ Attempting to send PDF file: ${fileName}`);
@@ -201,34 +195,22 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
               
               console.log(`✅ PDF sent successfully!`);
               await prisma.message.create({
-                data: { 
-                  tenantId: tenant.id, 
-                  fromNumber: phoneNumber, 
-                  toNumber: fromNumber, 
-                  direction: 'outbound', 
-                  content: `[Sent PDF: ${fileName}]`, 
-                  isAiReply: true 
-                }
+                data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: `[Sent PDF: ${fileName}]`, isAiReply: true }
               });
             } catch (sendError) {
               console.error(`❌ ERROR SENDING PDF:`, sendError);
-              await sock.sendMessage(msg.key.remoteJid, { 
-                text: `I tried to send the file but encountered an error: ${sendError.message}` 
-              });
+              await sock.sendMessage(msg.key.remoteJid, { text: `I tried to send the file but encountered an error: ${sendError.message}` });
             }
           }
         } else {
           console.log(`❌ FILE NOT FOUND! Listing actual files in folder:`);
           const dirPath = path.join(__dirname, '..', 'uploads', 'knowledge');
           if (fs.existsSync(dirPath)) {
-             const files = fs.readdirSync(dirPath);
-             console.log(`📁 Files in directory:`, files);
+             console.log(`📁 Files in directory:`, fs.readdirSync(dirPath));
           } else {
              console.log(`❌ Directory ${dirPath} DOES NOT EXIST!`);
           }
-          await sock.sendMessage(msg.key.remoteJid, { 
-            text: "I'm sorry, I couldn't find that specific file on the server. Please try uploading it again in the dashboard." 
-          });
+          await sock.sendMessage(msg.key.remoteJid, { text: "I'm sorry, I couldn't find that specific file on the server. Please try uploading it again in the dashboard." });
         }
         console.log(`🔍 ========== PDF DEBUG END ==========\n`);
       } else {
