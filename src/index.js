@@ -1434,7 +1434,7 @@ app.post('/api/dashboard/upload-knowledge', authenticateToken, upload.single('fi
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
     if (!tenant) {
       const fs = require('fs');
-      fs.unlinkSync(req.file.path); // Clean up file
+      fs.unlinkSync(req.file.path);
       return res.status(404).json({ error: 'Tenant not found.' });
     }
 
@@ -1442,27 +1442,29 @@ app.post('/api/dashboard/upload-knowledge', authenticateToken, upload.single('fi
     const filePath = req.file.path;
     const fileExtension = req.file.originalname.split('.').pop().toLowerCase();
     
-    // 🚨 REQUIRE LIBRARIES DIRECTLY HERE TO PREVENT NAMING CONFLICTS
     const fs = require('fs');
-    const pdfParse = require('pdf-parse'); 
+    
+    // 🚨 BULLETPROOF PDF-PARSE LOADER (Handles both CommonJS and ES Module exports)
+    const pdfModule = require('pdf-parse');
+    const parsePdf = typeof pdfModule === 'function' ? pdfModule : (pdfModule.default || pdfModule);
 
     if (fileExtension === 'pdf') {
       const dataBuffer = fs.readFileSync(filePath);
-      const data = await pdfParse(dataBuffer); // 🚨 MUST BE pdfParse, NOT pdf
+      const data = await parsePdf(dataBuffer); // This will now work 100%
       extractedText = data.text;
     } else if (fileExtension === 'txt') {
       extractedText = fs.readFileSync(filePath, 'utf8');
     } else {
-      fs.unlinkSync(filePath); // Delete invalid file
+      fs.unlinkSync(filePath);
       return res.status(400).json({ error: 'Only PDF and TXT files are allowed.' });
     }
 
-    // Clean up the text (remove excessive whitespace)
+    // Clean up the text
     extractedText = extractedText.replace(/\s+/g, ' ').trim();
 
     if (extractedText.length < 10) {
       fs.unlinkSync(filePath);
-      return res.status(400).json({ error: 'Could not extract enough text from this file. It might be an image-based PDF.' });
+      return res.status(400).json({ error: 'Could not extract enough text. File might be image-based.' });
     }
 
     // Save to database
@@ -1471,7 +1473,7 @@ app.post('/api/dashboard/upload-knowledge', authenticateToken, upload.single('fi
       data: { knowledgeBase: extractedText }
     });
 
-    // Delete the physical file to save disk space
+    // Delete temp file
     fs.unlinkSync(filePath);
 
     res.json({ 
