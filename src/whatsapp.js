@@ -1,13 +1,15 @@
 const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
-const qrcode = require('qrcode-terminal');
+const qrcodeTerminal = require('qrcode-terminal');
+const { toDataURL } = require('qrcode'); // 🚨 NEW: For web QR code generation
 const pino = require('pino');
 const { PrismaClient } = require('@prisma/client');
 const { getAIResponse } = require('./ai');
-const { getPolicyForTenant } = require('./policies'); // 🚨 ADD THIS LINE!
+const { getPolicyForTenant } = require('./policies');
 
 const prisma = new PrismaClient();
 const activeSockets = new Map();
+const qrCodes = new Map(); // 🚨 NEW: Store QR codes in memory for the web dashboard
 
 async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConnected) {  
   console.log(`🔄 Starting WhatsApp session for: ${phoneNumber}`);
@@ -29,18 +31,36 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
 
     if (qr) {
       console.log(`\n📱 SCAN THIS QR CODE WITH WHATSAPP FOR: ${phoneNumber}`);
-      qrcode.generate(qr, { small: true });
+      qrcodeTerminal.generate(qr, { small: true });
+      
+      // 🚨 NEW: Convert QR string to Data URL and store it for the web dashboard
+      try {
+        const qrDataUrl = await toDataURL(qr);
+        qrCodes.set(phoneNumber, qrDataUrl);
+      } catch (err) {
+        console.error('Failed to generate QR Data URL:', err);
+      }
+      
       if (onQrGenerated) onQrGenerated(phoneNumber, qr);
     }
 
     if (connection === 'close') {
       const shouldReconnect = (lastDisconnect.error instanceof Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
       console.log('⚠️ Connection closed. Reconnecting:', shouldReconnect);
+      
+      if (!shouldReconnect) {
+        // If logged out, clear the QR code and socket
+        qrCodes.delete(phoneNumber);
+        activeSockets.delete(phoneNumber);
+        await prisma.tenant.update({ where: { whatsappNumber: phoneNumber }, data: { isActive: false } }).catch(() => {});
+      }
+      
       if (shouldReconnect) {
         startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConnected);
       }
     } else if (connection === 'open') {
       console.log(`✅ SUCCESS! WhatsApp is connected and ready for: ${phoneNumber}`);
+      qrCodes.delete(phoneNumber); // 🚨 Clear QR code once connected
       if (onConnected) onConnected(phoneNumber);
       await prisma.tenant.update({ where: { id: tenantId }, data: { isActive: true } });
     }
@@ -133,8 +153,6 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
 
       const finalSystemPrompt = timeContext + basePrompt + contextRule + contactRule + zoneRule + activePolicy;
 
-
-      // 🚨 UPDATED: Added zoneRule to the final prompt
       // 🧠 NEW: Fetch recent chat history to give the AI memory (last 10 messages)
       const recentMessages = await prisma.message.findMany({
         where: { 
@@ -184,4 +202,4 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
   });
 }
 
-module.exports = { startWhatsAppSession, activeSockets };
+module.exports = { startWhatsAppSession, activeSockets, qrCodes }; // 🚨 EXPORTED qrCodes

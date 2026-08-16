@@ -3,7 +3,7 @@ const express = require('express');
 const http = require('http');
 const { WebSocketServer } = require('ws');
 const { PrismaClient } = require('@prisma/client');
-const { startWhatsAppSession, activeSockets } = require('./whatsapp');
+const { startWhatsAppSession, activeSockets, qrCodes } = require('./whatsapp');
 const { registerUser, loginUser } = require('./auth');
 const { authenticateToken } = require('./middleware'); // 🚀 NEW: Auth Middleware
 
@@ -1535,6 +1535,124 @@ app.get('/api/dashboard/chat-history', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error(' Chat history error:', error);
     res.status(500).json({ error: 'Failed to load chat history.' });
+  }
+});
+
+
+// 🚀 CONNECT WHATSAPP: Show QR Code page
+app.get('/connect/:number', authenticateToken, async (req, res) => {
+  try {
+    const { number } = req.params;
+    const tenant = await prisma.tenant.findFirst({ 
+      where: { 
+        whatsappNumber: number,
+        userId: req.user.userId 
+      } 
+    });
+    
+    if (!tenant) {
+      return res.status(404).send('Tenant not found');
+    }
+
+    res.send(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Connect WhatsApp - ${tenant.businessName}</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+      </head>
+      <body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-md p-8 text-center">
+          <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">🔗 Connect WhatsApp</h1>
+            <p class="text-gray-600 font-semibold">${tenant.businessName}</p>
+            <p class="text-sm text-gray-500 mt-1">Number: ${number}</p>
+          </div>
+          
+          <div id="qrContainer" class="mb-6 p-6 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 min-h-[250px] flex items-center justify-center">
+            <div class="animate-pulse text-center">
+              <div class="h-48 w-48 bg-gray-200 rounded-lg mb-4 mx-auto"></div>
+              <p class="text-gray-600">⏳ Generating QR code...</p>
+            </div>
+          </div>
+          
+          <div id="statusContainer" class="mb-6">
+            <p class="text-sm text-gray-600 font-medium">📲 Open WhatsApp on your phone:</p>
+            <ol class="text-sm text-gray-500 mt-2 text-left space-y-1 list-decimal list-inside">
+              <li>Go to <strong>Settings</strong> → <strong>Linked Devices</strong></li>
+              <li>Tap <strong>"Link a Device"</strong></li>
+              <li>Scan the QR code above</li>
+            </ol>
+          </div>
+          
+          <a href="/dashboard" class="block w-full bg-gray-100 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-200 transition">
+            ← Back to Dashboard
+          </a>
+        </div>
+
+        <script>
+          async function checkQR() {
+            try {
+              const res = await fetch('/api/whatsapp/qr/${number}', {
+                headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+              });
+              const data = await res.json();
+              
+              if (res.ok) {
+                if (data.qrCode) {
+                  document.getElementById('qrContainer').innerHTML = \`
+                    <img src="\${data.qrCode}" alt="QR Code" class="w-48 h-48 mx-auto mb-4 rounded-lg shadow-sm">
+                    <p class="text-green-600 font-semibold">✅ Scan this QR code!</p>
+                  \`;
+                } else if (data.connected) {
+                  document.getElementById('qrContainer').innerHTML = \`
+                    <div class="text-green-500 text-6xl mb-4">✅</div>
+                    <p class="text-green-600 font-bold text-lg">WhatsApp Connected!</p>
+                    <p class="text-gray-600 mt-2">Redirecting to dashboard...</p>
+                  \`;
+                  setTimeout(() => { window.location.href = '/dashboard'; }, 2000);
+                }
+              }
+            } catch (err) {
+              console.error('QR check error:', err);
+            }
+          }
+          
+          checkQR();
+          setInterval(checkQR, 2000); // Check every 2 seconds
+        </script>
+      </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error('❌ Connect page error:', error);
+    res.status(500).send('Server error');
+  }
+});
+
+// 🚀 API: Get QR Code
+app.get('/api/whatsapp/qr/:number', authenticateToken, async (req, res) => {
+  try {
+    const { number } = req.params;
+    
+    // Check if already connected
+    const sock = activeSockets.get(number);
+    if (sock && sock.user) {
+      return res.json({ connected: true, message: 'Already connected' });
+    }
+    
+    // Get QR code from memory
+    const qrCode = qrCodes.get(number);
+    if (qrCode) {
+      return res.json({ qrCode, connected: false });
+    }
+    
+    res.json({ qrCode: null, connected: false, message: 'Generating QR code...' });
+  } catch (error) {
+    console.error('❌ QR API error:', error);
+    res.status(500).json({ error: 'Failed to get QR code' });
   }
 });
 
