@@ -1,7 +1,7 @@
 const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
 const qrcodeTerminal = require('qrcode-terminal');
-const { toDataURL } = require('qrcode'); // 🚨 NEW: For web QR code generation
+const { toDataURL } = require('qrcode');
 const pino = require('pino');
 const { PrismaClient } = require('@prisma/client');
 const { getAIResponse } = require('./ai');
@@ -9,7 +9,7 @@ const { getPolicyForTenant } = require('./policies');
 
 const prisma = new PrismaClient();
 const activeSockets = new Map();
-const qrCodes = new Map(); // 🚨 NEW: Store QR codes in memory for the web dashboard
+const qrCodes = new Map();
 
 async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConnected) {  
   console.log(`🔄 Starting WhatsApp session for: ${phoneNumber}`);
@@ -30,10 +30,9 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
-      console.log(`\n📱 SCAN THIS QR CODE WITH WHATSAPP FOR: ${phoneNumber}`);
+      console.log(`\n SCAN THIS QR CODE WITH WHATSAPP FOR: ${phoneNumber}`);
       qrcodeTerminal.generate(qr, { small: true });
       
-      // 🚨 NEW: Convert QR string to Data URL and store it for the web dashboard
       try {
         const qrDataUrl = await toDataURL(qr);
         qrCodes.set(phoneNumber, qrDataUrl);
@@ -51,8 +50,10 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       if (!shouldReconnect) {
         qrCodes.delete(phoneNumber);
         activeSockets.delete(phoneNumber);
-        // ✅ You already have this, which is perfect:
-        await prisma.tenant.update({ where: { whatsappNumber: phoneNumber }, data: { isActive: false } }).catch(() => {});
+        await prisma.tenant.updateMany({ 
+          where: { whatsappNumber: phoneNumber }, 
+          data: { isActive: false } 
+        }).catch(() => {});
       }
       
       if (shouldReconnect) {
@@ -62,10 +63,12 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       console.log(`✅ SUCCESS! WhatsApp is connected and ready for: ${phoneNumber}`);
       qrCodes.delete(phoneNumber);
       if (onConnected) onConnected(phoneNumber);
-      
-      // 🚨 SAFE UPDATE: Won't crash if tenantId is missing
-      await prisma.tenant.updateMany({ where: { id: tenantId }, data: { isActive: true } }).catch(() => {});
+      await prisma.tenant.updateMany({ 
+        where: { id: tenantId }, 
+        data: { isActive: true } 
+      }).catch(() => {});
     }
+  });
 
   sock.ev.on('messages.upsert', async ({ messages, type }) => {
     if (type !== 'notify') return;
@@ -81,7 +84,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
     const text = msg.message.conversation || msg.message.extendedTextMessage?.text || msg.message.imageMessage?.caption || "";
     if (!text) return;
 
-    console.log(`\n📩 [SUCCESS] New Message from ${fromNumber}: ${text}`);
+    console.log(`\n [SUCCESS] New Message from ${fromNumber}: ${text}`);
 
     try {
       const tenant = await prisma.tenant.findUnique({ where: { whatsappNumber: phoneNumber } });
@@ -90,7 +93,6 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         return;
       }
 
-      // 🚀 NEW: Auto-Create Lead in CRM if it's a new customer
       const existingLead = await prisma.lead.findFirst({
         where: { tenantId: tenant.id, phoneNumber: fromNumber }
       });
@@ -111,15 +113,13 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         data: { tenantId: tenant.id, fromNumber, toNumber: phoneNumber, direction: 'inbound', content: text, isAiReply: false }
       });
 
-      // 🚨 NEW: Human Takeover Check
       if (tenant.isHumanMode) {
-        console.log(`👤 Human Mode Active: AI paused. Message from ${fromNumber} saved for manual reply.`);
-        return; // Stop here! Do not call the AI or send a message.
+        console.log(` Human Mode Active: AI paused. Message from ${fromNumber} saved for manual reply.`);
+        return;
       }
 
       const basePrompt = tenant.systemPrompt || "You are a helpful, professional AI assistant.";
       
-      // 🚨 UPDATED: Combine Business Context AND Knowledge Base
       let contextRule = '';
       if (tenant.businessContext) {
         contextRule += `\n\nBUSINESS CONTEXT:\n${tenant.businessContext}`;
@@ -130,7 +130,6 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       
       const contactRule = tenant.contactInfo ? `\n\nOFFICIAL CONTACT DETAILS (USE EXACTLY AS WRITTEN):\n${tenant.contactInfo}` : '';
       
-      // 🚨 NEW: Dynamic Service Zones Logic
       let zoneRule = '';
       if (tenant.serviceAreas) {
         try {
@@ -145,16 +144,13 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         } catch (e) { console.error('Error parsing service areas:', e); }
       }
 
-      // 🚨 DYNAMIC RULE ENGINE INJECTION
       const activePolicy = getPolicyForTenant(tenant.businessContext || tenant.industry || '');
       
-      // 🚨 INJECT CURRENT YEAR TO PREVENT OUTDATED "2024" REFERENCES
       const currentYear = new Date().getFullYear();
       const timeContext = `\n\n⏰ CURRENT TIME CONTEXT: The current year is ${currentYear}. When providing market data, prices, or trends, you must frame them as current as of ${currentYear}. Do not default to outdated years like 2023 or 2024. If you lack real-time ${currentYear} data, state: "While I don't have live ${currentYear} market feeds, historically this area trends around..."`;
 
       const finalSystemPrompt = timeContext + basePrompt + contextRule + contactRule + zoneRule + activePolicy;
 
-      // 🧠 NEW: Fetch recent chat history to give the AI memory (last 10 messages)
       const recentMessages = await prisma.message.findMany({
         where: { 
           tenantId: tenant.id,
@@ -163,23 +159,19 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
             { fromNumber: phoneNumber, toNumber: fromNumber }
           ]
         },
-        orderBy: { createdAt: 'desc' }, // 🚨 CRITICAL FIX: Get the NEWEST messages first
+        orderBy: { createdAt: 'desc' },
         take: 10 
       });
 
-      // 🚨 CRITICAL FIX: Reverse the array so it's in chronological order (oldest to newest) for the AI
       recentMessages.reverse();
 
-      // Format history for the AI (user = customer, assistant = AI)
       const chatHistory = recentMessages.map(msg => ({
         role: msg.direction === 'inbound' ? 'user' : 'assistant',
         content: msg.content
       }));
 
-      // Add the brand new message to the very end of the history
       chatHistory.push({ role: 'user', content: text });
 
-      // 🚨 PASS THE FULL HISTORY TO THE AI
       const aiReply = await getAIResponse(chatHistory, finalSystemPrompt, tenant);
 
       console.log(`🗣️ AI Reply: ${aiReply}`);
@@ -194,7 +186,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         fetch(process.env.DISCORD_WEBHOOK_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: `🔥 **New WhatsApp Activity!**\n🏢 **Business:** ${tenant.businessName}\n📱 **Number:** ${fromNumber}\n💬 **Message:** ${text}\n🤖 **AI Reply:** ${aiReply}` })
+          body: JSON.stringify({ content: `🔥 **New WhatsApp Activity!**\n🏢 **Business:** ${tenant.businessName}\n📱 **Number:** ${fromNumber}\n💬 **Message:** ${text}\n **AI Reply:** ${aiReply}` })
         }).catch(err => console.error("❌ Failed to notify Discord:", err));
       }
     } catch (error) {
@@ -203,4 +195,4 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
   });
 }
 
-module.exports = { startWhatsAppSession, activeSockets, qrCodes }; // 🚨 EXPORTED qrCodes
+module.exports = { startWhatsAppSession, activeSockets, qrCodes };
