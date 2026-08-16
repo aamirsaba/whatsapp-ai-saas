@@ -128,7 +128,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         contextRule += `\n\n📄 KNOWLEDGE BASE (USE THIS DATA TO ANSWER QUESTIONS):\n${tenant.knowledgeBase}`;
       }
       
-            // 🚨 STRENGTHENED: Force the AI to use the contact info
+      // 🚨 STRENGTHENED: Force the AI to use the contact info
       const contactRule = tenant.contactInfo 
         ? `\n\n🚨 CRITICAL RULE: If the user asks for contact details, phone number, email, address, or website, you MUST provide the exact information below. DO NOT say you don't have access, and DO NOT tell them to search Google.\n\nOFFICIAL CONTACT DETAILS:\n${tenant.contactInfo}` 
         : '';
@@ -152,7 +152,8 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       const currentYear = new Date().getFullYear();
       const timeContext = `\n\n⏰ CURRENT TIME CONTEXT: The current year is ${currentYear}. When providing market data, prices, or trends, you must frame them as current as of ${currentYear}. Do not default to outdated years like 2023 or 2024. If you lack real-time ${currentYear} data, state: "While I don't have live ${currentYear} market feeds, historically this area trends around..."`;
 
-      const finalSystemPrompt = timeContext + basePrompt + contextRule + contactRule + zoneRule + activePolicy;
+      // 🚨 THE ONLY CHANGE: contactRule is now at the VERY END so the AI cannot ignore it
+      const finalSystemPrompt = timeContext + basePrompt + contextRule + zoneRule + activePolicy + contactRule;
 
       const recentMessages = await prisma.message.findMany({
         where: { 
