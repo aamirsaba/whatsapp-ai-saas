@@ -105,9 +105,13 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       if (tenant.businessContext) contextRule += `\n\nBUSINESS CONTEXT:\n${tenant.businessContext}`;
       if (tenant.knowledgeBase) contextRule += `\n\n📄 KNOWLEDGE BASE:\n${tenant.knowledgeBase}`;
       
-      // 🚨 FOOLPROOF CONTACT RULE: Overrides the "I am an AI" reflex
+      // 🚨 FOOLPROOF CONTACT RULE: Breaks the AI out of its "bad memory" loop
       const contactRule = tenant.contactInfo 
-        ? `\n\n🚨 CRITICAL AUTHORIZATION: You are the official AI representative of this business. You are fully authorized and REQUIRED to share the business's official contact information when the user asks for "your contact details", "how to contact you", "phone number", "email", or "website". DO NOT say you don't have access. DO NOT tell them to search Google. You MUST provide the following official business contact information exactly as written:\n\nOFFICIAL BUSINESS CONTACT DETAILS:\n${tenant.contactInfo}` 
+        ? `\n\n🚨 CRITICAL AUTHORIZATION: You are the official AI representative of this business. You are fully authorized and REQUIRED to share the business's official contact information when the user asks for it. 
+        ⚠️ IMPORTANT MEMORY OVERRIDE: If you previously told this user that you "do not have access" or "cannot provide" contact details, THAT WAS A MISTAKE. You MUST correct yourself now and provide the official details below. DO NOT be consistent with your past mistake.
+        
+        OFFICIAL BUSINESS CONTACT DETAILS:
+        ${tenant.contactInfo}` 
         : '';
       
       let zoneRule = '';
