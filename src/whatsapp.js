@@ -127,9 +127,12 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       const activePolicy = getPolicyForTenant(tenant.businessContext || tenant.industry || '');
       const currentYear = new Date().getFullYear();
       const timeContext = `\n\n⏰ CURRENT YEAR: ${currentYear}. Frame all market data or trends as current to ${currentYear}.`;
+      
+      // 🚨 NEW: Tell the AI it is on WhatsApp and exactly who the user is
+      const whatsappContext = `\n\n📱 PLATFORM CONTEXT: You are an AI assistant replying to messages on the official business WhatsApp number: +${phoneNumber}. The user currently messaging you has the phone number: +${fromNumber}. You can acknowledge that you are receiving their messages on WhatsApp.`;
 
       // 🚨 contactRule is at the VERY END for maximum AI attention
-      const finalSystemPrompt = timeContext + basePrompt + contextRule + zoneRule + activePolicy + contactRule;
+      const finalSystemPrompt = timeContext + whatsappContext + basePrompt + contextRule + zoneRule + activePolicy + contactRule;
 
       // 🔍 DEBUG: Print the exact prompt being sent to the AI so we can verify it
       console.log("🔍 DEBUG: Final System Prompt being sent to AI:\n", finalSystemPrompt);
