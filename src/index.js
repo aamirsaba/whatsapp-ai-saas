@@ -10,10 +10,21 @@ const { authenticateToken } = require('./middleware'); // 🚀 NEW: Auth Middlew
 const cron = require('node-cron');
 
 const multer = require('multer');
-// 🚨 NEW: Dedicated uploader for Knowledge Base PDFs (Max 10MB, saves permanently)
+
+// 🚨 NEW: Configure storage to KEEP the original filename (so the AI can find it)
+const knowledgeStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/knowledge/');
+  },
+  filename: function (req, file, cb) {
+    // Save with the exact original name (e.g., "Power BI Course.pdf")
+    cb(null, file.originalname);
+  }
+});
+
 const knowledgeUpload = multer({ 
-  dest: 'uploads/knowledge/',
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit to protect server space
+  storage: knowledgeStorage,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
 // Ensure the folder exists on startup

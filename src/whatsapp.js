@@ -138,6 +138,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         ? `\n\n📄 AVAILABLE PDF FILES: [${pdfFileList}]. \n🚨 STRICT RULE: You may ONLY output the exact string "[SEND_PDF:filename.pdf]" IF the user explicitly uses the words "send me the pdf", "give me the file", or "download the document". If the user says "hi", "hello", or asks a general question, DO NOT output the [SEND_PDF:...] string. Just answer normally in plain text.` 
         : '';
 
+
       // 🚨 CORRECT ORDER: Build the prompt FIRST
       const finalSystemPrompt = timeContext + whatsappContext + basePrompt + contextRule + zoneRule + activePolicy + contactRule + pdfRule;
 
