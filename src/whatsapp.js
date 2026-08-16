@@ -165,38 +165,72 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       const aiReply = await getAIResponse(chatHistory, finalSystemPrompt, tenant);
       console.log(`🗣️ AI Reply: ${aiReply}`);
 
-      // 🚨 CORRECT ORDER: Check for PDF match FOURTH
+      // 🚨 CHECK IF AI WANTS TO SEND A PDF
       const pdfMatch = aiReply.match(/\[SEND_PDF:(.*?)\]/);
       
       if (pdfMatch) {
         const fileName = pdfMatch[1].trim();
         const filePath = path.join(__dirname, '..', 'uploads', 'knowledge', fileName);
         
-        console.log(`🔍 DEBUG PDF: AI requested fileName: "${fileName}"`);
-        console.log(`🔍 DEBUG PDF: Checking path: "${filePath}"`);
-        console.log(`🔍 DEBUG PDF: File exists? ${fs.existsSync(filePath)}`);
+        console.log(`\n🔍 ========== PDF DEBUG START ==========`);
+        console.log(`🔍 AI requested fileName: "${fileName}"`);
+        console.log(`🔍 Full path: "${filePath}"`);
+        console.log(`🔍 File exists? ${fs.existsSync(filePath)}`);
         
         if (fs.existsSync(filePath)) {
-          console.log(`✅ Sending PDF file: ${fileName}`);
-          await sock.sendMessage(msg.key.remoteJid, {
-            document: fs.readFileSync(filePath),
-            mimetype: 'application/pdf',
-            fileName: fileName,
-            caption: `Here is the document you requested.`
-          });
-          await prisma.message.create({
-            data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: `[Sent PDF: ${fileName}]`, isAiReply: true }
-          });
+          const stats = fs.statSync(filePath);
+          console.log(`🔍 File size: ${stats.size} bytes`);
+          
+          if (stats.size === 0) {
+            console.log(`❌ FILE IS EMPTY (0 bytes)! Cannot send.`);
+            await sock.sendMessage(msg.key.remoteJid, { 
+              text: "I found the file, but it appears to be empty. Please re-upload it in the dashboard." 
+            });
+          } else {
+            try {
+              console.log(`✅ Attempting to send PDF file: ${fileName}`);
+              const fileBuffer = fs.readFileSync(filePath);
+              console.log(`🔍 Buffer size: ${fileBuffer.length} bytes`);
+              
+              await sock.sendMessage(msg.key.remoteJid, {
+                document: fileBuffer,
+                mimetype: 'application/pdf',
+                fileName: fileName,
+                caption: `Here is the document you requested: ${fileName}`
+              });
+              
+              console.log(`✅ PDF sent successfully!`);
+              await prisma.message.create({
+                data: { 
+                  tenantId: tenant.id, 
+                  fromNumber: phoneNumber, 
+                  toNumber: fromNumber, 
+                  direction: 'outbound', 
+                  content: `[Sent PDF: ${fileName}]`, 
+                  isAiReply: true 
+                }
+              });
+            } catch (sendError) {
+              console.error(`❌ ERROR SENDING PDF:`, sendError);
+              await sock.sendMessage(msg.key.remoteJid, { 
+                text: `I tried to send the file but encountered an error: ${sendError.message}` 
+              });
+            }
+          }
         } else {
           console.log(`❌ FILE NOT FOUND! Listing actual files in folder:`);
           const dirPath = path.join(__dirname, '..', 'uploads', 'knowledge');
           if (fs.existsSync(dirPath)) {
-             console.log(fs.readdirSync(dirPath));
+             const files = fs.readdirSync(dirPath);
+             console.log(`📁 Files in directory:`, files);
           } else {
-             console.log(`Directory ${dirPath} DOES NOT EXIST!`);
+             console.log(`❌ Directory ${dirPath} DOES NOT EXIST!`);
           }
-          await sock.sendMessage(msg.key.remoteJid, { text: "I'm sorry, I couldn't find that specific file on the server. Please try uploading it again in the dashboard." });
+          await sock.sendMessage(msg.key.remoteJid, { 
+            text: "I'm sorry, I couldn't find that specific file on the server. Please try uploading it again in the dashboard." 
+          });
         }
+        console.log(`🔍 ========== PDF DEBUG END ==========\n`);
       } else {
         // Standard text reply
         await sock.sendMessage(msg.key.remoteJid, { text: aiReply });
