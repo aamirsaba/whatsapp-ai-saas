@@ -81,6 +81,9 @@ model Tenant {
   invitations      TeamInvitation[] // 🚨 ADDED: Relation to invitations
   // ... other tenant fields ...
   knowledgeDocuments KnowledgeDocument[]
+
+  agents         Agent[]
+  conversations  Conversation[]
 }
 
 // 5. The Message Model
@@ -147,4 +150,33 @@ model KnowledgeDocument {
   fileSize    Int      // in bytes
   content     String   @db.Text // The extracted text
   createdAt   DateTime @default(now())
+}
+
+// 👨‍💼 AGENT MANAGEMENT
+model Agent {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String
+  email       String?
+  languages   String   @default("[]") // JSON array: ["English", "Arabic"]
+  isAvailable Boolean  @default(true)
+  avatar      String?  // For future profile pictures
+  createdAt   DateTime @default(now())
+  conversations Conversation[]
+}
+
+// 💬 PER-USER CONVERSATION CONTROL
+model Conversation {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userNumber      String   // The WhatsApp number of the user
+  mode            String   @default("AI") // "AI" or "HUMAN"
+  assignedAgentId String?
+  assignedAgent   Agent?   @relation(fields: [assignedAgentId], references: [id], onDelete: SetNull)
+  lastMessageAt   DateTime @default(now())
+  createdAt       DateTime @default(now())
+  
+  @@unique([tenantId, userNumber]) // One conversation per user per tenant
 }

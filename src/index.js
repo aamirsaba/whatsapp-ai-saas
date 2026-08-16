@@ -1730,6 +1730,163 @@ app.delete('/api/dashboard/knowledge/:id', authenticateToken, async (req, res) =
   }
 });
 
+// ============================================
+// 👨‍💼 AGENT MANAGEMENT ROUTES
+// ============================================
+
+// List all agents for tenant
+app.get('/api/dashboard/agents', authenticateToken, async (req, res) => {
+  try {
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    const agents = await prisma.agent.findMany({
+      where: { tenantId: tenant.id },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json({ success: true, agents });
+  } catch (error) {
+    console.error('❌ List agents error:', error);
+    res.status(500).json({ error: 'Failed to load agents.' });
+  }
+});
+
+// Create new agent
+app.post('/api/dashboard/agents', authenticateToken, async (req, res) => {
+  try {
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    const { name, email, languages } = req.body;
+    if (!name) return res.status(400).json({ error: 'Agent name is required.' });
+
+    const agent = await prisma.agent.create({
+      data: {
+        tenantId: tenant.id,
+        name,
+        email: email || null,
+        languages: JSON.stringify(languages || ['English']),
+        isAvailable: true
+      }
+    });
+
+    res.json({ success: true, agent, message: `✅ Agent "${name}" added successfully!` });
+  } catch (error) {
+    console.error('❌ Create agent error:', error);
+    res.status(500).json({ error: 'Failed to create agent.' });
+  }
+});
+
+// Update agent (toggle availability, edit details)
+app.put('/api/dashboard/agents/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    const agent = await prisma.agent.findFirst({ where: { id, tenantId: tenant.id } });
+    if (!agent) return res.status(404).json({ error: 'Agent not found.' });
+
+    const updated = await prisma.agent.update({
+      where: { id },
+      data: {
+        name: req.body.name ?? agent.name,
+        email: req.body.email ?? agent.email,
+        languages: req.body.languages ? JSON.stringify(req.body.languages) : agent.languages,
+        isAvailable: req.body.isAvailable ?? agent.isAvailable
+      }
+    });
+
+    res.json({ success: true, agent: updated });
+  } catch (error) {
+    console.error('❌ Update agent error:', error);
+    res.status(500).json({ error: 'Failed to update agent.' });
+  }
+});
+
+// Delete agent
+app.delete('/api/dashboard/agents/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    await prisma.agent.delete({ where: { id, tenantId: tenant.id } });
+    res.json({ success: true, message: '✅ Agent deleted.' });
+  } catch (error) {
+    console.error('❌ Delete agent error:', error);
+    res.status(500).json({ error: 'Failed to delete agent.' });
+  }
+});
+
+// ============================================
+// 💬 CONVERSATION MANAGEMENT ROUTES
+// ============================================
+
+// List all conversations for tenant
+app.get('/api/dashboard/conversations', authenticateToken, async (req, res) => {
+  try {
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    const conversations = await prisma.conversation.findMany({
+      where: { tenantId: tenant.id },
+      include: { assignedAgent: true },
+      orderBy: { lastMessageAt: 'desc' }
+    });
+
+    res.json({ success: true, conversations });
+  } catch (error) {
+    console.error('❌ List conversations error:', error);
+    res.status(500).json({ error: 'Failed to load conversations.' });
+  }
+});
+
+// Switch conversation mode (AI ↔ HUMAN)
+app.put('/api/dashboard/conversations/:id/mode', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { mode, agentId } = req.body;
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    const conversation = await prisma.conversation.findFirst({ 
+      where: { id, tenantId: tenant.id } 
+    });
+    if (!conversation) return res.status(404).json({ error: 'Conversation not found.' });
+
+    const updated = await prisma.conversation.update({
+      where: { id },
+      data: {
+        mode: mode || conversation.mode,
+        assignedAgentId: agentId !== undefined ? agentId : conversation.assignedAgentId
+      },
+      include: { assignedAgent: true }
+    });
+
+    res.json({ success: true, conversation: updated });
+  } catch (error) {
+    console.error('❌ Update conversation mode error:', error);
+    res.status(500).json({ error: 'Failed to update conversation.' });
+  }
+});
+
+// Delete conversation
+app.delete('/api/dashboard/conversations/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    await prisma.conversation.delete({ where: { id, tenantId: tenant.id } });
+    res.json({ success: true, message: '✅ Conversation deleted.' });
+  } catch (error) {
+    console.error('❌ Delete conversation error:', error);
+    res.status(500).json({ error: 'Failed to delete conversation.' });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 WhatsApp AI SaaS Backend is running!`);

@@ -153,6 +153,7 @@
               </div>
             </div>
 
+
             <!-- 📍 Service Zone Manager Trigger -->
             <div class="flex items-center justify-between bg-blue-50 p-4 rounded-lg border border-blue-100 mt-4">
               <div>
@@ -250,45 +251,30 @@
           <div id="connectionStatusSection"></div>
         </div>
 
-        <!-- 👥 Manage Agents -->
+        <!-- 👨‍💼 UPGRADED: Agent Management (With Availability & Languages) -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4">👥 Manage Agents</h3>
-          <div class="max-w-md">
-            <div class="space-y-3">
-              <input type="email" id="agentEmail" placeholder="agent@company.com" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-              <button onclick="inviteAgent()" class="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition">Invite Agent</button>
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">👨‍💼 Agent Management</h3>
+          <div class="bg-gray-50 rounded-lg p-4 mb-4">
+            <h4 class="font-medium text-gray-700 mb-3 text-sm">➕ Add New Agent</h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <input type="text" id="agentName" placeholder="Agent Name (e.g., Ahmed)" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+              <input type="email" id="agentEmail" placeholder="Email (optional)" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+              <input type="text" id="agentLanguages" placeholder="Languages (e.g., English, Arabic)" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
             </div>
-            <ul id="agentList" class="mt-4 space-y-2 text-sm text-gray-600 max-h-32 overflow-y-auto">
-              <li class="text-gray-400">No agents added yet.</li>
-            </ul>
+            <button onclick="createAgent()" class="mt-3 w-full md:w-auto bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition">➕ Add Agent</button>
+          </div>
+          <div id="agentsList" class="space-y-2 max-h-64 overflow-y-auto">
+            <p class="text-gray-400 text-sm italic text-center py-4">Loading agents...</p>
           </div>
         </div>
 
-        <!-- 💬 Live Inbox (Manual Reply) -->
+        <!-- 💬 UPGRADED: Per-User Conversations (AI vs Human Toggle) -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
-          <h3 class="text-lg font-semibold text-gray-800 mb-2">💬 Live Inbox (Manual Reply)</h3>
-          <p class="text-xs text-gray-500 mb-4">Select a customer to reply manually.</p>
-          <div id="recentChats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-            <div class="text-center text-gray-400 py-8 col-span-full">Loading recent chats...</div>
-          </div>
-          <div id="replyBox" class="hidden bg-white border-2 border-indigo-100 rounded-xl p-5 shadow-sm">
-            <div class="flex items-center justify-between mb-3">
-              <p class="text-sm font-bold text-gray-800">Replying to: <span id="replyToNumber" class="text-indigo-600"></span></p>
-              <button onclick="closeReplyBox()" class="text-gray-400 hover:text-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
-            </div>
-            <div class="mb-3">
-              <label class="block text-xs font-medium text-gray-600 mb-1">⚡ Quick Reply:</label>
-              <select id="quickReplies" onchange="insertQuickReply()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
-                <option value="">-- Select a template --</option>
-                <option value="Hello! Thank you for contacting us. How can I assist you today?">👋 Standard Greeting</option>
-                <option value="Could you please provide a few more details so I can assist you better?">ℹ️ Request More Info</option>
-                <option value="You can reach our official support team at [Insert Email/Phone] for further assistance.">📞 Share Contact Info</option>
-                <option value="Thank you for your inquiry. We will get back to you shortly.">⏳ Holding Response</option>
-                <option value="Thank you for contacting us! Have a great day.">✅ Closing / Thank You</option>
-              </select>
-            </div>
-            <textarea id="manualReplyText" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none mb-3" placeholder="Type your manual reply..."></textarea>
-            <button onclick="sendManualReply()" class="w-full bg-green-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition flex items-center justify-center gap-2"><span>📤</span> Send via WhatsApp</button>
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">💬 Active Conversations</h3>
+          <p class="text-xs text-gray-500 mb-4">Toggle between 🤖 AI and 👨‍💻 Human mode for each user individually.</p>
+          
+          <div id="conversationsList" class="space-y-3 max-h-96 overflow-y-auto">
+            <p class="text-gray-400 text-sm italic text-center py-4">Loading conversations...</p>
           </div>
         </div>
 
@@ -945,6 +931,171 @@
       console.log("✅ All dashboard functions initialized.");
     });
 
+    // ============================================
+    // 👨‍💼 AGENTS MANAGEMENT
+    // ============================================
+    async function loadAgents() {
+      const list = document.getElementById('agentsList');
+      if (!list) return;
+      try {
+        const res = await fetch('/api/dashboard/agents', { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        
+        if (res.ok && data.agents) {
+          if (data.agents.length === 0) {
+            list.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-4">No agents yet. Add your first agent above!</p>';
+            return;
+          }
+          list.innerHTML = data.agents.map(agent => {
+            const languages = JSON.parse(agent.languages || '[]').join(', ');
+            return `
+              <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200">
+                <div class="flex items-center space-x-3">
+                  <div class="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm">
+                    ${agent.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p class="font-medium text-gray-800 text-sm">${agent.name}</p>
+                    <p class="text-xs text-gray-500">${languages || 'English'} ${agent.email ? '• ' + agent.email : ''}</p>
+                  </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" ${agent.isAvailable ? 'checked' : ''} 
+                           onchange="toggleAgentAvailability('${agent.id}', this.checked)" class="sr-only peer">
+                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
+                    <span class="ml-2 text-xs font-medium ${agent.isAvailable ? 'text-green-600' : 'text-gray-400'}">
+                      ${agent.isAvailable ? 'Available' : 'Offline'}
+                    </span>
+                  </label>
+                  <button onclick="deleteAgent('${agent.id}', '${agent.name}')" class="px-2 py-1 bg-red-50 text-red-600 text-xs rounded hover:bg-red-100">🗑️</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      } catch (error) { console.error('Failed to load agents:', error); }
+    }
+
+    async function createAgent() {
+      const name = document.getElementById('agentName').value.trim();
+      const email = document.getElementById('agentEmail').value.trim();
+      const languagesStr = document.getElementById('agentLanguages').value.trim();
+      if (!name) { alert('Please enter agent name'); return; }
+      
+      const languages = languagesStr ? languagesStr.split(',').map(l => l.trim()) : ['English'];
+      try {
+        const res = await fetch('/api/dashboard/agents', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, languages })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          alert(data.message);
+          document.getElementById('agentName').value = '';
+          document.getElementById('agentEmail').value = '';
+          document.getElementById('agentLanguages').value = '';
+          loadAgents();
+        } else { alert('❌ ' + data.error); }
+      } catch (error) { alert('❌ Network error'); }
+    }
+
+    async function toggleAgentAvailability(agentId, isAvailable) {
+      try {
+        await fetch(`/api/dashboard/agents/${agentId}`, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isAvailable })
+        });
+        loadAgents();
+      } catch (error) { console.error('Failed to toggle agent:', error); }
+    }
+
+    async function deleteAgent(agentId, agentName) {
+      if (!confirm(`Delete agent "${agentName}"?`)) return;
+      try {
+        const res = await fetch(`/api/dashboard/agents/${agentId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        if (res.ok) { alert('✅ Agent deleted'); loadAgents(); }
+      } catch (error) { alert('❌ Network error'); }
+    }
+
+    // ============================================
+    // 💬 PER-USER CONVERSATIONS MANAGEMENT
+    // ============================================
+    async function loadConversations() {
+      const list = document.getElementById('conversationsList');
+      if (!list) return;
+      try {
+        const res = await fetch('/api/dashboard/conversations', { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        
+        if (res.ok && data.conversations) {
+          if (data.conversations.length === 0) {
+            list.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-4">No conversations yet. They appear when users message your bot.</p>';
+            return;
+          }
+          list.innerHTML = data.conversations.map(conv => {
+            const isAI = conv.mode === 'AI';
+            const agentName = conv.assignedAgent?.name || 'Unassigned';
+            const time = new Date(conv.lastMessageAt).toLocaleString();
+            return `
+              <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200">
+                <div class="flex items-center space-x-3 flex-1 min-w-0">
+                  <div class="w-8 h-8 ${isAI ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-600'} rounded-full flex items-center justify-center font-bold text-sm">
+                    ${isAI ? '🤖' : '👨‍💼'}
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <p class="font-medium text-gray-800 text-sm truncate">+${conv.userNumber}</p>
+                    <p class="text-xs text-gray-500">${isAI ? 'AI Mode' : `Human: ${agentName}`} • Last: ${time}</p>
+                  </div>
+                </div>
+                <div class="flex items-center space-x-2 flex-shrink-0">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" ${isAI ? 'checked' : ''} 
+                           onchange="toggleConversationMode('${conv.id}', this.checked)" class="sr-only peer">
+                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-500"></div>
+                    <span class="ml-2 text-xs font-medium ${isAI ? 'text-purple-600' : 'text-orange-600'}">
+                      ${isAI ? '🤖 AI' : '👨‍💻 Human'}
+                    </span>
+                  </label>
+                  <button onclick="deleteConversation('${conv.id}', '+${conv.userNumber}')" class="px-2 py-1 bg-red-50 text-red-600 text-xs rounded hover:bg-red-100">🗑️</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      } catch (error) { console.error('Failed to load conversations:', error); }
+    }
+
+    async function toggleConversationMode(convId, isAI) {
+      try {
+        await fetch(`/api/dashboard/conversations/${convId}/mode`, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: isAI ? 'AI' : 'HUMAN' })
+        });
+        loadConversations();
+      } catch (error) { console.error('Failed to toggle mode:', error); }
+    }
+
+    async function deleteConversation(convId, userNumber) {
+      if (!confirm(`Delete conversation with ${userNumber}?`)) return;
+      try {
+        const res = await fetch(`/api/dashboard/conversations/${convId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        if (res.ok) { alert('✅ Conversation deleted'); loadConversations(); }
+      } catch (error) { alert('❌ Network error'); }
+    }
+
+    // Load agents and conversations when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        if (typeof token !== 'undefined' && token) {
+          loadAgents();
+          loadConversations();
+        }
+      }, 500);
+    });
 
 
     function logout() { 

@@ -84,6 +84,94 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         return;
       }
 
+      // 🚨 PER-USER CONVERSATION CONTROL
+      let conversation = await prisma.conversation.findUnique({
+        where: { 
+          tenantId_userNumber: { tenantId: tenant.id, userNumber: fromNumber }
+        },
+        include: { assignedAgent: true }
+      });
+
+      // Auto-detect "talk to human" request
+      const humanKeywords = ['talk to human', 'speak to human', 'human agent', 'real person', 'talk to agent', 'tawk ila insan', 'تحدث الى انسان', 'تحدث إلى شخص', 'agent', 'human'];
+      const lowerText = text.toLowerCase();
+      const wantsHuman = humanKeywords.some(kw => lowerText.includes(kw));
+
+      if (!conversation) {
+        // Create new conversation (default: AI mode)
+        conversation = await prisma.conversation.create({
+          data: {
+            tenantId: tenant.id,
+            userNumber: fromNumber,
+            mode: 'AI',
+            lastMessageAt: new Date()
+          }
+        });
+        console.log(`💬 New conversation created for ${fromNumber} (AI Mode)`);
+      } else {
+        // Update last message time
+        await prisma.conversation.update({
+          where: { id: conversation.id },
+          data: { lastMessageAt: new Date() }
+        });
+      }
+
+      // If user wants human AND we have available agents → auto-assign
+      if (wantsHuman && conversation.mode === 'AI') {
+        const availableAgent = await prisma.agent.findFirst({
+          where: { tenantId: tenant.id, isAvailable: true },
+          orderBy: { createdAt: 'asc' }
+        });
+
+        if (availableAgent) {
+          conversation = await prisma.conversation.update({
+            where: { id: conversation.id },
+            data: { 
+              mode: 'HUMAN', 
+              assignedAgentId: availableAgent.id 
+            },
+            include: { assignedAgent: true }
+          });
+          
+          // Send handoff notification to user
+          const handoffMsg = `👨‍💼 I'm connecting you with our agent *${availableAgent.name}* now. They'll reply shortly!\n\n(Your chat is now with a human. Say "talk to AI" anytime to switch back.)`;
+          await sock.sendMessage(msg.key.remoteJid, { text: handoffMsg });
+          await prisma.message.create({
+            data: { 
+              tenantId: tenant.id, 
+              fromNumber: phoneNumber, 
+              toNumber: fromNumber, 
+              direction: 'outbound', 
+              content: handoffMsg, 
+              isAiReply: true 
+            }
+          });
+          console.log(`🔄 Auto-handoff: ${fromNumber} → Agent ${availableAgent.name}`);
+          return; // Stop here, don't call AI
+        }
+      }
+
+      // Auto-detect "talk to AI" request
+      const aiKeywords = ['talk to ai', 'speak to ai', 'ai agent', 'robot', 'back to ai', 'تحدث الى الذكاء', 'العودة للذكاء'];
+      const wantsAI = aiKeywords.some(kw => lowerText.includes(kw));
+      
+      if (wantsAI && conversation.mode === 'HUMAN') {
+        conversation = await prisma.conversation.update({
+          where: { id: conversation.id },
+          data: { mode: 'AI', assignedAgentId: null },
+          include: { assignedAgent: true }
+        });
+        console.log(`🤖 Switched back to AI mode for ${fromNumber}`);
+      }
+
+      // 🚨 CHECK: If mode is HUMAN, save message and STOP (don't call AI)
+      if (conversation.mode === 'HUMAN') {
+        console.log(`👨‍💻 HUMAN MODE: Message from ${fromNumber} saved. Agent: ${conversation.assignedAgent?.name || 'Unassigned'}`);
+        // TODO Phase 3: Notify agent in dashboard via WebSocket
+        return; // Exit early - AI does NOT reply
+      }
+
+
       const existingLead = await prisma.lead.findFirst({ where: { tenantId: tenant.id, phoneNumber: fromNumber } });
       if (!existingLead) {
         console.log(`🎯 New Lead Detected: ${fromNumber} | Adding to CRM...`);
