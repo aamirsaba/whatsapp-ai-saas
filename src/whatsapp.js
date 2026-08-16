@@ -128,7 +128,10 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         contextRule += `\n\n📄 KNOWLEDGE BASE (USE THIS DATA TO ANSWER QUESTIONS):\n${tenant.knowledgeBase}`;
       }
       
-      const contactRule = tenant.contactInfo ? `\n\nOFFICIAL CONTACT DETAILS (USE EXACTLY AS WRITTEN):\n${tenant.contactInfo}` : '';
+            // 🚨 STRENGTHENED: Force the AI to use the contact info
+      const contactRule = tenant.contactInfo 
+        ? `\n\n🚨 CRITICAL RULE: If the user asks for contact details, phone number, email, address, or website, you MUST provide the exact information below. DO NOT say you don't have access, and DO NOT tell them to search Google.\n\nOFFICIAL CONTACT DETAILS:\n${tenant.contactInfo}` 
+        : '';
       
       let zoneRule = '';
       if (tenant.serviceAreas) {
