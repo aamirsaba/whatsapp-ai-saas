@@ -336,7 +336,8 @@ app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
       isHumanMode,
       leadWebhookUrl,
       isSummaryEnabled,
-      summaryTime
+      summaryTime,
+      aiAgentName // 🚨 NEW: Added aiAgentName
     } = req.body;
 
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
@@ -349,7 +350,7 @@ app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
       data: {
         systemPrompt: systemPrompt !== undefined ? systemPrompt : tenant.systemPrompt,
         businessContext: businessContext !== undefined ? businessContext : tenant.businessContext,
-        contactInfo: contactInfo !== undefined ? contactInfo : tenant.contactInfo, // 🚨 CRITICAL: Save contact info
+        contactInfo: contactInfo !== undefined ? contactInfo : tenant.contactInfo,
         llmApiKey: llmApiKey !== undefined ? llmApiKey : tenant.llmApiKey,
         llmModel: llmModel !== undefined ? llmModel : tenant.llmModel,
         llmProvider: llmProvider !== undefined ? llmProvider : tenant.llmProvider,
@@ -357,7 +358,8 @@ app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
         isHumanMode: isHumanMode !== undefined ? isHumanMode : tenant.isHumanMode,
         leadWebhookUrl: leadWebhookUrl !== undefined ? leadWebhookUrl : tenant.leadWebhookUrl,
         isSummaryEnabled: isSummaryEnabled !== undefined ? isSummaryEnabled : tenant.isSummaryEnabled,
-        summaryTime: summaryTime !== undefined ? summaryTime : tenant.summaryTime
+        summaryTime: summaryTime !== undefined ? summaryTime : tenant.summaryTime,
+        aiAgentName: aiAgentName !== undefined ? aiAgentName : tenant.aiAgentName // 🚨 NEW: Save aiAgentName
       }
     });
 

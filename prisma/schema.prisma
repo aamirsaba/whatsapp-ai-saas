@@ -84,6 +84,8 @@ model Tenant {
 
   agents         Agent[]
   conversations  Conversation[]
+  // ... other tenant fields ...
+  aiAgentName   String?  //  NEW: Custom name for the AI (e.g., Noor, Haya, Ammar)
 }
 
 // 5. The Message Model

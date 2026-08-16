@@ -228,6 +228,15 @@
             <div class="mt-3">
               <label class="block text-xs font-medium text-gray-600 mb-1">Additional Notes</label>
               <textarea id="contactNotes" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm"></textarea>
+
+<!-- 🤖 AI AGENT NAME -->
+<div class="mt-6">
+  <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+    🤖 AI Agent Name <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Optional</span>
+  </label>
+  <p class="text-xs text-gray-500 mb-2">Give your AI a human name (e.g., Noor, Haya, Ammar, Richard). It will introduce itself with this name.</p>
+  <input type="text" id="aiAgentName" placeholder="e.g., Noor" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+</div>
             </div>
             <button type="submit" class="w-full bg-green-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-green-700 transition shadow-md flex items-center justify-center gap-2">💾 Save AI Settings</button>
           </form>
@@ -352,7 +361,13 @@
           document.getElementById('systemPrompt').value = data.tenant.systemPrompt || '';
           document.getElementById('businessContext').value = data.tenant.businessContext || '';
           document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
+                 document.getElementById('llmApiKey').value = data.tenant.llmApiKey || '';
+          document.getElementById('systemPrompt').value = data.tenant.systemPrompt || '';
+          document.getElementById('businessContext').value = data.tenant.businessContext || '';
+          document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
           document.getElementById('llmModel').value = data.tenant.llmModel || '';
+          document.getElementById('aiAgentName').value = data.tenant.aiAgentName || ''; // 🚨 NEW: Load AI Agent Name
+
           
           let botType = data.tenant.botType;
           if (!botType) botType = 'business';
@@ -529,12 +544,30 @@
       msg.textContent = 'Saving...'; msg.className = 'mt-3 text-center text-sm text-gray-600';
       const contactInfo = `Contact Person: ${document.getElementById('contactPerson').value || 'Not provided'}\nEmail: ${document.getElementById('contactEmail').value || 'Not provided'}\nPhone/WhatsApp: ${document.getElementById('contactPhone').value || 'Not provided'}\nWebsite: ${document.getElementById('contactWebsite').value || 'Not provided'}\nNotes: ${document.getElementById('contactNotes').value || 'None'}`.trim();
       try {
-        const res = await fetch('/api/dashboard/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ systemPrompt: document.getElementById('systemPrompt').value, businessContext: document.getElementById('businessContext').value, contactInfo: contactInfo, llmApiKey: document.getElementById('llmApiKey').value, llmModel: document.getElementById('llmModel').value, llmProvider: document.getElementById('llmProvider').value, llmBaseUrl: document.getElementById('llmBaseUrl').value, isHumanMode: document.getElementById('humanModeToggle').checked, leadWebhookUrl: document.getElementById('leadWebhookUrl').value, isSummaryEnabled: document.getElementById('isSummaryEnabled').checked, summaryTime: document.getElementById('summaryTime').value }) });
+             const res = await fetch('/api/dashboard/settings', { 
+          method: 'PUT', 
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, 
+          body: JSON.stringify({ 
+            systemPrompt: document.getElementById('systemPrompt').value, 
+            businessContext: document.getElementById('businessContext').value, 
+            contactInfo: contactInfo, 
+            llmApiKey: document.getElementById('llmApiKey').value, 
+            llmModel: document.getElementById('llmModel').value, 
+            llmProvider: document.getElementById('llmProvider').value, 
+            llmBaseUrl: document.getElementById('llmBaseUrl').value, 
+            isHumanMode: document.getElementById('humanModeToggle').checked, 
+            leadWebhookUrl: document.getElementById('leadWebhookUrl').value, 
+            isSummaryEnabled: document.getElementById('isSummaryEnabled').checked, 
+            summaryTime: document.getElementById('summaryTime').value,
+            aiAgentName: document.getElementById('aiAgentName').value.trim() // 🚨 NEW: Save AI Agent Name
+          }) 
+        });
         const data = await res.json();
         if (data.success) { msg.textContent = '✅ AI reprogrammed successfully!'; msg.className = 'mt-3 text-center text-sm text-green-600 font-bold'; } 
         else { msg.textContent = '❌ ' + data.error; msg.className = 'mt-3 text-center text-sm text-red-600 font-bold'; }
       } catch (err) { msg.textContent = '❌ Server error.'; msg.className = 'mt-3 text-center text-sm text-red-600 font-bold'; }
     });
+
 
     async function disconnectBot() {
       if (!confirm('⚠️ Log out WhatsApp number? You will need to scan QR again.')) return;
