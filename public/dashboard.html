@@ -133,6 +133,24 @@
                 <button onclick="uploadKnowledge()" id="uploadBtn" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition"><span>📤</span> Upload & Train</button>
               </div>
               <p id="uploadStatus" class="text-xs mt-2 font-medium"></p>
+
+              <!--  NEW: Document List Container -->
+              <div class="mt-6 border-t border-gray-100 pt-4">
+                <div class="flex justify-between items-center mb-3">
+                  <h3 class="text-sm font-bold text-gray-800">📚 Uploaded Documents</h3>
+                  <button onclick="loadKnowledgeDocuments()" class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                     Refresh
+                  </button>
+                </div>
+                
+                <div id="documentList" class="space-y-2">
+                  <!-- Documents will be injected here by JavaScript -->
+                </div>
+                
+                <p id="emptyDocsMsg" class="text-gray-400 text-xs italic text-center py-3 hidden">
+                  No documents uploaded yet.
+                </p>
+              </div>
             </div>
 
             <!-- 📍 Service Zone Manager Trigger -->
@@ -765,7 +783,12 @@
       try {
         const res = await fetch('/api/dashboard/upload-knowledge', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData });
         const data = await res.json();
-        if (res.ok) { statusText.textContent = `✅ ${data.message}`; statusText.className = 'text-xs mt-2 font-medium text-green-600'; fileInput.value = ''; } 
+                if (res.ok) { 
+          statusText.textContent = `✅ ${data.message}`; 
+          statusText.className = 'text-xs mt-2 font-medium text-green-600'; 
+          fileInput.value = ''; 
+          loadKnowledgeDocuments(); // 🚨 ADD THIS LINE!
+        } 
         else { statusText.textContent = `❌ ${data.error}`; statusText.className = 'text-xs mt-2 font-medium text-red-600'; }
       } catch (error) { statusText.textContent = '❌ Network error. Please try again.'; statusText.className = 'text-xs mt-2 font-medium text-red-600'; } 
       finally { uploadBtn.disabled = false; uploadBtn.innerHTML = '<span>📤</span> Upload & Train'; }
@@ -831,6 +854,86 @@
       }
     }
 
+    // 🚀 1. LOAD AND DISPLAY DOCUMENTS
+    async function loadKnowledgeDocuments() {
+      const listContainer = document.getElementById('documentList');
+      const emptyMsg = document.getElementById('emptyDocsMsg');
+      
+      try {
+        const res = await fetch('/api/dashboard/knowledge', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        
+        if (res.ok && data.documents) {
+          listContainer.innerHTML = ''; // Clear current list
+          
+          if (data.documents.length === 0) {
+            emptyMsg.classList.remove('hidden');
+          } else {
+            emptyMsg.classList.add('hidden');
+            
+            data.documents.forEach(doc => {
+              const sizeMB = (doc.fileSize / (1024 * 1024)).toFixed(2);
+              const date = new Date(doc.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+              
+              const docRow = document.createElement('div');
+              docRow.className = 'flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-gray-100 transition';
+              docRow.innerHTML = `
+                <div class="flex items-center space-x-3 overflow-hidden">
+                  <div class="text-2xl">${doc.fileName.endsWith('.pdf') ? '📄' : '📝'}</div>
+                  <div class="truncate">
+                    <p class="font-medium text-gray-800 truncate">${doc.fileName}</p>
+                    <p class="text-xs text-gray-500">${sizeMB} MB • Uploaded on ${date}</p>
+                  </div>
+                </div>
+                <button onclick="deleteKnowledgeDocument('${doc.id}', '${doc.fileName.replace(/'/g, "\\'")}')" 
+                        class="ml-4 px-3 py-1.5 bg-red-50 text-red-600 text-sm font-medium rounded-md hover:bg-red-100 transition flex-shrink-0">
+                  🗑️ Delete
+                </button>
+              `;
+              listContainer.appendChild(docRow);
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load documents:', error);
+      }
+    }
+
+    // 🚀 2. DELETE A SPECIFIC DOCUMENT
+    async function deleteKnowledgeDocument(docId, fileName) {
+      if (!confirm(`Are you sure you want to delete "${fileName}"? The AI will no longer know this information.`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/dashboard/knowledge/${docId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          alert('✅ Document deleted successfully!');
+          loadKnowledgeDocuments(); // Refresh the list
+        } else {
+          alert('❌ ' + (data.error || 'Failed to delete.'));
+        }
+      } catch (error) {
+        alert('❌ Network error while deleting.');
+      }
+    }
+
+    // 🚀 3. AUTO-LOAD DOCUMENTS WHEN PAGE OPENS
+    document.addEventListener('DOMContentLoaded', () => {
+      // Wait a tiny bit to ensure the token is loaded
+      setTimeout(() => {
+        if (token) loadKnowledgeDocuments();
+      }, 500);
+    });
+
     // 🚨 CRITICAL FIX: This was missing! Call loadDashboard to populate name, API key, etc.
     document.addEventListener('DOMContentLoaded', () => {
       console.log("🚀 Dashboard loading...");
@@ -841,6 +944,8 @@
       if (typeof loadRecentChatHistory === 'function') loadRecentChatHistory();
       console.log("✅ All dashboard functions initialized.");
     });
+
+
 
     function logout() { 
       localStorage.clear(); 
