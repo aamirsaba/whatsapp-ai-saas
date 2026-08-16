@@ -135,7 +135,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       const pdfFileList = uploadedDocs.map(doc => doc.fileName).join(', ');
       
       const pdfRule = pdfFileList 
-        ? `\n\n📄 AVAILABLE PDF FILES: [${pdfFileList}]. \n🚨 STRICT RULE: You may ONLY output the exact string "[SEND_PDF:filename.pdf]" IF the user explicitly uses the words "send me the pdf", "give me the file", or "download the document". If the user says "hi", "hello", or asks a general question, DO NOT output the [SEND_PDF:...] string. Just answer normally in plain text.` 
+        ? `\n\n📄 AVAILABLE PDF FILES: [${pdfFileList}]. \n🚨 ABSOLUTE STRICT RULE: You are FORBIDDEN from using the "[SEND_PDF:filename.pdf]" format unless the user's message explicitly contains words like "send pdf", "give me the file", "download document", or "share the pdf". If the user asks a general question (like "do you offer ITIL?", "hi", "what is X"), you MUST answer in normal plain text. NEVER output the [SEND_PDF:...] string for general questions.` 
         : '';
 
 
