@@ -635,64 +635,6 @@
 
     let currentTenantIdForReply = null;
 
-    async function loadTeamMembers() {
-      try {
-        const response = await fetch('/api/dashboard/team', { headers: { 'Authorization': `Bearer ${token}` } });
-        const data = await response.json();
-        if (response.ok && data.members) {
-          const agentList = document.getElementById('agentList');
-          if (data.members.length === 0) { agentList.innerHTML = '<li class="text-gray-400">No agents added yet.</li>'; } 
-          else { agentList.innerHTML = data.members.map(member => `<li class="flex items-center justify-between bg-white p-2 rounded border border-gray-200"><span class="text-sm text-gray-700">${member.user.email}</span><span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">${member.role}</span></li>`).join(''); }
-        }
-      } catch (error) { console.error('Load team error:', error); }
-    }
-
-    function openReplyBox(number) {
-      currentTenantIdForReply = document.getElementById('clientSelector') ? document.getElementById('clientSelector').value : null;
-      document.getElementById('replyToNumber').textContent = number;
-      document.getElementById('replyBox').classList.remove('hidden');
-      setTimeout(() => { document.getElementById('replyBox').scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
-    }
-
-    function insertQuickReply() {
-      const select = document.getElementById('quickReplies');
-      const textarea = document.getElementById('manualReplyText');
-      const selectedText = select.value;
-      if (selectedText) {
-        if (textarea.value.trim().length > 0) { textarea.value = textarea.value + '\n\n' + selectedText; } 
-        else { textarea.value = selectedText; }
-        select.value = "";
-        textarea.focus();
-      }
-    }
-
-    async function sendManualReply() {
-      const toNumber = document.getElementById('replyToNumber').textContent;
-      const content = document.getElementById('manualReplyText').value;
-      if (!content) return alert('Please type a message.');
-      try {
-        const res = await fetch('/api/dashboard/send-message', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ toNumber, content, tenantId: currentTenantIdForReply }) });
-        const data = await res.json();
-        if (data.success) {
-          alert('✅ Message sent to WhatsApp!');
-          document.getElementById('manualReplyText').value = '';
-          closeReplyBox();
-          loadOwnerChats();
-        } else { alert('❌ ' + data.error); }
-      } catch (err) { alert('❌ Server error.'); }
-    }
-
-    async function inviteAgent() {
-      const emailInput = document.getElementById('agentEmail');
-      const email = emailInput.value.trim();
-      if (!email) { alert('Please enter an email address.'); return; }
-      try {
-        const response = await fetch('/api/dashboard/team/invite', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ email }) });
-        const data = await response.json();
-        if (response.ok) { alert(data.message); emailInput.value = ''; loadTeamMembers(); } 
-        else { alert('❌ ' + data.error); }
-      } catch (error) { console.error('Invite agent error:', error); alert('Failed to invite agent. Please try again.'); }
-    }
 
     async function loadAnalytics() {
       try {
