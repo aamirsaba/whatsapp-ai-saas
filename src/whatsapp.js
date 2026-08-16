@@ -161,8 +161,8 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       const aiReply = await getAIResponse(chatHistory, finalSystemPrompt, tenant);
       console.log(`🗣️ AI Reply: ${aiReply}`);
 
-// 🚨 Case-insensitive regex to catch "SEND", "Sent", "send", etc.
-const pdfMatch = aiReply.match(/\[SEND_PDF:(.*?)\]/i);
+      // 🚨 Bulletproof Regex: Catches [SEND_PDF:file.pdf], [Sent PDF: file.pdf], [send pdf: file.pdf], etc.
+      const pdfMatch = aiReply.match(/\[(?:send|sent)[_ ]?pdf[:\s]+(.*?\.pdf)\]/i);
       
       if (pdfMatch) {
         const fileName = pdfMatch[1].trim();
