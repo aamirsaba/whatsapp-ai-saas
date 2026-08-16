@@ -301,44 +301,50 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
   }
 });
 
+// 🚀 SAVE AI SETTINGS
 app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
-  console.log("🔍 SETTINGS ROUTE HIT! Body:", req.body); // 🚨 ADD THIS LINE
-  
   try {
-    const { systemPrompt, businessContext, contactInfo, llmApiKey, llmModel, llmProvider, llmBaseUrl, isHumanMode, leadWebhookUrl } = req.body;
-    // ... rest of the code
-    
-    if (!llmApiKey) {
-      return res.status(400).json({ error: 'LLM API Key is strictly required.' });
-    }
+    const { 
+      systemPrompt, 
+      businessContext, 
+      contactInfo, 
+      llmApiKey, 
+      llmModel, 
+      llmProvider, 
+      llmBaseUrl,
+      isHumanMode,
+      leadWebhookUrl,
+      isSummaryEnabled,
+      summaryTime
+    } = req.body;
 
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
-    if (!tenant) return res.status(404).json({ error: 'Business not found.' });
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant not found.' });
+    }
 
     await prisma.tenant.update({
       where: { id: tenant.id },
-      data: { 
-        // 🚨 NEW: Completely ignore systemPrompt from user input. Keep the original auto-generated one.
-        systemPrompt: tenant.systemPrompt, 
+      data: {
+        systemPrompt: systemPrompt !== undefined ? systemPrompt : tenant.systemPrompt,
         businessContext: businessContext !== undefined ? businessContext : tenant.businessContext,
-        contactInfo: contactInfo !== undefined ? contactInfo : tenant.contactInfo,
-        llmApiKey: llmApiKey,
-        llmModel: llmModel || tenant.llmModel,
-        llmProvider: llmProvider || tenant.llmProvider || 'OPENAI',
-        llmBaseUrl: llmBaseUrl,
-        isHumanMode: isHumanMode === true || isHumanMode === 'true',
-        leadWebhookUrl: leadWebhookUrl || null
+        contactInfo: contactInfo !== undefined ? contactInfo : tenant.contactInfo, // 🚨 CRITICAL: Save contact info
+        llmApiKey: llmApiKey !== undefined ? llmApiKey : tenant.llmApiKey,
+        llmModel: llmModel !== undefined ? llmModel : tenant.llmModel,
+        llmProvider: llmProvider !== undefined ? llmProvider : tenant.llmProvider,
+        llmBaseUrl: llmBaseUrl !== undefined ? llmBaseUrl : tenant.llmBaseUrl,
+        isHumanMode: isHumanMode !== undefined ? isHumanMode : tenant.isHumanMode,
+        leadWebhookUrl: leadWebhookUrl !== undefined ? leadWebhookUrl : tenant.leadWebhookUrl,
+        isSummaryEnabled: isSummaryEnabled !== undefined ? isSummaryEnabled : tenant.isSummaryEnabled,
+        summaryTime: summaryTime !== undefined ? summaryTime : tenant.summaryTime
       }
     });
-       
 
-    res.json({ success: true, message: '✨ AI Settings updated successfully!' });
+    console.log('✅ Settings saved successfully for tenant:', tenant.id);
+    res.json({ success: true, message: 'Settings saved successfully!' });
   } catch (error) {
-    console.error('❌ Dashboard update error DETAILS:', error);
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    console.error('Error code:', error.code);
-    res.status(500).json({ error: 'Failed to update settings. Check server logs.', details: error.message });
+    console.error('❌ Save settings error:', error);
+    res.status(500).json({ error: 'Failed to save settings.' });
   }
 });
 
