@@ -1444,14 +1444,25 @@ app.post('/api/dashboard/upload-knowledge', authenticateToken, upload.single('fi
     
     const fs = require('fs');
     
-    // 🚨 BULLETPROOF PDF-PARSE LOADER (Handles both CommonJS and ES Module exports)
-    const pdfModule = require('pdf-parse');
-    const parsePdf = typeof pdfModule === 'function' ? pdfModule : (pdfModule.default || pdfModule);
-
     if (fileExtension === 'pdf') {
+      // 🚨 BULLETPROOF LOADER: Clear cache and try all export variations
+      delete require.cache[require.resolve('pdf-parse')];
+      const pdfModule = require('pdf-parse');
+      
+      let parseFn = null;
+      if (typeof pdfModule === 'function') parseFn = pdfModule;
+      else if (typeof pdfModule.default === 'function') parseFn = pdfModule.default;
+      else if (typeof pdfModule.parse === 'function') parseFn = pdfModule.parse;
+      
+      if (!parseFn) {
+        console.error('❌ PDF MODULE DEBUG:', typeof pdfModule, Object.keys(pdfModule));
+        throw new Error('pdf-parse module did not export a valid function. Please reinstall.');
+      }
+
       const dataBuffer = fs.readFileSync(filePath);
-      const data = await parsePdf(dataBuffer); // This will now work 100%
+      const data = await parseFn(dataBuffer);
       extractedText = data.text;
+      
     } else if (fileExtension === 'txt') {
       extractedText = fs.readFileSync(filePath, 'utf8');
     } else {
@@ -1483,7 +1494,7 @@ app.post('/api/dashboard/upload-knowledge', authenticateToken, upload.single('fi
     });
   } catch (error) {
     console.error('❌ Upload knowledge error:', error);
-    res.status(500).json({ error: 'Failed to process file.' });
+    res.status(500).json({ error: 'Failed to process file: ' + error.message });
   }
 });
 
