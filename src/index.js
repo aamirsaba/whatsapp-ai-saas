@@ -1408,17 +1408,18 @@ app.post('/api/agent/send-message', authenticateToken, async (req, res) => {
       );
     }
 
-    // Send via WhatsApp
+    // Send via WhatsApp (sends the translated Urdu version)
     await sock.sendMessage(phoneNumber + '@s.whatsapp.net', { text: finalMessage });
 
-    // Save to database
+    // 🚨 SAVE BOTH VERSIONS TO DATABASE
+    // Save the English version (what the agent typed) so they can read it in history
     await prisma.message.create({
       data: {
         tenantId: agent.tenantId,
         fromNumber: agent.tenant.whatsappNumber,
         toNumber: phoneNumber,
         direction: 'outbound',
-        content: finalMessage, 
+        content: message, //  SAVE THE ENGLISH VERSION (what agent typed)
         isAiReply: false
       }
     });
