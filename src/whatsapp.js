@@ -202,10 +202,23 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       // ==========================================
       // 4. CHECK IF MODE IS HUMAN (Stop AI)
       // ==========================================
-      if (conversation.mode === 'HUMAN') {
-        console.log(`👨‍💻 HUMAN MODE: Message from ${fromNumber} saved. Agent: ${conversation.assignedAgent?.name || 'Unassigned'}`);
-        return; // Exit early - AI does NOT reply
-      }
+      //  CHECK: If mode is HUMAN, save message and STOP (don't call AI)
+if (conversation.mode === 'HUMAN') {
+  //  SAVE THE INBOUND MESSAGE TO DATABASE
+  await prisma.message.create({
+    data: { 
+      tenantId: tenant.id, 
+      fromNumber, 
+      toNumber: phoneNumber, 
+      direction: 'inbound', 
+      content: text, 
+      isAiReply: false 
+    }
+  });
+  
+  console.log(`👨‍💻 HUMAN MODE: Message from ${fromNumber} saved. Agent: ${conversation.assignedAgent?.name || 'Unassigned'}`);
+  return; // Exit early - AI does NOT reply
+}
 
       // ==========================================
       // 5. SAVE INBOUND MESSAGE & LEAD
