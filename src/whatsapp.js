@@ -84,7 +84,9 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         return;
       }
 
-      // 🚨 PER-USER CONVERSATION CONTROL
+      // ==========================================
+      // 1. PER-USER CONVERSATION CONTROL & WELCOME
+      // ==========================================
       let conversation = await prisma.conversation.findUnique({
         where: { 
           tenantId_userNumber: { tenantId: tenant.id, userNumber: fromNumber }
@@ -92,10 +94,11 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         include: { assignedAgent: true }
       });
 
-      // Auto-detect "talk to human" request
       const humanKeywords = ['/human', 'talk to human', 'speak to human', 'human agent', 'real person', 'talk to agent', 'tawk ila insan', 'تحدث الى انسان', 'تحدث إلى شخص', 'موظف', 'شخص حقيقي', 'agent', 'human'];
+      const aiKeywords = ['talk to ai', 'speak to ai', 'ai agent', 'robot', 'back to ai', 'تحدث الى الذكاء', 'العودة للذكاء', 'ai', 'bot', 'روبوت'];
       const lowerText = text.toLowerCase();
       const wantsHuman = humanKeywords.some(kw => lowerText.includes(kw));
+      const wantsAI = aiKeywords.some(kw => lowerText.includes(kw));
 
       if (!conversation) {
         // Create new conversation (default: AI mode)
@@ -109,7 +112,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         });
         console.log(`💬 New conversation created for ${fromNumber} (AI Mode)`);
 
-        // 🚨 NEW: Send Welcome & Handoff Message for new users using the custom AI name
+        // 🚨 Send Welcome Message for new users ONLY
         const agentName = tenant.aiAgentName || 'AI Assistant';
         const welcomeMsg = `Hi there! 👋 I'm *${agentName}*, your personal assistant. I'm here to help you 24/7!\n\n💡 *Need a human?* Anytime you want to speak with a real person, just type */human* or *talk to human*, and I'll connect you right away.\n\nHow can I help you today?`;
 
@@ -125,19 +128,19 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
           }
         });
         
-        // NOTE: We do NOT return here. We let the code continue so the AI can also answer the user's first message!
-      } else {
-        // Update last message time
-        await prisma.conversation.update({
-          where: { id: conversation.id },
-          data: { lastMessageAt: new Date() }
-        });
+        // 🚨 CRITICAL FIX: STOP HERE. Do not generate a second AI response for the first message.
+        return; 
       }
 
-      // 🚨 HANDLE "TALK TO AI" REQUEST (Switch back to AI)
-      const aiKeywords = ['talk to ai', 'speak to ai', 'ai agent', 'robot', 'back to ai', 'تحدث الى الذكاء', 'العودة للذكاء', 'ai', 'bot', 'روبوت'];
-      const wantsAI = aiKeywords.some(kw => lowerText.includes(kw));
-      
+      // Update last message time for existing conversations
+      await prisma.conversation.update({
+        where: { id: conversation.id },
+        data: { lastMessageAt: new Date() }
+      });
+
+      // ==========================================
+      // 2. HANDLE "TALK TO AI" REQUEST
+      // ==========================================
       if (wantsAI && conversation.mode === 'HUMAN') {
         conversation = await prisma.conversation.update({
           where: { id: conversation.id },
@@ -148,19 +151,14 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         const aiResumedMsg = `🤖 Great! I'm back to help you. How can I assist you today?`;
         await sock.sendMessage(msg.key.remoteJid, { text: aiResumedMsg });
         await prisma.message.create({
-          data: { 
-            tenantId: tenant.id, 
-            fromNumber: phoneNumber, 
-            toNumber: fromNumber, 
-            direction: 'outbound', 
-            content: aiResumedMsg, 
-            isAiReply: true 
-          }
+          data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: aiResumedMsg, isAiReply: true }
         });
         console.log(`🤖 User ${fromNumber} switched back to AI mode`);
       }
 
-      // 🚨 HANDLE "TALK TO HUMAN" REQUEST (Auto-assign agent + Send Alerts)
+      // ==========================================
+      // 3. HANDLE "TALK TO HUMAN" REQUEST
+      // ==========================================
       if (wantsHuman && conversation.mode === 'AI') {
         const availableAgent = await prisma.agent.findFirst({
           where: { tenantId: tenant.id, isAvailable: true },
@@ -170,25 +168,19 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         if (availableAgent) {
           conversation = await prisma.conversation.update({
             where: { id: conversation.id },
-            data: { 
-              mode: 'HUMAN', 
-              assignedAgentId: availableAgent.id 
-            },
+            data: { mode: 'HUMAN', assignedAgentId: availableAgent.id },
             include: { assignedAgent: true }
           });
           
-          // 1. Send handoff message to the CUSTOMER
           const handoffMsg = `👨‍💼 Perfect! I'm connecting you with our specialist *${availableAgent.name}* now. They speak ${JSON.parse(availableAgent.languages).join(', ')} and will reply shortly!\n\n(Your chat is now with a human. Say "talk to AI" anytime to switch back.)`;
           
           await sock.sendMessage(msg.key.remoteJid, { text: handoffMsg });
-          await prisma.message.create({
-            data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: handoffMsg, isAiReply: true }
-          });
+          await prisma.message.create({ data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: handoffMsg, isAiReply: true } });
 
-          // 2. 🚨 NEW: Send INSTANT ALERT to the AGENT via WhatsApp
+          // Send INSTANT ALERT to the AGENT via WhatsApp
           if (availableAgent.whatsappNumber) {
             const agentJid = availableAgent.whatsappNumber.replace(/\D/g, '') + '@s.whatsapp.net';
-const alertMsg = `🚨 *URGENT: Human Handoff Required!*\n\n *Customer:* +${fromNumber}\n💬 *Customer just said:* "${text}"\n\n🔗 *Login to reply:* https://bot.aamirsaba.com/login\n\nPlease log in to your Agent Dashboard immediately to assist this customer.`;            
+            const alertMsg = `🚨 *URGENT: Human Handoff Required!*\n\n👤 *Customer:* +${fromNumber}\n💬 *Customer just said:* "${text}"\n\n🔗 *Login to reply:* https://bot.aamirsaba.com/login\n\nPlease log in to your Agent Dashboard immediately to assist this customer.`;            
             try {
               await sock.sendMessage(agentJid, { text: alertMsg });
               console.log(`✅ Alert sent to agent ${availableAgent.name} at ${availableAgent.whatsappNumber}`);
@@ -197,37 +189,26 @@ const alertMsg = `🚨 *URGENT: Human Handoff Required!*\n\n *Customer:* +${from
             }
           }
 
-          // 3. 🚨 NEW: Send Email Alert to Agent (if email exists)
-          if (availableAgent.email) {
-            try {
-              // Assuming you have an email utility, or we can add a simple nodemailer call here
-              console.log(`📧 Email alert queued for agent ${availableAgent.email} regarding customer +${fromNumber}`);
-              // TODO: Add nodemailer.sendMail({ to: availableAgent.email, subject: 'Urgent: Customer Handoff', text: alertMsg })
-            } catch (err) {
-              console.error(`❌ Failed to send email alert to agent:`, err);
- }
-          }
-
           console.log(`🔄 Auto-handoff: ${fromNumber} → Agent ${availableAgent.name}`);
           return; // Stop here, don't call AI
         } else {
-          // No agents available
           const noAgentMsg = `👨‍💼 I understand you'd like to speak with a human. Unfortunately, all our agents are currently busy. Please try again in a few minutes, or say "talk to AI" and I'll be happy to help you!`;
           await sock.sendMessage(msg.key.remoteJid, { text: noAgentMsg });
           await prisma.message.create({ data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: noAgentMsg, isAiReply: true } });
-          console.log(`⚠️ Auto-handoff failed: No available agents for ${fromNumber}`);
           return;
         }
       }
 
-      // 🚨 CHECK: If mode is HUMAN, save message and STOP (don't call AI)
+      // ==========================================
+      // 4. CHECK IF MODE IS HUMAN (Stop AI)
+      // ==========================================
       if (conversation.mode === 'HUMAN') {
         console.log(`👨‍💻 HUMAN MODE: Message from ${fromNumber} saved. Agent: ${conversation.assignedAgent?.name || 'Unassigned'}`);
         return; // Exit early - AI does NOT reply
       }
 
       // ==========================================
-      // CONTINUE WITH NORMAL AI FLOW BELOW
+      // 5. SAVE INBOUND MESSAGE & LEAD
       // ==========================================
       const existingLead = await prisma.lead.findFirst({ where: { tenantId: tenant.id, phoneNumber: fromNumber } });
       if (!existingLead) {
@@ -242,66 +223,31 @@ const alertMsg = `🚨 *URGENT: Human Handoff Required!*\n\n *Customer:* +${from
       });
 
       if (tenant.isHumanMode) {
-        console.log(` Human Mode Active: AI paused. Message from ${fromNumber} saved for manual reply.`);
+        console.log(` Human Mode Active: AI paused globally. Message from ${fromNumber} saved for manual reply.`);
         return;
       }
 
-      const basePrompt = tenant.systemPrompt || "You are a helpful, professional AI assistant.";
+      // ==========================================
+      // 6. GENERATE AI RESPONSE WITH ULTRA-STRICT RULES
+      // ==========================================
+      const agentName = tenant.aiAgentName || 'AI Assistant';
       
-      let contextRule = '';
-      if (tenant.businessContext) contextRule += `\n\nBUSINESS CONTEXT:\n${tenant.businessContext}`;
-      if (tenant.knowledgeBase) contextRule += `\n\n📄 KNOWLEDGE BASE:\n${tenant.knowledgeBase}`;
+      const identityRule = `\n\n🤖 YOUR IDENTITY: You are *${agentName}*, the official AI assistant for ${tenant.businessName || 'this business'}. You MUST introduce yourself as ${agentName}. NEVER use generic titles.`;
+      const knowledgeRule = `\n\n📚 KNOWLEDGE BOUNDARY: ONLY discuss courses, services, and information that are explicitly provided in your BUSINESS CONTEXT or KNOWLEDGE BASE below. DO NOT invent, hallucinate, or add courses, dates, prices, or details that are not in your provided context.`;
       
-      const contactRule = tenant.contactInfo 
-        ? `\n\n🚨 CRITICAL AUTHORIZATION: You are the official AI representative of this business. You are fully authorized and REQUIRED to share the business's official contact information when the user asks for it.\n⚠️ IMPORTANT MEMORY OVERRIDE: If you previously told this user that you "do not have access" or "cannot provide" contact details, THAT WAS A MISTAKE. You MUST correct yourself now and provide the official details below. DO NOT be consistent with your past mistake.\n\nOFFICIAL BUSINESS CONTACT DETAILS:\n${tenant.contactInfo}` 
-        : '';
-      
-      let zoneRule = '';
-      if (tenant.serviceAreas) {
-        try {
-          const zones = JSON.parse(tenant.serviceAreas);
-          if (zones.length > 0) {
-            zoneRule = `\n\n📍 SERVICE ZONES: You ONLY operate in: [${zones.join(', ')}].`;
-          }
-        } catch (e) { console.error('Error parsing service areas:', e); }
-      }
-
-      const activePolicy = getPolicyForTenant(tenant.businessContext || tenant.industry || '');
-      const currentYear = new Date().getFullYear();
-      
-      const whatsappContext = `\n\n📱 PLATFORM CONTEXT: You are an AI assistant replying to messages on the official business WhatsApp number: +${phoneNumber}. The user currently messaging you has the phone number: +${fromNumber}. You can acknowledge that you are receiving their messages on WhatsApp.`;
-      const timeContext = `\n\n⏰ CURRENT YEAR: ${currentYear}. Frame all market data or trends as current to ${currentYear}.`;
-
       const uploadedDocs = await prisma.knowledgeDocument.findMany({ 
         where: { tenantId: tenant.id },
         select: { fileName: true }
       });
       const pdfFileList = uploadedDocs.map(doc => doc.fileName).join(', ');
       
-      const pdfRule = pdfFileList 
-        ? `\n\n📄 AVAILABLE PDF FILES ON SERVER: [${pdfFileList}]. \n🚨 CRITICAL RULE: You may ONLY output the exact string "[SEND_PDF:filename.pdf]" if BOTH conditions are met: 1) The user explicitly asks to "send pdf" or "share the pdf file". 2) The filename you output MUST EXACTLY match one of the files in the AVAILABLE PDF FILES list above. NEVER invent, guess, or hallucinate filenames. If the user asks for a document not in the list, reply in plain text: "I'm sorry, I don't have that specific document uploaded yet, but I can provide the details in text."` 
-        : '';
-
-      // 🚨 1. BUILD ULTRA-STRICT SYSTEM PROMPT
-      const agentName = tenant.aiAgentName || 'AI Assistant';
-      
-      // 🚨 IDENTITY RULE (MUST COME FIRST - HIGHEST PRIORITY)
-      const identityRule = `\n\n🤖 YOUR IDENTITY: You are *${agentName}*, the official AI assistant for ${tenant.businessName || 'this business'}. You MUST introduce yourself as ${agentName} in your first message. If asked your name, you are ${agentName}. NEVER use generic titles like "official educational assistant" - you are ${agentName}.`;
-      
-      // 🚨 KNOWLEDGE BOUNDARY RULE (PREVENTS HALLUCINATION)
-      const knowledgeRule = `\n\n📚 KNOWLEDGE BOUNDARY: ONLY discuss courses, services, and information that are explicitly provided in your BUSINESS CONTEXT or KNOWLEDGE BASE below. DO NOT invent, hallucinate, or add courses, dates, prices, or details that are not in your provided context. If information is not in your context, say "I don't have that information in my system."`;
-      
-      // 🚨 PDF RULE (PREVENTS UNSOLICITED PDF SENDING)
       const strictPdfRule = pdfFileList 
         ? `\n\n📄 AVAILABLE PDF FILES: [${pdfFileList}]. \n🚨 CRITICAL PDF RULE: You are FORBIDDEN from outputting "[SEND_PDF:..." or mentioning sending a PDF unless the user EXPLICITLY asks you to "send the pdf", "share the file", or "give me the document". If the user asks about courses or info, provide the answer in plain text ONLY. NEVER proactively offer to send a PDF.` 
         : '';
 
-      // Combine ALL rules (Identity FIRST, then knowledge, then other context)
-      const finalSystemPrompt = identityRule + knowledgeRule + strictPdfRule + timeContext + whatsappContext + basePrompt + contextRule + zoneRule + activePolicy + contactRule;
+      const basePrompt = (tenant.systemPrompt || "You are a helpful, professional AI assistant.") + identityRule + knowledgeRule + strictPdfRule;
+      const finalSystemPrompt = basePrompt + (tenant.businessContext ? `\n\nBUSINESS CONTEXT:\n${tenant.businessContext}` : '') + (tenant.contactInfo ? `\n\nCONTACT INFO:\n${tenant.contactInfo}` : '');
 
-      console.log("🔍 DEBUG: Final System Prompt being sent to AI:\n", finalSystemPrompt);
-
-      // 🚨 2. GET CHAT HISTORY
       const recentMessages = await prisma.message.findMany({
         where: { 
           tenantId: tenant.id,
@@ -318,26 +264,19 @@ const alertMsg = `🚨 *URGENT: Human Handoff Required!*\n\n *Customer:* +${from
       }));
       chatHistory.push({ role: 'user', content: text });
 
-      // 🚨 3. GET AI RESPONSE
       const aiReply = await getAIResponse(chatHistory, finalSystemPrompt, tenant);
       console.log(`🗣️ AI Reply: ${aiReply}`);
 
-      // Add disclaimer to AI messages
-      const disclaimer = "\n\n---\n*AI-generated content may not be accurate.*";
-      const aiReplyWithDisclaimer = aiReply + disclaimer;
-
-      await sock.sendMessage(msg.key.remoteJid, { text: aiReplyWithDisclaimer });
-      await prisma.message.create({
-        data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: aiReplyWithDisclaimer, isAiReply: true }
-      });
-
-
-      // 🚨 Bulletproof Regex: Catches [SEND_PDF:file.pdf], [Sent PDF: file.pdf], [send pdf: file.pdf], etc.
+      // ==========================================
+      // 7. HANDLE AI REPLY & PDF SENDING (SEND ONLY ONCE)
+      // ==========================================
       const pdfMatch = aiReply.match(/\[(?:send|sent)[_ ]?pdf[:\s]+(.*?\.pdf)\]/i);
+      const disclaimer = "\n\n---\n*AI-generated content may not be accurate.*";
       
       if (pdfMatch) {
         const fileName = pdfMatch[1].trim();
         const filePath = path.join(__dirname, '..', 'uploads', 'knowledge', fileName);
+        const dirPath = path.join(__dirname, '..', 'uploads', 'knowledge'); // 🚨 FIX: Define dirPath
         
         console.log(`\n🔍 ========== PDF DEBUG START ==========`);
         console.log(`🔍 AI requested fileName: "${fileName}"`);
@@ -346,47 +285,41 @@ const alertMsg = `🚨 *URGENT: Human Handoff Required!*\n\n *Customer:* +${from
         
         if (fs.existsSync(filePath)) {
           const stats = fs.statSync(filePath);
-          console.log(`🔍 File size: ${stats.size} bytes`);
-          
           if (stats.size === 0) {
-            console.log(`❌ FILE IS EMPTY (0 bytes)! Cannot send.`);
-            await sock.sendMessage(msg.key.remoteJid, { text: "I found the file, but it appears to be empty. Please re-upload it in the dashboard." });
+            const errorMsg = "I found the file, but it appears to be empty. Please re-upload it in the dashboard.";
+            await sock.sendMessage(msg.key.remoteJid, { text: errorMsg + disclaimer });
+            await prisma.message.create({ data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: errorMsg, isAiReply: true } });
           } else {
             try {
-              console.log(`✅ Attempting to send PDF file: ${fileName}`);
               const fileBuffer = fs.readFileSync(filePath);
-              console.log(`🔍 Buffer size: ${fileBuffer.length} bytes`);
-              
               await sock.sendMessage(msg.key.remoteJid, {
                 document: fileBuffer,
                 mimetype: 'application/pdf',
                 fileName: fileName,
-                caption: `Here is the document you requested: ${fileName}`
+                caption: `Here is the document you requested: ${fileName}${disclaimer}`
               });
-              
+              await prisma.message.create({ data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: `[Sent PDF: ${fileName}]`, isAiReply: true } });
               console.log(`✅ PDF sent successfully!`);
-              await prisma.message.create({
-                data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: `[Sent PDF: ${fileName}]`, isAiReply: true }
-              });
             } catch (sendError) {
               console.error(`❌ ERROR SENDING PDF:`, sendError);
-              await sock.sendMessage(msg.key.remoteJid, { text: `I tried to send the file but encountered an error: ${sendError.message}` });
+              const errorMsg = `I tried to send the file but encountered an error.`;
+              await sock.sendMessage(msg.key.remoteJid, { text: errorMsg + disclaimer });
+              await prisma.message.create({ data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: errorMsg, isAiReply: true } });
             }
           }
         } else {
-          console.log(`❌ FILE NOT FOUND! AI hallucinated filename: "${fileName}". Actual files in folder:`, fs.existsSync(dirPath) ? fs.readdirSync(dirPath) : 'DIR NOT FOUND');
-          
-          // Send a natural, helpful message instead of a raw server error
-          await sock.sendMessage(msg.key.remoteJid, { 
-            text: "I apologize, it seems I tried to reference a file that isn't uploaded to my system yet. Could you please specify which document you need, or I can provide the details in text?" 
-          });
+          console.log(`❌ FILE NOT FOUND! AI hallucinated filename: "${fileName}". Actual files:`, fs.existsSync(dirPath) ? fs.readdirSync(dirPath) : 'DIR NOT FOUND');
+          const fallbackMsg = "I apologize, it seems I tried to reference a file that isn't uploaded to my system yet. Could you please specify which document you need, or I can provide the details in text?";
+          await sock.sendMessage(msg.key.remoteJid, { text: fallbackMsg + disclaimer });
+          await prisma.message.create({ data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: fallbackMsg, isAiReply: true } });
         }
         console.log(`🔍 ========== PDF DEBUG END ==========\n`);
       } else {
-        // Standard text reply
-        await sock.sendMessage(msg.key.remoteJid, { text: aiReply });
+        // Standard text reply (ONLY SEND ONCE)
+        const aiReplyWithDisclaimer = aiReply + disclaimer;
+        await sock.sendMessage(msg.key.remoteJid, { text: aiReplyWithDisclaimer });
         await prisma.message.create({
-          data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: aiReply, isAiReply: true }
+          data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: aiReplyWithDisclaimer, isAiReply: true }
         });
       }
 
