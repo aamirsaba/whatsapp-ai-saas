@@ -51,7 +51,7 @@ app.use(express.json());
 
 // 🚨 CRITICAL: Serve static files (HTML, CSS, JS) from the 'public' folder
 // This fixes the "Cannot GET /accept-invitation.html" error
-const path = require('path');
+
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // 🧠 CACHE TO REMEMBER THE LATEST QR CODE FOR EACH NUMBER
