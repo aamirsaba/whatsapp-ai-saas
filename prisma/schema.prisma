@@ -156,16 +156,17 @@ model KnowledgeDocument {
 
 // 👨‍💼 AGENT MANAGEMENT
 model Agent {
-  id          String   @id @default(cuid())
-  tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  name        String
-  email       String?
-  languages   String   @default("[]") // JSON array: ["English", "Arabic"]
-  isAvailable Boolean  @default(true)
-  avatar      String?  // For future profile pictures
-  createdAt   DateTime @default(now())
-  conversations Conversation[]
+  id             String   @id @default(cuid())
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name           String
+  email          String?
+  whatsappNumber String?  // 🚨 NEW: For sending instant WhatsApp alerts to the agent
+  languages      String   @default("[]") // JSON array: ["English", "Arabic"]
+  isAvailable    Boolean  @default(true)
+  avatar         String?  
+  createdAt      DateTime @default(now())
+  conversations  Conversation[]
 }
 
 // 💬 PER-USER CONVERSATION CONTROL

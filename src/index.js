@@ -1760,7 +1760,7 @@ app.post('/api/dashboard/agents', authenticateToken, async (req, res) => {
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
     if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
 
-    const { name, email, languages } = req.body;
+    const { name, email, whatsappNumber, languages } = req.body;
     if (!name) return res.status(400).json({ error: 'Agent name is required.' });
 
     const agent = await prisma.agent.create({
@@ -1768,6 +1768,7 @@ app.post('/api/dashboard/agents', authenticateToken, async (req, res) => {
         tenantId: tenant.id,
         name,
         email: email || null,
+        whatsappNumber: whatsappNumber || null, // 🚨 NEW
         languages: JSON.stringify(languages || ['English']),
         isAvailable: true
       }

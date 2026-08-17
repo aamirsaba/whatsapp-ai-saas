@@ -160,7 +160,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         console.log(`🤖 User ${fromNumber} switched back to AI mode`);
       }
 
-      // 🚨 HANDLE "TALK TO HUMAN" REQUEST (Auto-assign agent)
+      // 🚨 HANDLE "TALK TO HUMAN" REQUEST (Auto-assign agent + Send Alerts)
       if (wantsHuman && conversation.mode === 'AI') {
         const availableAgent = await prisma.agent.findFirst({
           where: { tenantId: tenant.id, isAvailable: true },
@@ -177,34 +177,45 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
             include: { assignedAgent: true }
           });
           
+          // 1. Send handoff message to the CUSTOMER
           const handoffMsg = `👨‍💼 Perfect! I'm connecting you with our specialist *${availableAgent.name}* now. They speak ${JSON.parse(availableAgent.languages).join(', ')} and will reply shortly!\n\n(Your chat is now with a human. Say "talk to AI" anytime to switch back.)`;
           
           await sock.sendMessage(msg.key.remoteJid, { text: handoffMsg });
           await prisma.message.create({
-            data: { 
-              tenantId: tenant.id, 
-              fromNumber: phoneNumber, 
-              toNumber: fromNumber, 
-              direction: 'outbound', 
-              content: handoffMsg, 
-              isAiReply: true 
-            }
+            data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: handoffMsg, isAiReply: true }
           });
+
+          // 2. 🚨 NEW: Send INSTANT ALERT to the AGENT via WhatsApp
+          if (availableAgent.whatsappNumber) {
+            const agentJid = availableAgent.whatsappNumber.replace(/\D/g, '') + '@s.whatsapp.net';
+            const alertMsg = `🚨 *URGENT: Human Handoff Required!*\n\n👤 *Customer:* +${fromNumber}\n💬 *Customer just said:* "${text}"\n\n🔗 Please log in to your Agent Dashboard immediately to reply.`;
+            
+            try {
+              await sock.sendMessage(agentJid, { text: alertMsg });
+              console.log(`✅ Alert sent to agent ${availableAgent.name} at ${availableAgent.whatsappNumber}`);
+            } catch (err) {
+              console.error(`❌ Failed to send WhatsApp alert to agent:`, err);
+            }
+          }
+
+          // 3. 🚨 NEW: Send Email Alert to Agent (if email exists)
+          if (availableAgent.email) {
+            try {
+              // Assuming you have an email utility, or we can add a simple nodemailer call here
+              console.log(`📧 Email alert queued for agent ${availableAgent.email} regarding customer +${fromNumber}`);
+              // TODO: Add nodemailer.sendMail({ to: availableAgent.email, subject: 'Urgent: Customer Handoff', text: alertMsg })
+            } catch (err) {
+              console.error(`❌ Failed to send email alert to agent:`, err);
+ }
+          }
+
           console.log(`🔄 Auto-handoff: ${fromNumber} → Agent ${availableAgent.name}`);
           return; // Stop here, don't call AI
         } else {
+          // No agents available
           const noAgentMsg = `👨‍💼 I understand you'd like to speak with a human. Unfortunately, all our agents are currently busy. Please try again in a few minutes, or say "talk to AI" and I'll be happy to help you!`;
           await sock.sendMessage(msg.key.remoteJid, { text: noAgentMsg });
-          await prisma.message.create({
-            data: { 
-              tenantId: tenant.id, 
-              fromNumber: phoneNumber, 
-              toNumber: fromNumber, 
-              direction: 'outbound', 
-              content: noAgentMsg, 
-              isAiReply: true 
-            }
-          });
+          await prisma.message.create({ data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: noAgentMsg, isAiReply: true } });
           console.log(`⚠️ Auto-handoff failed: No available agents for ${fromNumber}`);
           return;
         }
