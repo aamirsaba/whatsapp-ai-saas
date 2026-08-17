@@ -328,6 +328,7 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
   }
 });
 
+
 // 🚀 SAVE AI SETTINGS
 app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
   try {
@@ -1409,6 +1410,39 @@ app.post('/api/agent/send-message', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error(' Agent send message error:', error);
     res.status(500).json({ error: 'Failed to send message.' });
+  }
+});
+
+// 🚨 GET CHAT HISTORY FOR AGENT
+app.get('/api/agent/chat-history/:number', authenticateToken, async (req, res) => {
+  try {
+    const { number } = req.params;
+    
+    // Find the agent and their tenant by their email
+    const agent = await prisma.agent.findFirst({ 
+      where: { email: req.user.email },
+      include: { tenant: true }
+    });
+    
+    if (!agent) return res.status(403).json({ error: 'Agent not found.' });
+
+    // Get all messages for this conversation
+    const messages = await prisma.message.findMany({
+      where: {
+        tenantId: agent.tenantId,
+        OR: [
+          { fromNumber: number, toNumber: agent.tenant.whatsappNumber },
+          { fromNumber: agent.tenant.whatsappNumber, toNumber: number }
+        ]
+      },
+      orderBy: { createdAt: 'asc' },
+      take: 50 // Last 50 messages
+    });
+
+    res.json({ success: true, messages });
+  } catch (error) {
+    console.error('Load chat history error:', error);
+    res.status(500).json({ error: 'Failed to load chat history.' });
   }
 });
 

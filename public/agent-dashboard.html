@@ -27,8 +27,12 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Welcome Banner -->
     <div class="bg-green-50 border border-green-200 rounded-xl p-6 mb-6">
-      <h2 class="text-lg font-semibold text-green-800">👋 Welcome, Agent!</h2>
-      <p class="text-sm text-green-700 mt-1">You're responding on behalf of <span id="businessName" class="font-semibold"></span>. Help respond to customer inquiries.</p>
+      <h2 class="text-lg font-semibold text-green-800">👋 Welcome, <span id="agentNameDisplay">Agent</span>!</h2>
+      <p class="text-sm text-green-700 mt-1">
+        You're responding on behalf of <span id="businessName" class="font-semibold">your team</span>. 
+        <span id="agentContactInfo" class="block mt-1 text-xs text-green-600"></span>
+        Help respond to customer inquiries.
+      </p>
     </div>
 
     <!-- Live Inbox -->
@@ -38,11 +42,17 @@
       
       <!-- Recent Chats as Cards -->
       <div id="recentChats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6 max-h-96 overflow-y-auto p-1">
-        <div class="text-center text-gray-400 py-8">Loading conversations...</div>
+        <div class="text-center text-gray-400 py-8 col-span-full">Loading conversations...</div>
       </div>
 
       <!-- Reply Box with Quick Replies -->
       <div id="replyBox" class="hidden bg-white border-2 border-indigo-100 rounded-xl p-5 shadow-sm">
+        
+        <!-- 🚨 NEW: Chat History Container -->
+        <div id="chatHistoryContainer" class="mb-4 p-4 bg-gray-50 rounded-lg max-h-64 overflow-y-auto border border-gray-200 hidden">
+          <!-- Messages will be injected here -->
+        </div>
+
         <div class="flex items-center justify-between mb-3">
           <p class="text-sm font-bold text-gray-800">Replying to: <span id="replyToNumber" class="text-indigo-600"></span></p>
           <button onclick="closeReplyBox()" class="text-gray-400 hover:text-gray-600">
@@ -50,14 +60,14 @@
           </button>
         </div>
         
-        <!-- 🚨 Quick Replies Dropdown -->
+        <!-- Quick Replies Dropdown -->
         <div class="mb-3">
           <label class="block text-xs font-medium text-gray-600 mb-1">⚡ Quick Reply:</label>
           <select id="quickReplies" onchange="insertQuickReply()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
             <option value="">-- Select a template --</option>
             <option value="Hello! Thank you for contacting us. How can I assist you today?">👋 Standard Greeting</option>
             <option value="Could you please provide a few more details so I can assist you better?">ℹ️ Request More Info</option>
-            <option value="You can reach our official support team at [Insert Email/Phone] for further assistance."> Share Contact Info</option>
+            <option value="You can reach our official support team at [Insert Email/Phone] for further assistance.">📞 Share Contact Info</option>
             <option value="Thank you for your inquiry. We will get back to you shortly.">⏳ Holding Response</option>
             <option value="Thank you for contacting us! Have a great day.">✅ Closing / Thank You</option>
           </select>
@@ -78,26 +88,37 @@
       window.location.href = '/login';
     }
 
-    // Decode token to get email
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      document.getElementById('userEmail').textContent = payload.email;
-    } catch (e) {
-      console.error('Invalid token');
-    }
-
-    // Load team info and chats
+    // Load team info, agent details, and chats
     async function loadAgentInfo() {
       try {
-        const res = await fetch('/api/agent/info', {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        document.getElementById('userEmail').textContent = payload.email;
+
+        // Fetch agents to find current agent's details
+        const res = await fetch('/api/dashboard/agents', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
         
-        if (res.ok && data.team) {
-          document.getElementById('teamName').textContent = `Team: ${data.team.businessName}`;
-          document.getElementById('businessName').textContent = data.team.businessName;
+        if (res.ok && data.agents) {
+          const currentAgent = data.agents.find(a => a.email === payload.email);
+          if (currentAgent) {
+            document.getElementById('agentNameDisplay').textContent = currentAgent.name;
+            if (currentAgent.whatsappNumber) {
+              document.getElementById('agentContactInfo').textContent = `📱 Your WhatsApp: +${currentAgent.whatsappNumber}`;
+            }
+          }
         }
+        
+        // Try to get business name
+        try {
+          const infoRes = await fetch('/api/agent/info', { headers: { 'Authorization': `Bearer ${token}` } });
+          const infoData = await infoRes.json();
+          if (infoRes.ok && infoData.team) {
+            document.getElementById('businessName').textContent = infoData.team.businessName;
+          }
+        } catch(e) { /* ignore if endpoint doesn't exist yet */ }
+
       } catch (error) {
         console.error('Load agent info error:', error);
       }
@@ -115,8 +136,8 @@
           document.getElementById('recentChats').innerHTML = data.chats.map(chat => `
             <div onclick="openReplyBox('${chat.phoneNumber}')" class="p-4 border border-gray-200 rounded-lg hover:border-indigo-300 cursor-pointer transition bg-gray-50 hover:bg-white">
               <div class="flex items-center justify-between mb-2">
-                <span class="font-semibold text-gray-800">${chat.phoneNumber}</span>
-                <span class="text-xs text-gray-500">${new Date(chat.createdAt).toLocaleString()}</span>
+                <span class="font-semibold text-gray-800">+${chat.phoneNumber}</span>
+                <span class="text-xs text-gray-500">${new Date(chat.lastMessageAt || chat.createdAt).toLocaleString()}</span>
               </div>
               <p class="text-sm text-gray-600 truncate">${chat.lastMessage}</p>
             </div>
@@ -126,6 +147,47 @@
         }
       } catch (error) {
         console.error('Load chats error:', error);
+      }
+    }
+
+    // 🚨 NEW: Load chat history for a specific number
+    async function loadChatHistory(number) {
+      const historyContainer = document.getElementById('chatHistoryContainer');
+      historyContainer.classList.remove('hidden');
+      historyContainer.innerHTML = '<p class="text-center text-gray-500 text-sm">Loading history...</p>';
+
+      try {
+        const res = await fetch(`/api/agent/chat-history/${number}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        
+        if (res.ok && data.messages && data.messages.length > 0) {
+          historyContainer.innerHTML = data.messages.map(msg => {
+            const isOutbound = msg.direction === 'outbound';
+            const alignClass = isOutbound ? 'text-right' : 'text-left';
+            const bgClass = isOutbound ? 'bg-green-100 text-green-900 ml-auto' : 'bg-white text-gray-800 border border-gray-200';
+            const label = isOutbound ? '👨‍💼 You' : '👤 Customer';
+            
+            return `
+              <div class="mb-3 ${alignClass}">
+                <div class="inline-block max-w-xs lg:max-w-md px-3 py-2 rounded-lg ${bgClass} shadow-sm">
+                  <p class="text-xs font-semibold mb-1 opacity-75">${label}</p>
+                  <p class="text-sm whitespace-pre-wrap">${msg.content}</p>
+                  <p class="text-xs opacity-60 mt-1 text-right">${new Date(msg.createdAt).toLocaleString()}</p>
+                </div>
+              </div>
+            `;
+          }).join('');
+          
+          // Scroll to bottom
+          historyContainer.scrollTop = historyContainer.scrollHeight;
+        } else {
+          historyContainer.innerHTML = '<p class="text-center text-gray-500 text-sm">No previous messages.</p>';
+        }
+      } catch (error) {
+        console.error('Load chat history error:', error);
+        historyContainer.innerHTML = '<p class="text-center text-red-500 text-sm">Failed to load history.</p>';
       }
     }
 
@@ -146,11 +208,19 @@
       }
     }
 
-    function openReplyBox(number) {
-      document.getElementById('replyToNumber').textContent = number;
+    async function openReplyBox(number) {
+      document.getElementById('replyToNumber').textContent = '+' + number;
       document.getElementById('replyBox').classList.remove('hidden');
       document.getElementById('manualReplyText').value = '';
       document.getElementById('manualReplyText').focus();
+      
+      // Load chat history when opening the reply box
+      await loadChatHistory(number);
+      
+      // Smooth scroll to reply box
+      setTimeout(() => { 
+        document.getElementById('replyBox').scrollIntoView({ behavior: 'smooth', block: 'center' }); 
+      }, 100);
     }
 
     function closeReplyBox() {
@@ -158,7 +228,7 @@
     }
 
     async function sendAgentReply() {
-      const number = document.getElementById('replyToNumber').textContent;
+      const number = document.getElementById('replyToNumber').textContent.replace('+', '');
       const text = document.getElementById('manualReplyText').value;
       
       if (!text.trim()) {
@@ -177,9 +247,9 @@
         });
 
         if (res.ok) {
-          alert('✅ Message sent!');
           document.getElementById('manualReplyText').value = '';
-          closeReplyBox();
+          // Reload history to show the sent message
+          await loadChatHistory(number);
           loadRecentChats();
         } else {
           const data = await res.json();
