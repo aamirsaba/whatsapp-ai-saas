@@ -1754,76 +1754,83 @@ app.get('/api/dashboard/agents', authenticateToken, async (req, res) => {
   }
 });
 
-// Create new agent + send invitation
+// ============================================
+// 👨‍💼 CREATE AGENT & SEND INVITATION EMAIL
+// ============================================
 app.post('/api/dashboard/agents', authenticateToken, async (req, res) => {
   try {
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
     if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
 
     const { name, email, whatsappNumber, languages } = req.body;
-    
-    if (!name || !email || !whatsappNumber) {
-      return res.status(400).json({ error: 'Name, email, and WhatsApp number are required.' });
-    }
+    if (!name || !email) return res.status(400).json({ error: 'Name and Email are required.' });
 
-    // Create invitation token
-    const inviteToken = require('crypto').randomBytes(32).toString('hex');
+    // 1. Generate a secure invitation token
+    const crypto = require('crypto');
+    const inviteToken = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-    // Create invitation record
-    await prisma.teamInvitation.create({
-      data: {
-        email,
-        tenantId: tenant.id,
-        token: inviteToken,
-        expiresAt
-      }
-    });
-
-    // Create agent record
+    // 2. Create the Agent record
     const agent = await prisma.agent.create({
       data: {
         tenantId: tenant.id,
         name,
         email,
-        whatsappNumber,
+        whatsappNumber: whatsappNumber || null,
         languages: JSON.stringify(languages || ['English']),
         isAvailable: true
       }
     });
 
-    // 🚨 SEND INVITATION EMAIL
+    // 3. Create the Invitation record
+    await prisma.teamInvitation.create({
+      data: {
+        email,
+        tenantId: tenant.id,
+        token: inviteToken,
+        expiresAt,
+        accepted: false
+      }
+    });
+
+    // 4. 🚨 SEND THE INVITATION EMAIL USING HOSTINGER SMTP
     try {
-      const inviteLink = `https://bot.aamirsaba.com/accept-invitation?email=${encodeURIComponent(email)}&token=${inviteToken}`;
-      
-      // You need to configure nodemailer with your email credentials
       const nodemailer = require('nodemailer');
+      
       const transporter = nodemailer.createTransport({
-        service: 'gmail', // or your email provider
+        host: process.env.SMTP_HOST || 'smtp.hostinger.com',
+        port: parseInt(process.env.SMTP_PORT || '465'),
+        secure: true, // true for port 465 (SSL)
         auth: {
-          user: process.env.EMAIL_USER, // Add to .env
-          pass: process.env.EMAIL_PASS  // Add to .env
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS
         }
       });
 
+      // Note: Added .html to match your public/accept-invitation.html file
+      const inviteLink = `https://bot.aamirsaba.com/accept-invitation.html?email=${encodeURIComponent(email)}&token=${inviteToken}`;
+
       await transporter.sendMail({
-        from: `"${tenant.businessName}" <${process.env.EMAIL_USER}>`,
+        from: `"${tenant.businessName}" <${process.env.SMTP_USER}>`,
         to: email,
         subject: `You're invited to join ${tenant.businessName} as an Agent!`,
         html: `
-          <h2>Welcome to ${tenant.businessName}!</h2>
-          <p>You've been invited to join as an AI Agent.</p>
-          <p><strong>Click here to accept and set your password:</strong></p>
-          <a href="${inviteLink}" style="background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Accept Invitation</a>
-          <p>This link expires in 7 days.</p>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+            <h2 style="color: #10b981; margin-top: 0;">Welcome to ${tenant.businessName}!</h2>
+            <p>You have been invited to join the team as an AI Agent.</p>
+            <p>Please click the button below to accept the invitation and set up your account:</p>
+            <a href="${inviteLink}" style="display: inline-block; background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0;">Accept Invitation</a>
+            <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">This link will expire in 7 days. If you did not expect this invitation, please ignore this email.</p>
+          </div>
         `
       });
       console.log(`✅ Invitation email sent to ${email}`);
-    } catch (emailErr) {
-      console.error('❌ Failed to send invitation email:', emailErr);
+    } catch (emailError) {
+      console.error('❌ Failed to send invitation email:', emailError);
+      // We don't fail the request if email fails, but we log it
     }
 
-    res.json({ success: true, agent, message: `✅ Agent "${name}" added! Invitation email sent to ${email}` });
+    res.json({ success: true, agent, message: `✅ Agent "${name}" added and invitation sent!` });
   } catch (error) {
     console.error('❌ Create agent error:', error);
     res.status(500).json({ error: 'Failed to create agent.' });
