@@ -354,15 +354,28 @@
       nonprofit: { systemPrompt: "You are a passionate, informative Non-Profit Organization Assistant.", businessContext: "Help with donation info, volunteer opportunities, and mission statements." }
     };
 
-    async function loadDashboard() {
+        async function loadDashboard() {
       try {
         const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
         if (data.success) {
-	const whatsappNumber = data.tenant.whatsappNumber || '';
-	document.getElementById('topWhatsappNumber').textContent = whatsappNumber ? `📱 +${whatsappNumber}` : '';
-          document.getElementById('topBusinessName').textContent = businessName;
-      	  document.getElementById('businessName').textContent = businessName;
+          
+          // 🚨 1. GET THE ACTUAL TEXT STRINGS FROM DATABASE
+          const nameString = data.tenant.businessName || 'My Business';
+          const waString = data.tenant.whatsappNumber || '';
+          
+          //  2. SET THE HEADER (Top Right)
+          const topNameEl = document.getElementById('topBusinessName');
+          if (topNameEl) topNameEl.textContent = nameString; // Use textContent, not the element itself!
+          
+          const topWaEl = document.getElementById('topWhatsappNumber');
+          if (topWaEl) topWaEl.textContent = waString ? `📱 +${waString}` : '';
+
+          //  3. SET THE WELCOME BANNER (Main Page)
+          const welcomeNameEl = document.getElementById('businessName');
+          if (welcomeNameEl) welcomeNameEl.textContent = nameString; // Use the string variable here too!
+          
+          // ... KEEP ALL YOUR EXISTING CODE BELOW THIS LINE (llmApiKey, systemPrompt, etc.) ...
           
           document.getElementById('llmApiKey').value = data.tenant.llmApiKey || '';
           document.getElementById('systemPrompt').value = data.tenant.systemPrompt || '';
