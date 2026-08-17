@@ -391,6 +391,16 @@
     
     if (!token) { window.location.href = '/login'; }
 
+    // 🚨 SAFEGUARD: If an agent tries to access the admin dashboard, redirect them
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.role === 'AGENT') {
+        window.location.href = '/agent-dashboard.html';
+      }
+    } catch (e) {
+      console.error('Invalid token');
+    }
+
     const personas = {
       emotional: { systemPrompt: "You are an empathetic, supportive Emotional Support Companion.", businessContext: "Listen actively and validate feelings. Offer coping strategies. ⚠️ CRITICAL: Never diagnose mental health conditions." },
       islamic: { systemPrompt: "You are a knowledgeable, compassionate, and respectful Islamic assistant.", businessContext: "Answer based on Quran and authentic Sunnah. Be polite. Admit if you don't know." },

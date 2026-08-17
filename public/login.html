@@ -91,17 +91,26 @@
           msg.textContent = '✅ Login successful! Redirecting...';
           msg.className = 'mt-4 text-center text-sm text-green-600 font-bold';
           
-          // 🚨 FIXED: Redirect to /dashboard (matches backend route)
-          setTimeout(() => window.location.href = '/dashboard', 1000);
+          // 🚨 NEW: Check user role and redirect to the correct dashboard
+          setTimeout(() => {
+            try {
+              // Decode the JWT token to check the user's role
+              const payload = JSON.parse(atob(data.token.split('.')[1]));
+              
+              if (payload.role === 'AGENT') {
+                window.location.href = '/agent-dashboard.html';
+              } else {
+                window.location.href = '/dashboard';
+              }
+            } catch (e) {
+              // Fallback in case of any token parsing error
+              window.location.href = '/dashboard'; 
+            }
+          }, 1000);
         } else {
           msg.textContent = '❌ ' + (data.error || 'Login failed');
           msg.className = 'mt-4 text-center text-sm text-red-600 font-bold';
         }
-      } catch (err) {
-        msg.textContent = '❌ Server error. Please try again.';
-        msg.className = 'mt-4 text-center text-sm text-red-600 font-bold';
-      }
-    });
   </script>
 </body>
 </html>
