@@ -48,7 +48,7 @@
       <!-- Reply Box with Quick Replies -->
       <div id="replyBox" class="hidden bg-white border-2 border-indigo-100 rounded-xl p-5 shadow-sm">
         
-        <!-- 🚨 NEW: Chat History Container -->
+        <!-- 🚨 Chat History Container -->
         <div id="chatHistoryContainer" class="mb-4 p-4 bg-gray-50 rounded-lg max-h-64 overflow-y-auto border border-gray-200 hidden">
           <!-- Messages will be injected here -->
         </div>
@@ -81,44 +81,36 @@
     </div>
   </div>
 
-  <script>
+    <script>
     // Check authentication
     const token = localStorage.getItem('token');
     if (!token) {
       window.location.href = '/login';
     }
 
-    // Load team info, agent details, and chats
+    let currentReplyNumber = null;
+    let chatHistoryInterval = null;
+
+    // Decode token to get email
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      document.getElementById('userEmail').textContent = payload.email;
+    } catch (e) {
+      console.error('Invalid token');
+    }
+
+    // Load team info and chats
     async function loadAgentInfo() {
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        document.getElementById('userEmail').textContent = payload.email;
-
-        // Fetch agents to find current agent's details
-        const res = await fetch('/api/dashboard/agents', {
+        const res = await fetch('/api/agent/info', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
         
-        if (res.ok && data.agents) {
-          const currentAgent = data.agents.find(a => a.email === payload.email);
-          if (currentAgent) {
-            document.getElementById('agentNameDisplay').textContent = currentAgent.name;
-            if (currentAgent.whatsappNumber) {
-              document.getElementById('agentContactInfo').textContent = `📱 Your WhatsApp: +${currentAgent.whatsappNumber}`;
-            }
-          }
+        if (res.ok && data.team) {
+          document.getElementById('teamName').textContent = `Team: ${data.team.businessName}`;
+          document.getElementById('businessName').textContent = data.team.businessName;
         }
-        
-        // Try to get business name
-        try {
-          const infoRes = await fetch('/api/agent/info', { headers: { 'Authorization': `Bearer ${token}` } });
-          const infoData = await infoRes.json();
-          if (infoRes.ok && infoData.team) {
-            document.getElementById('businessName').textContent = infoData.team.businessName;
-          }
-        } catch(e) { /* ignore if endpoint doesn't exist yet */ }
-
       } catch (error) {
         console.error('Load agent info error:', error);
       }
@@ -152,10 +144,6 @@
 
     // 🚨 NEW: Load chat history for a specific number
     async function loadChatHistory(number) {
-      const historyContainer = document.getElementById('chatHistoryContainer');
-      historyContainer.classList.remove('hidden');
-      historyContainer.innerHTML = '<p class="text-center text-gray-500 text-sm">Loading history...</p>';
-
       try {
         const res = await fetch(`/api/agent/chat-history/${number}`, {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -163,6 +151,9 @@
         const data = await res.json();
         
         if (res.ok && data.messages && data.messages.length > 0) {
+          const historyContainer = document.getElementById('chatHistoryContainer');
+          historyContainer.classList.remove('hidden');
+          
           historyContainer.innerHTML = data.messages.map(msg => {
             const isOutbound = msg.direction === 'outbound';
             const alignClass = isOutbound ? 'text-right' : 'text-left';
@@ -182,16 +173,13 @@
           
           // Scroll to bottom
           historyContainer.scrollTop = historyContainer.scrollHeight;
-        } else {
-          historyContainer.innerHTML = '<p class="text-center text-gray-500 text-sm">No previous messages.</p>';
         }
       } catch (error) {
         console.error('Load chat history error:', error);
-        historyContainer.innerHTML = '<p class="text-center text-red-500 text-sm">Failed to load history.</p>';
       }
     }
 
-    // 🚨 Quick Reply Function
+    //  Quick Reply Function
     function insertQuickReply() {
       const select = document.getElementById('quickReplies');
       const textarea = document.getElementById('manualReplyText');
@@ -209,6 +197,7 @@
     }
 
     async function openReplyBox(number) {
+      currentReplyNumber = number;
       document.getElementById('replyToNumber').textContent = '+' + number;
       document.getElementById('replyBox').classList.remove('hidden');
       document.getElementById('manualReplyText').value = '';
@@ -217,6 +206,15 @@
       // Load chat history when opening the reply box
       await loadChatHistory(number);
       
+      //  Set up auto-refresh every 5 seconds to get new messages
+      if (chatHistoryInterval) {
+        clearInterval(chatHistoryInterval);
+      }
+      chatHistoryInterval = setInterval(() => {
+        loadChatHistory(number);
+        loadRecentChats();
+      }, 5000);
+      
       // Smooth scroll to reply box
       setTimeout(() => { 
         document.getElementById('replyBox').scrollIntoView({ behavior: 'smooth', block: 'center' }); 
@@ -224,7 +222,14 @@
     }
 
     function closeReplyBox() {
+      currentReplyNumber = null;
       document.getElementById('replyBox').classList.add('hidden');
+      
+      // Clear the auto-refresh interval
+      if (chatHistoryInterval) {
+        clearInterval(chatHistoryInterval);
+        chatHistoryInterval = null;
+      }
     }
 
     async function sendAgentReply() {
@@ -247,10 +252,9 @@
         });
 
         if (res.ok) {
-          document.getElementById('manualReplyText').value = '';
-          // Reload history to show the sent message
+          // Immediately reload chat history to show the sent message
           await loadChatHistory(number);
-          loadRecentChats();
+          document.getElementById('manualReplyText').value = '';
         } else {
           const data = await res.json();
           alert('❌ Failed to send: ' + data.error);
@@ -268,6 +272,9 @@
     // Load on page load
     loadAgentInfo();
     loadRecentChats();
+    
+    // Auto-refresh recent chats every 10 seconds
+    setInterval(loadRecentChats, 10000);
   </script>
 </body>
 </html>

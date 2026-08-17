@@ -1487,6 +1487,7 @@ app.get('/api/agent/info', authenticateToken, async (req, res) => {
   }
 });
 
+
 // 🚀 UPLOAD KNOWLEDGE BASE (Multi-File Support)
 app.post('/api/dashboard/upload-knowledge', authenticateToken, knowledgeUpload.single('file'), async (req, res) => {
   try {
