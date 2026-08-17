@@ -1755,6 +1755,7 @@ app.get('/api/dashboard/agents', authenticateToken, async (req, res) => {
 });
 
 // Create new agent
+// Create new agent + send invitation email
 app.post('/api/dashboard/agents', authenticateToken, async (req, res) => {
   try {
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
@@ -1762,22 +1763,70 @@ app.post('/api/dashboard/agents', authenticateToken, async (req, res) => {
 
     const { name, whatsappNumber, email, languages } = req.body;
     
-    // 🚨 STRICT VALIDATION: Name and Email are now REQUIRED
     if (!name) return res.status(400).json({ error: 'Agent name is required.' });
-    if (!email || !email.includes('@')) return res.status(400).json({ error: 'A valid agent email is required for login.' });
+    if (!email || !email.includes('@')) return res.status(400).json({ error: 'A valid agent email is required.' });
+    if (!whatsappNumber) return res.status(400).json({ error: 'Agent WhatsApp number is required.' });
 
+    // Create a unique invitation token
+    const inviteToken = require('crypto').randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    // Create invitation record
+    await prisma.teamInvitation.create({
+      data: {
+        email,
+        tenantId: tenant.id,
+        token: inviteToken,
+        expiresAt
+      }
+    });
+
+    // Create agent record
     const agent = await prisma.agent.create({
       data: {
         tenantId: tenant.id,
         name,
-        email: email, // 🚨 No longer allows null
-        whatsappNumber: whatsappNumber || null,
+        email,
+        whatsappNumber,
         languages: JSON.stringify(languages || ['English']),
         isAvailable: true
       }
     });
 
-    res.json({ success: true, agent, message: `✅ Agent "${name}" added successfully!` });
+    // 🚨 SEND INVITATION EMAIL
+    try {
+      const inviteLink = `https://bot.aamirsaba.com/accept-invitation?email=${encodeURIComponent(email)}&token=${inviteToken}`;
+      
+      // If you have nodemailer configured in email.js, use it here
+      const nodemailer = require('nodemailer');
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER || 'your-email@gmail.com',
+          pass: process.env.EMAIL_PASS || 'your-app-password'
+        }
+      });
+
+      await transporter.sendMail({
+        from: `"${tenant.businessName}" <${process.env.EMAIL_USER || 'your-email@gmail.com'}>`,
+        to: email,
+        subject: `You're invited to join ${tenant.businessName} as an Agent!`,
+        html: `
+          <h2>Welcome to ${tenant.businessName}!</h2>
+          <p>You've been invited to join as an AI Agent.</p>
+          <p><strong>Click here to accept and set your password:</strong></p>
+          <a href="${inviteLink}" style="background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Accept Invitation</a>
+          <p>This link expires in 7 days.</p>
+          <p>If you didn't expect this invitation, please ignore this email.</p>
+        `
+      });
+      console.log(`✅ Invitation email sent to ${email}`);
+    } catch (emailErr) {
+      console.error('❌ Failed to send invitation email:', emailErr);
+      // Don't fail the request if email fails
+    }
+
+    res.json({ success: true, agent, message: `✅ Agent "${name}" added and invitation email sent!` });
   } catch (error) {
     console.error('❌ Create agent error:', error);
     res.status(500).json({ error: 'Failed to create agent.' });

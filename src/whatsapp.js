@@ -188,8 +188,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
           // 2. 🚨 NEW: Send INSTANT ALERT to the AGENT via WhatsApp
           if (availableAgent.whatsappNumber) {
             const agentJid = availableAgent.whatsappNumber.replace(/\D/g, '') + '@s.whatsapp.net';
-            const alertMsg = `🚨 *URGENT: Human Handoff Required!*\n\n👤 *Customer:* +${fromNumber}\n💬 *Customer just said:* "${text}"\n\n🔗 Please log in to your Agent Dashboard immediately to reply.`;
-            
+const alertMsg = `🚨 *URGENT: Human Handoff Required!*\n\n *Customer:* +${fromNumber}\n💬 *Customer just said:* "${text}"\n\n🔗 *Login to reply:* https://bot.aamirsaba.com/login\n\nPlease log in to your Agent Dashboard immediately to assist this customer.`;            
             try {
               await sock.sendMessage(agentJid, { text: alertMsg });
               console.log(`✅ Alert sent to agent ${availableAgent.name} at ${availableAgent.whatsappNumber}`);
