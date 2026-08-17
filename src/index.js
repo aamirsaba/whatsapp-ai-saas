@@ -1363,62 +1363,72 @@ app.get('/api/agent/chats', authenticateToken, async (req, res) => {
   }
 });
 
-// 🚀 AGENT: Send message
+// 🚨 AGENT SEND MESSAGE (WITH AUTO-TRANSLATION)
 app.post('/api/agent/send-message', authenticateToken, async (req, res) => {
   try {
     const { phoneNumber, message } = req.body;
-    if (!phoneNumber || !message) {
-      return res.status(400).json({ error: 'Phone number and message are required.' });
-    }
+    const agent = await prisma.agent.findFirst({ 
+      where: { email: req.user.email },
+      include: { tenant: true }
+    });
+    
+    if (!agent || !agent.tenant) return res.status(404).json({ error: 'Tenant not found.' });
 
-    const user = await prisma.user.findUnique({ 
-      where: { id: req.user.userId },
-      include: { teamMemberships: true }
+    const sock = activeSockets.get(agent.tenant.whatsappNumber);
+    if (!sock) return res.status(500).json({ error: 'WhatsApp not connected.' });
+
+    // 🚨 CHECK IF WE NEED TO TRANSLATE THE AGENT'S REPLY
+    // Get the last message from the user to detect language
+    const lastUserMsg = await prisma.message.findFirst({
+      where: { 
+        tenantId: agent.tenantId, 
+        fromNumber: phoneNumber, 
+        toNumber: agent.tenant.whatsappNumber 
+      },
+      orderBy: { createdAt: 'desc' }
     });
 
-    if (!user || user.teamMemberships.length === 0) {
-      return res.status(403).json({ error: 'No team access.' });
+    let finalMessage = message;
+    const isUserArabic = lastUserMsg && /[\u0600-\u06FF]/.test(lastUserMsg.content);
+
+    if (isUserArabic && !/[\u0600-\u06FF]/.test(message)) {
+      console.log(' Translating agent reply to Arabic...');
+      finalMessage = await translateText(
+        message, 
+        'Arabic', 
+        agent.tenant.llmProvider, 
+        agent.tenant.llmApiKey, 
+        agent.tenant.llmModel,
+        agent.tenant.llmBaseUrl
+      );
     }
 
-    // Get first tenant's WhatsApp number (for MVP)
-    const tenantId = user.teamMemberships[0].tenantId;
-    const tenant = await prisma.tenant.findUnique({ 
-      where: { id: tenantId },
-      select: { whatsappNumber: true }
-    });
+    // Send via WhatsApp
+    await sock.sendMessage(phoneNumber + '@s.whatsapp.net', { text: finalMessage });
 
-    // Save message to database
+    // Save to database
     await prisma.message.create({
       data: {
-        tenantId,
-        fromNumber: tenant.whatsappNumber,
+        tenantId: agent.tenantId,
+        fromNumber: agent.tenant.whatsappNumber,
         toNumber: phoneNumber,
         direction: 'outbound',
-        content: message,
+        content: finalMessage, // Save the translated version (or both)
         isAiReply: false
       }
     });
 
-    // Send via WhatsApp (using activeSockets map)
-    const sock = activeSockets.get(tenant.whatsappNumber);
-    if (sock) {
-      await sock.sendMessage(phoneNumber + '@s.whatsapp.net', { text: message });
-      res.json({ success: true, message: 'Message sent!' });
-    } else {
-      res.status(500).json({ error: 'WhatsApp session not active.' });
-    }
+    res.json({ success: true, message: 'Message sent.' });
   } catch (error) {
-    console.error(' Agent send message error:', error);
+    console.error('Agent send message error:', error);
     res.status(500).json({ error: 'Failed to send message.' });
   }
 });
 
-// 🚨 GET CHAT HISTORY FOR AGENT
+// 🚨 GET CHAT HISTORY FOR AGENT (WITH AUTO-TRANSLATION)
 app.get('/api/agent/chat-history/:number', authenticateToken, async (req, res) => {
   try {
     const { number } = req.params;
-    
-    // Find the agent and their tenant by their email
     const agent = await prisma.agent.findFirst({ 
       where: { email: req.user.email },
       include: { tenant: true }
@@ -1426,7 +1436,6 @@ app.get('/api/agent/chat-history/:number', authenticateToken, async (req, res) =
     
     if (!agent) return res.status(403).json({ error: 'Agent not found.' });
 
-    // Get all messages for this conversation
     const messages = await prisma.message.findMany({
       where: {
         tenantId: agent.tenantId,
@@ -1436,13 +1445,63 @@ app.get('/api/agent/chat-history/:number', authenticateToken, async (req, res) =
         ]
       },
       orderBy: { createdAt: 'asc' },
-      take: 50 // Last 50 messages
+      take: 50
     });
 
-    res.json({ success: true, messages });
+    // 🚨 AUTO-TRANSLATE LOGIC
+    // Check if the last message from the user was in Arabic
+    const lastUserMessage = [...messages].reverse().find(m => m.fromNumber === number);
+    const isArabicChat = lastUserMessage && /[\u0600-\u06FF]/.test(lastUserMessage.content);
+
+    const translatedMessages = [];
+    
+    for (const msg of messages) {
+      let displayContent = msg.content;
+      let originalContent = null;
+
+      // If user sent Arabic and agent speaks English (or vice versa), translate
+      if (msg.fromNumber === number && isArabicChat) {
+        // Translate Arabic -> English for the agent to read
+        // Note: For MVP, we do this on the fly. In production, you might cache this.
+        if (/[\u0600-\u06FF]/.test(msg.content)) {
+           // We will translate in the frontend or use a quick backend call. 
+           // For now, let's just flag it.
+           originalContent = msg.content;
+           displayContent = msg.content; // We will translate in the next step via a dedicated endpoint to save time
+        }
+      }
+      
+      translatedMessages.push({ ...msg, displayContent, originalContent });
+    }
+
+    res.json({ success: true, messages: translatedMessages, isArabicChat });
   } catch (error) {
     console.error('Load chat history error:', error);
     res.status(500).json({ error: 'Failed to load chat history.' });
+  }
+});
+
+// 🚨 NEW: DEDICATED TRANSLATION ENDPOINT FOR AGENT DASHBOARD
+app.post('/api/agent/translate', authenticateToken, async (req, res) => {
+  try {
+    const { text, targetLang } = req.body; // targetLang: 'English' or 'Arabic'
+    const agent = await prisma.agent.findFirst({ where: { email: req.user.email }, include: { tenant: true } });
+    
+    if (!agent || !agent.tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    const translated = await translateText(
+      text, 
+      targetLang, 
+      agent.tenant.llmProvider, 
+      agent.tenant.llmApiKey, 
+      agent.tenant.llmModel,
+      agent.tenant.llmBaseUrl
+    );
+
+    res.json({ success: true, translatedText: translated });
+  } catch (error) {
+    console.error('Translation error:', error);
+    res.status(500).json({ error: 'Translation failed.' });
   }
 });
 

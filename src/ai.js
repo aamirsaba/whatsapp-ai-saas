@@ -72,4 +72,41 @@ async function getAIResponse(chatHistory, systemPrompt, tenant) {
   }
 }
 
-module.exports = { getAIResponse };
+// 🚨 NEW: Translation Function using your existing LLM
+async function translateText(text, targetLanguage, llmProvider, llmApiKey, llmModel, llmBaseUrl) {
+  if (!text) return text;
+
+  const prompt = `Translate the following text to ${targetLanguage}. Only output the translated text, no explanations.\n\nText: "${text}"`;
+
+  try {
+    // We reuse your existing getAIResponse logic but with a simple prompt
+    // Note: You might need to adjust this depending on how your ai.js is structured. 
+    // For now, we will use a direct fetch to the OpenAI-compatible endpoint which Alibaba supports.
+    
+    const baseUrl = llmBaseUrl || 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1';
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${llmApiKey}`
+      },
+      body: JSON.stringify({
+        model: llmModel || 'qwen-plus',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.3 // Low temperature for accurate translation
+      })
+    });
+
+    const data = await response.json();
+    if (data.choices && data.choices[0] && data.choices[0].message) {
+      return data.choices[0].message.content.trim();
+    }
+    return text; // Fallback to original if translation fails
+  } catch (error) {
+    console.error('❌ Translation error:', error);
+    return text;
+  }
+}
+
+module.exports = { getAIResponse, translateText }; // Make sure to add translateText to exports
+
