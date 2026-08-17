@@ -1363,7 +1363,7 @@ app.get('/api/agent/chats', authenticateToken, async (req, res) => {
   }
 });
 
-// 🚨 AGENT SEND MESSAGE (WITH AUTO-TRANSLATION)
+// 🚨 AGENT SEND MESSAGE (UNIVERSAL TRANSLATOR)
 app.post('/api/agent/send-message', authenticateToken, async (req, res) => {
   try {
     const { phoneNumber, message } = req.body;
@@ -1377,8 +1377,7 @@ app.post('/api/agent/send-message', authenticateToken, async (req, res) => {
     const sock = activeSockets.get(agent.tenant.whatsappNumber);
     if (!sock) return res.status(500).json({ error: 'WhatsApp not connected.' });
 
-    // 🚨 CHECK IF WE NEED TO TRANSLATE THE AGENT'S REPLY
-    // Get the last message from the user to detect language
+    // 🚨 1. GET THE LAST MESSAGE FROM THE CUSTOMER TO DETECT THEIR LANGUAGE
     const lastUserMsg = await prisma.message.findFirst({
       where: { 
         tenantId: agent.tenantId, 
@@ -1389,13 +1388,18 @@ app.post('/api/agent/send-message', authenticateToken, async (req, res) => {
     });
 
     let finalMessage = message;
-    const isUserArabic = lastUserMsg && /[\u0600-\u06FF]/.test(lastUserMsg.content);
+    
+    //  2. IF CUSTOMER SPOKE A FOREIGN LANGUAGE, TRANSLATE AGENT'S REPLY
+    // We check if the customer's message contains non-English characters (like Arabic, Urdu, Chinese, etc.)
+    const isForeignLanguage = lastUserMsg && /[^\x00-\x7F]/.test(lastUserMsg.content);
 
-    if (isUserArabic && !/[\u0600-\u06FF]/.test(message)) {
-      console.log(' Translating agent reply to Arabic...');
+    if (isForeignLanguage) {
+      console.log('🌍 Detected foreign language. Translating agent reply...');
+      
+      // We ask the AI to translate the agent's English message into the SAME language the customer used.
       finalMessage = await translateText(
-        message, 
-        'Arabic', 
+        `Translate the following English text into the exact same language as this reference text: "${lastUserMsg.content}". \n\nText to translate: "${message}"`, 
+        'Same language as reference', // The AI will figure it out
         agent.tenant.llmProvider, 
         agent.tenant.llmApiKey, 
         agent.tenant.llmModel,
@@ -1413,7 +1417,7 @@ app.post('/api/agent/send-message', authenticateToken, async (req, res) => {
         fromNumber: agent.tenant.whatsappNumber,
         toNumber: phoneNumber,
         direction: 'outbound',
-        content: finalMessage, // Save the translated version (or both)
+        content: finalMessage, 
         isAiReply: false
       }
     });
@@ -1459,20 +1463,22 @@ app.get('/api/agent/chat-history/:number', authenticateToken, async (req, res) =
       let displayContent = msg.content;
       let originalContent = null;
 
-      // If user sent Arabic and agent speaks English (or vice versa), translate
-      if (msg.fromNumber === number && isArabicChat) {
-        // Translate Arabic -> English for the agent to read
-        // Note: For MVP, we do this on the fly. In production, you might cache this.
-        if (/[\u0600-\u06FF]/.test(msg.content)) {
-           // We will translate in the frontend or use a quick backend call. 
-           // For now, let's just flag it.
-           originalContent = msg.content;
-           displayContent = msg.content; // We will translate in the next step via a dedicated endpoint to save time
-        }
-      }
-      
-      translatedMessages.push({ ...msg, displayContent, originalContent });
-    }
+// Inside the chat-history endpoint, when mapping messages:
+if (msg.fromNumber === number && /[^\x00-\x7F]/.test(msg.content)) {
+  // Customer spoke a foreign language. Translate to English for the agent.
+  const translated = await translateText(
+    `Translate the following text to English: "${msg.content}"`, 
+    'English', 
+    agent.tenant.llmProvider, 
+    agent.tenant.llmApiKey, 
+    agent.tenant.llmModel,
+    agent.tenant.llmBaseUrl
+  );
+  msg.displayContent = translated;
+  msg.originalContent = msg.content; // Keep original just in case
+} else {
+  msg.displayContent = msg.content;
+}
 
     res.json({ success: true, messages: translatedMessages, isArabicChat });
   } catch (error) {
