@@ -1754,20 +1754,19 @@ app.get('/api/dashboard/agents', authenticateToken, async (req, res) => {
   }
 });
 
-// Create new agent
-// Create new agent + send invitation email
+// Create new agent + send invitation
 app.post('/api/dashboard/agents', authenticateToken, async (req, res) => {
   try {
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
     if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
 
-    const { name, whatsappNumber, email, languages } = req.body;
+    const { name, email, whatsappNumber, languages } = req.body;
     
-    if (!name) return res.status(400).json({ error: 'Agent name is required.' });
-    if (!email || !email.includes('@')) return res.status(400).json({ error: 'A valid agent email is required.' });
-    if (!whatsappNumber) return res.status(400).json({ error: 'Agent WhatsApp number is required.' });
+    if (!name || !email || !whatsappNumber) {
+      return res.status(400).json({ error: 'Name, email, and WhatsApp number are required.' });
+    }
 
-    // Create a unique invitation token
+    // Create invitation token
     const inviteToken = require('crypto').randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
@@ -1797,18 +1796,18 @@ app.post('/api/dashboard/agents', authenticateToken, async (req, res) => {
     try {
       const inviteLink = `https://bot.aamirsaba.com/accept-invitation?email=${encodeURIComponent(email)}&token=${inviteToken}`;
       
-      // If you have nodemailer configured in email.js, use it here
+      // You need to configure nodemailer with your email credentials
       const nodemailer = require('nodemailer');
       const transporter = nodemailer.createTransport({
-        service: 'gmail',
+        service: 'gmail', // or your email provider
         auth: {
-          user: process.env.EMAIL_USER || 'your-email@gmail.com',
-          pass: process.env.EMAIL_PASS || 'your-app-password'
+          user: process.env.EMAIL_USER, // Add to .env
+          pass: process.env.EMAIL_PASS  // Add to .env
         }
       });
 
       await transporter.sendMail({
-        from: `"${tenant.businessName}" <${process.env.EMAIL_USER || 'your-email@gmail.com'}>`,
+        from: `"${tenant.businessName}" <${process.env.EMAIL_USER}>`,
         to: email,
         subject: `You're invited to join ${tenant.businessName} as an Agent!`,
         html: `
@@ -1817,16 +1816,14 @@ app.post('/api/dashboard/agents', authenticateToken, async (req, res) => {
           <p><strong>Click here to accept and set your password:</strong></p>
           <a href="${inviteLink}" style="background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Accept Invitation</a>
           <p>This link expires in 7 days.</p>
-          <p>If you didn't expect this invitation, please ignore this email.</p>
         `
       });
       console.log(`✅ Invitation email sent to ${email}`);
     } catch (emailErr) {
       console.error('❌ Failed to send invitation email:', emailErr);
-      // Don't fail the request if email fails
     }
 
-    res.json({ success: true, agent, message: `✅ Agent "${name}" added and invitation email sent!` });
+    res.json({ success: true, agent, message: `✅ Agent "${name}" added! Invitation email sent to ${email}` });
   } catch (error) {
     console.error('❌ Create agent error:', error);
     res.status(500).json({ error: 'Failed to create agent.' });

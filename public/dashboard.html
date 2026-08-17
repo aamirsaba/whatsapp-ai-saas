@@ -271,25 +271,25 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1">Agent Name *</label>
-        <input type="text" id="agentName" placeholder="e.g., Ahmed" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" required>
+        <input type="text" id="agentName" placeholder="e.g., Ahmed" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
       </div>
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1">Email (for login) *</label>
-        <input type="email" id="agentEmail" placeholder="agent@company.com" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" required>
+        <input type="email" id="agentEmail" placeholder="agent@company.com" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
       </div>
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1">WhatsApp Number *</label>
-        <input type="text" id="agentWhatsapp" placeholder="e.g., 96891293119" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" required>
+        <input type="text" id="agentWhatsapp" placeholder="e.g., 96891293119" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
       </div>
       <div>
         <label class="block text-xs font-medium text-gray-600 mb-1">Languages *</label>
-        <input type="text" id="agentLanguages" placeholder="e.g., English, Arabic" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" required>
+        <input type="text" id="agentLanguages" placeholder="e.g., English, Arabic" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
       </div>
     </div>
     <button onclick="createAgent()" class="mt-4 w-full sm:w-auto bg-indigo-600 text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition">➕ Add Agent</button>
   </div>
   <div id="agentsList" class="space-y-2 max-h-64 overflow-y-auto">
-    <p class="text-gray-400 text-sm italic text-center py-4">Loading agents...</p>
+    <p class="text-gray-400 text-sm italic text-center py-4">No agents yet. Add your first agent above!</p>
   </div>
 </div>
 
@@ -810,6 +810,7 @@
         const data = await res.json();
         const chatContainer = document.getElementById('chatHistory');
         if (!chatContainer) return;
+        
         if (res.ok && data.messages && data.messages.length > 0) {
           chatContainer.innerHTML = data.messages.map(msg => {
             const isOutbound = msg.direction === 'outbound';
@@ -829,7 +830,9 @@
               <div class="text-xs text-gray-500 mt-1 px-2">${isOutbound ? 'To: ' + msg.toNumber : 'From: ' + msg.fromNumber}</div>
             </div>`;
           }).join('');
-        } else { chatContainer.innerHTML = '<div class="text-center text-gray-400 py-12">No messages yet. Send a WhatsApp message to see it here!</div>'; }
+        } else { 
+          chatContainer.innerHTML = '<div class="text-center text-gray-400 py-12">No messages yet. Send a WhatsApp message to see it here!</div>'; 
+        }
       } catch (error) {
         console.error('Load chat history error:', error);
       }
@@ -920,9 +923,9 @@
       console.log("🚀 Dashboard loading...");
       if (typeof loadDashboard === 'function') loadDashboard();
       if (typeof loadLeads === 'function') loadLeads();
-      if (typeof loadTeamMembers === 'function') loadTeamMembers();
-      if (typeof loadOwnerChats === 'function') loadOwnerChats();
-      if (typeof loadRecentChatHistory === 'function') loadRecentChatHistory();
+      if (typeof loadRecentChatHistory === 'function') loadRecentChatHistory(); // 🚨 ADD THIS
+      if (typeof loadAgents === 'function') loadAgents();
+      if (typeof loadConversations === 'function') loadConversations();
       console.log("✅ All dashboard functions initialized.");
     });
 
