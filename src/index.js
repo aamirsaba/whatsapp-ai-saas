@@ -42,11 +42,17 @@ const upload = multer({
 });
 
 const app = express();
+
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
 const prisma = new PrismaClient();
 app.use(express.json());
+
+// 🚨 CRITICAL: Serve static files (HTML, CSS, JS) from the 'public' folder
+// This fixes the "Cannot GET /accept-invitation.html" error
+const path = require('path');
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // 🧠 CACHE TO REMEMBER THE LATEST QR CODE FOR EACH NUMBER
 const qrCache = {};
@@ -1793,7 +1799,7 @@ app.post('/api/dashboard/agents', authenticateToken, async (req, res) => {
       }
     });
 
-    // 4. 🚨 SEND THE INVITATION EMAIL USING HOSTINGER SMTP
+    // 4. 🚨 SEND THE INVITATION EMAIL USING YOUR HOSTINGER SMTP
     try {
       const nodemailer = require('nodemailer');
       
@@ -1807,7 +1813,6 @@ app.post('/api/dashboard/agents', authenticateToken, async (req, res) => {
         }
       });
 
-      // Note: Added .html to match your public/accept-invitation.html file
       const inviteLink = `https://bot.aamirsaba.com/accept-invitation.html?email=${encodeURIComponent(email)}&token=${inviteToken}`;
 
       await transporter.sendMail({
@@ -1827,7 +1832,7 @@ app.post('/api/dashboard/agents', authenticateToken, async (req, res) => {
       console.log(`✅ Invitation email sent to ${email}`);
     } catch (emailError) {
       console.error('❌ Failed to send invitation email:', emailError);
-      // We don't fail the request if email fails, but we log it
+      // We don't fail the whole request if email fails, but we log it
     }
 
     res.json({ success: true, agent, message: `✅ Agent "${name}" added and invitation sent!` });
@@ -1945,6 +1950,8 @@ app.delete('/api/dashboard/conversations/:id', authenticateToken, async (req, re
     res.status(500).json({ error: 'Failed to delete conversation.' });
   }
 });
+
+
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
