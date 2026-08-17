@@ -6,6 +6,7 @@ const { PrismaClient } = require('@prisma/client');
 const { startWhatsAppSession, activeSockets, qrCodes } = require('./whatsapp');
 const { registerUser, loginUser } = require('./auth');
 const { authenticateToken } = require('./middleware'); // 🚀 NEW: Auth Middleware
+const { getAIResponse, translateText } = require('./ai'); // 🚨 ADDED translateText
 
 const cron = require('node-cron');
 
@@ -1429,17 +1430,22 @@ app.post('/api/agent/send-message', authenticateToken, async (req, res) => {
   }
 });
 
-// 🚨 GET CHAT HISTORY FOR AGENT (WITH AUTO-TRANSLATION)
+// 🚨 GET CHAT HISTORY FOR AGENT (WITH UNIVERSAL TRANSLATION)
 app.get('/api/agent/chat-history/:number', authenticateToken, async (req, res) => {
   try {
     const { number } = req.params;
+    
+    // Find the agent and their tenant
     const agent = await prisma.agent.findFirst({ 
       where: { email: req.user.email },
       include: { tenant: true }
     });
     
-    if (!agent) return res.status(403).json({ error: 'Agent not found.' });
+    if (!agent || !agent.tenant) {
+      return res.status(403).json({ error: 'Agent or Tenant not found.' });
+    }
 
+    // Get all messages for this conversation
     const messages = await prisma.message.findMany({
       where: {
         tenantId: agent.tenantId,
@@ -1449,38 +1455,45 @@ app.get('/api/agent/chat-history/:number', authenticateToken, async (req, res) =
         ]
       },
       orderBy: { createdAt: 'asc' },
-      take: 50
+      take: 50 // Last 50 messages
     });
 
-    // 🚨 AUTO-TRANSLATE LOGIC
-    // Check if the last message from the user was in Arabic
-    const lastUserMessage = [...messages].reverse().find(m => m.fromNumber === number);
-    const isArabicChat = lastUserMessage && /[\u0600-\u06FF]/.test(lastUserMessage.content);
-
+    // 🚨 UNIVERSAL TRANSLATION LOGIC
     const translatedMessages = [];
     
     for (const msg of messages) {
-      let displayContent = msg.content;
-      let originalContent = null;
+      // Check if the message is FROM the customer AND contains non-English characters (Arabic, Urdu, Chinese, etc.)
+      if (msg.fromNumber === number && /[^\x00-\x7F]/.test(msg.content)) {
+        try {
+          // Translate to English for the agent to read
+          const translated = await translateText(
+            `Translate the following text to English: "${msg.content}"`, 
+            'English', 
+            agent.tenant.llmProvider, 
+            agent.tenant.llmApiKey, 
+            agent.tenant.llmModel,
+            agent.tenant.llmBaseUrl
+          );
+          
+          msg.displayContent = translated;
+          msg.originalContent = msg.content; // Keep original just in case
+          msg.isTranslated = true;
+        } catch (err) {
+          console.error('Translation failed for message:', err);
+          msg.displayContent = msg.content; // Fallback to original
+          msg.isTranslated = false;
+        }
+      } else {
+        // English message or agent's own message
+        msg.displayContent = msg.content;
+        msg.originalContent = null;
+        msg.isTranslated = false;
+      }
+      
+      translatedMessages.push(msg);
+    }
 
-// Inside the chat-history endpoint, when mapping messages:
-if (msg.fromNumber === number && /[^\x00-\x7F]/.test(msg.content)) {
-  // Customer spoke a foreign language. Translate to English for the agent.
-  const translated = await translateText(
-    `Translate the following text to English: "${msg.content}"`, 
-    'English', 
-    agent.tenant.llmProvider, 
-    agent.tenant.llmApiKey, 
-    agent.tenant.llmModel,
-    agent.tenant.llmBaseUrl
-  );
-  msg.displayContent = translated;
-  msg.originalContent = msg.content; // Keep original just in case
-} else {
-  msg.displayContent = msg.content;
-}
-
-    res.json({ success: true, messages: translatedMessages, isArabicChat });
+    res.json({ success: true, messages: translatedMessages });
   } catch (error) {
     console.error('Load chat history error:', error);
     res.status(500).json({ error: 'Failed to load chat history.' });
