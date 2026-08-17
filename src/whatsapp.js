@@ -282,10 +282,26 @@ const alertMsg = `🚨 *URGENT: Human Handoff Required!*\n\n *Customer:* +${from
         ? `\n\n📄 AVAILABLE PDF FILES ON SERVER: [${pdfFileList}]. \n🚨 CRITICAL RULE: You may ONLY output the exact string "[SEND_PDF:filename.pdf]" if BOTH conditions are met: 1) The user explicitly asks to "send pdf" or "share the pdf file". 2) The filename you output MUST EXACTLY match one of the files in the AVAILABLE PDF FILES list above. NEVER invent, guess, or hallucinate filenames. If the user asks for a document not in the list, reply in plain text: "I'm sorry, I don't have that specific document uploaded yet, but I can provide the details in text."` 
         : '';
 
-      // 🚨 1. BUILD PROMPT FIRST
-      const finalSystemPrompt = timeContext + whatsappContext + basePrompt + contextRule + zoneRule + activePolicy + contactRule + pdfRule;
+      // 🚨 1. BUILD ULTRA-STRICT SYSTEM PROMPT
+      const agentName = tenant.aiAgentName || 'AI Assistant';
+      
+      // 🚨 IDENTITY RULE (MUST COME FIRST - HIGHEST PRIORITY)
+      const identityRule = `\n\n🤖 YOUR IDENTITY: You are *${agentName}*, the official AI assistant for ${tenant.businessName || 'this business'}. You MUST introduce yourself as ${agentName} in your first message. If asked your name, you are ${agentName}. NEVER use generic titles like "official educational assistant" - you are ${agentName}.`;
+      
+      // 🚨 KNOWLEDGE BOUNDARY RULE (PREVENTS HALLUCINATION)
+      const knowledgeRule = `\n\n📚 KNOWLEDGE BOUNDARY: ONLY discuss courses, services, and information that are explicitly provided in your BUSINESS CONTEXT or KNOWLEDGE BASE below. DO NOT invent, hallucinate, or add courses, dates, prices, or details that are not in your provided context. If information is not in your context, say "I don't have that information in my system."`;
+      
+      // 🚨 PDF RULE (PREVENTS UNSOLICITED PDF SENDING)
+      const strictPdfRule = pdfFileList 
+        ? `\n\n📄 AVAILABLE PDF FILES: [${pdfFileList}]. \n🚨 CRITICAL PDF RULE: You are FORBIDDEN from outputting "[SEND_PDF:..." or mentioning sending a PDF unless the user EXPLICITLY asks you to "send the pdf", "share the file", or "give me the document". If the user asks about courses or info, provide the answer in plain text ONLY. NEVER proactively offer to send a PDF.` 
+        : '';
 
-      // 🚨 2. GET CHAT HISTORY SECOND
+      // Combine ALL rules (Identity FIRST, then knowledge, then other context)
+      const finalSystemPrompt = identityRule + knowledgeRule + strictPdfRule + timeContext + whatsappContext + basePrompt + contextRule + zoneRule + activePolicy + contactRule;
+
+      console.log("🔍 DEBUG: Final System Prompt being sent to AI:\n", finalSystemPrompt);
+
+      // 🚨 2. GET CHAT HISTORY
       const recentMessages = await prisma.message.findMany({
         where: { 
           tenantId: tenant.id,
@@ -302,7 +318,7 @@ const alertMsg = `🚨 *URGENT: Human Handoff Required!*\n\n *Customer:* +${from
       }));
       chatHistory.push({ role: 'user', content: text });
 
-      // 🚨 STANDARD AI REPLY
+      // 🚨 3. GET AI RESPONSE
       const aiReply = await getAIResponse(chatHistory, finalSystemPrompt, tenant);
       console.log(`🗣️ AI Reply: ${aiReply}`);
 
