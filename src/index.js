@@ -1462,7 +1462,8 @@ app.get('/api/agent/chat-history/:number', authenticateToken, async (req, res) =
     const translatedMessages = [];
     
     for (const msg of messages) {
-      // Check if the message is FROM the customer AND contains non-English characters (Arabic, Urdu, Chinese, etc.)
+      // 🚨 ONLY TRANSLATE INBOUND MESSAGES (FROM CUSTOMER)
+      // If the message is FROM the customer AND contains non-English characters
       if (msg.fromNumber === number && /[^\x00-\x7F]/.test(msg.content)) {
         try {
           // Translate to English for the agent to read
@@ -1475,16 +1476,25 @@ app.get('/api/agent/chat-history/:number', authenticateToken, async (req, res) =
             agent.tenant.llmBaseUrl
           );
           
-          msg.displayContent = translated;
-          msg.originalContent = msg.content; // Keep original just in case
+          msg.displayContent = translated; // Show English translation
+          msg.originalContent = msg.content; // Keep original (Urdu/Arabic)
           msg.isTranslated = true;
         } catch (err) {
           console.error('Translation failed for message:', err);
           msg.displayContent = msg.content; // Fallback to original
           msg.isTranslated = false;
         }
-      } else {
-        // English message or agent's own message
+      } 
+      //  FOR OUTBOUND MESSAGES (FROM AGENT), ALWAYS SHOW ENGLISH
+      else if (msg.direction === 'outbound') {
+        // The agent typed in English, so show what they typed
+        // (Even though the customer received it in Urdu/Arabic)
+        msg.displayContent = msg.content; // Show English original
+        msg.originalContent = null;
+        msg.isTranslated = false;
+      } 
+      else {
+        // English inbound message - no translation needed
         msg.displayContent = msg.content;
         msg.originalContent = null;
         msg.isTranslated = false;
