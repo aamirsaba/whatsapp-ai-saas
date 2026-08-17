@@ -303,9 +303,19 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       }));
       chatHistory.push({ role: 'user', content: text });
 
-      // 🚨 3. GET AI REPLY THIRD (ONLY DECLARED ONCE!)
+      // 🚨 STANDARD AI REPLY
       const aiReply = await getAIResponse(chatHistory, finalSystemPrompt, tenant);
       console.log(`🗣️ AI Reply: ${aiReply}`);
+
+      // Add disclaimer to AI messages
+      const disclaimer = "\n\n---\n*AI-generated content may not be accurate.*";
+      const aiReplyWithDisclaimer = aiReply + disclaimer;
+
+      await sock.sendMessage(msg.key.remoteJid, { text: aiReplyWithDisclaimer });
+      await prisma.message.create({
+        data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: aiReplyWithDisclaimer, isAiReply: true }
+      });
+
 
       // 🚨 Bulletproof Regex: Catches [SEND_PDF:file.pdf], [Sent PDF: file.pdf], [send pdf: file.pdf], etc.
       const pdfMatch = aiReply.match(/\[(?:send|sent)[_ ]?pdf[:\s]+(.*?\.pdf)\]/i);

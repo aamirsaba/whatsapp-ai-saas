@@ -160,7 +160,7 @@ model Agent {
   tenantId       String
   tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name           String
-  email          String?
+  email          String
   whatsappNumber String?  // 🚨 NEW: For sending instant WhatsApp alerts to the agent
   languages      String   @default("[]") // JSON array: ["English", "Arabic"]
   isAvailable    Boolean  @default(true)

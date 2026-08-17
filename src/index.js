@@ -1760,15 +1760,18 @@ app.post('/api/dashboard/agents', authenticateToken, async (req, res) => {
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
     if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
 
-    const { name, email, whatsappNumber, languages } = req.body;
+    const { name, whatsappNumber, email, languages } = req.body;
+    
+    // 🚨 STRICT VALIDATION: Name and Email are now REQUIRED
     if (!name) return res.status(400).json({ error: 'Agent name is required.' });
+    if (!email || !email.includes('@')) return res.status(400).json({ error: 'A valid agent email is required for login.' });
 
     const agent = await prisma.agent.create({
       data: {
         tenantId: tenant.id,
         name,
-        email: email || null,
-        whatsappNumber: whatsappNumber || null, // 🚨 NEW
+        email: email, // 🚨 No longer allows null
+        whatsappNumber: whatsappNumber || null,
         languages: JSON.stringify(languages || ['English']),
         isAvailable: true
       }
