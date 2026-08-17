@@ -269,7 +269,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       const pdfFileList = uploadedDocs.map(doc => doc.fileName).join(', ');
       
       const pdfRule = pdfFileList 
-        ? `\n\n📄 AVAILABLE PDF FILES: [${pdfFileList}]. \n🚨 ABSOLUTE STRICT RULE: You are FORBIDDEN from using the "[SEND_PDF:filename.pdf]" format unless the user's message explicitly contains words like "send pdf", "give me the file", "download document", or "share the pdf". If the user asks a general question (like "do you offer ITIL?", "hi", "what is X"), you MUST answer in normal plain text. NEVER output the [SEND_PDF:...] string for general questions.` 
+        ? `\n\n📄 AVAILABLE PDF FILES ON SERVER: [${pdfFileList}]. \n🚨 CRITICAL RULE: You may ONLY output the exact string "[SEND_PDF:filename.pdf]" if BOTH conditions are met: 1) The user explicitly asks to "send pdf" or "share the pdf file". 2) The filename you output MUST EXACTLY match one of the files in the AVAILABLE PDF FILES list above. NEVER invent, guess, or hallucinate filenames. If the user asks for a document not in the list, reply in plain text: "I'm sorry, I don't have that specific document uploaded yet, but I can provide the details in text."` 
         : '';
 
       // 🚨 1. BUILD PROMPT FIRST
@@ -338,14 +338,12 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
             }
           }
         } else {
-          console.log(`❌ FILE NOT FOUND! Listing actual files in folder:`);
-          const dirPath = path.join(__dirname, '..', 'uploads', 'knowledge');
-          if (fs.existsSync(dirPath)) {
-             console.log(`📁 Files in directory:`, fs.readdirSync(dirPath));
-          } else {
-             console.log(`❌ Directory ${dirPath} DOES NOT EXIST!`);
-          }
-          await sock.sendMessage(msg.key.remoteJid, { text: "I'm sorry, I couldn't find that specific file on the server. Please try uploading it again in the dashboard." });
+          console.log(`❌ FILE NOT FOUND! AI hallucinated filename: "${fileName}". Actual files in folder:`, fs.existsSync(dirPath) ? fs.readdirSync(dirPath) : 'DIR NOT FOUND');
+          
+          // Send a natural, helpful message instead of a raw server error
+          await sock.sendMessage(msg.key.remoteJid, { 
+            text: "I apologize, it seems I tried to reference a file that isn't uploaded to my system yet. Could you please specify which document you need, or I can provide the details in text?" 
+          });
         }
         console.log(`🔍 ========== PDF DEBUG END ==========\n`);
       } else {
