@@ -1372,54 +1372,43 @@ app.post('/api/agent/send-message', authenticateToken, async (req, res) => {
       where: { email: req.user.email },
       include: { tenant: true }
     });
-    
     if (!agent || !agent.tenant) return res.status(404).json({ error: 'Tenant not found.' });
 
     const sock = activeSockets.get(agent.tenant.whatsappNumber);
     if (!sock) return res.status(500).json({ error: 'WhatsApp not connected.' });
 
-    // 🚨 1. GET THE LAST MESSAGE FROM THE CUSTOMER TO DETECT THEIR LANGUAGE
+    // Get last customer message to detect THEIR language
     const lastUserMsg = await prisma.message.findFirst({
-      where: { 
-        tenantId: agent.tenantId, 
-        fromNumber: phoneNumber, 
-        toNumber: agent.tenant.whatsappNumber 
-      },
+      where: { tenantId: agent.tenantId, fromNumber: phoneNumber, toNumber: agent.tenant.whatsappNumber },
       orderBy: { createdAt: 'desc' }
     });
 
     let finalMessage = message;
     
-    //  2. IF CUSTOMER SPOKE A FOREIGN LANGUAGE, TRANSLATE AGENT'S REPLY
-    // We check if the customer's message contains non-English characters (like Arabic, Urdu, Chinese, etc.)
-    const isForeignLanguage = lastUserMsg && /[^\x00-\x7F]/.test(lastUserMsg.content);
-
-    if (isForeignLanguage) {
-      console.log('🌍 Detected foreign language. Translating agent reply...');
+    if (lastUserMsg) {
+      // 🚨 SMART PROMPT: Translate agent's reply to the customer's detected language
+      const detectPrompt = `Detect the language of this reference text: "${lastUserMsg.content}". Then, translate the following message into that exact same language. Only output the translated text.\n\nMessage to translate: "${message}"`;
       
-      // We ask the AI to translate the agent's English message into the SAME language the customer used.
       finalMessage = await translateText(
-        `Translate the following English text into the exact same language as this reference text: "${lastUserMsg.content}". \n\nText to translate: "${message}"`, 
-        'Same language as reference', // The AI will figure it out
-        agent.tenant.llmProvider, 
-        agent.tenant.llmApiKey, 
+        detectPrompt,
+        'Detected Language',
+        agent.tenant.llmProvider,
+        agent.tenant.llmApiKey,
         agent.tenant.llmModel,
         agent.tenant.llmBaseUrl
       );
     }
 
-    // Send via WhatsApp (sends the translated Urdu version)
     await sock.sendMessage(phoneNumber + '@s.whatsapp.net', { text: finalMessage });
 
-    // 🚨 SAVE BOTH VERSIONS TO DATABASE
-    // Save the English version (what the agent typed) so they can read it in history
+    // Save the ENGLISH (or agent's preferred) version to DB so the agent can read their own history
     await prisma.message.create({
       data: {
         tenantId: agent.tenantId,
         fromNumber: agent.tenant.whatsappNumber,
         toNumber: phoneNumber,
         direction: 'outbound',
-        content: message, //  SAVE THE ENGLISH VERSION (what agent typed)
+        content: message, // Save original agent input
         isAiReply: false
       }
     });
@@ -1435,18 +1424,14 @@ app.post('/api/agent/send-message', authenticateToken, async (req, res) => {
 app.get('/api/agent/chat-history/:number', authenticateToken, async (req, res) => {
   try {
     const { number } = req.params;
+    const targetLang = req.query.lang || 'English'; // 🚨 Get agent's chosen language
     
-    // Find the agent and their tenant
     const agent = await prisma.agent.findFirst({ 
       where: { email: req.user.email },
       include: { tenant: true }
     });
-    
-    if (!agent || !agent.tenant) {
-      return res.status(403).json({ error: 'Agent or Tenant not found.' });
-    }
+    if (!agent || !agent.tenant) return res.status(403).json({ error: 'Agent not found.' });
 
-    // Get all messages for this conversation
     const messages = await prisma.message.findMany({
       where: {
         tenantId: agent.tenantId,
@@ -1456,51 +1441,38 @@ app.get('/api/agent/chat-history/:number', authenticateToken, async (req, res) =
         ]
       },
       orderBy: { createdAt: 'asc' },
-      take: 50 // Last 50 messages
+      take: 50
     });
 
-    // 🚨 UNIVERSAL TRANSLATION LOGIC
     const translatedMessages = [];
-    
     for (const msg of messages) {
-      // 🚨 ONLY TRANSLATE INBOUND MESSAGES (FROM CUSTOMER)
-      // If the message is FROM the customer AND contains non-English characters
-      if (msg.fromNumber === number && /[^\x00-\x7F]/.test(msg.content)) {
+      if (msg.direction === 'inbound') {
         try {
-          // Translate to English for the agent to read
+          // 🚨 SMART PROMPT: Translate ONLY if it's not already in the agent's preferred language
+          const prompt = `Detect the language of this text. If it is NOT ${targetLang}, translate it to ${targetLang}. If it is already in ${targetLang}, return it exactly as is. Do not add any extra text.\n\nText: "${msg.content}"`;
+          
           const translated = await translateText(
-            `Translate the following text to English: "${msg.content}"`, 
-            'English', 
+            prompt, 
+            targetLang, 
             agent.tenant.llmProvider, 
             agent.tenant.llmApiKey, 
             agent.tenant.llmModel,
             agent.tenant.llmBaseUrl
           );
           
-          msg.displayContent = translated; // Show English translation
-          msg.originalContent = msg.content; // Keep original (Urdu/Arabic)
-          msg.isTranslated = true;
+          msg.displayContent = translated;
+          msg.originalContent = msg.content;
+          msg.isTranslated = (translated !== msg.content);
         } catch (err) {
-          console.error('Translation failed for message:', err);
-          msg.displayContent = msg.content; // Fallback to original
+          msg.displayContent = msg.content;
           msg.isTranslated = false;
         }
-      } 
-      //  FOR OUTBOUND MESSAGES (FROM AGENT), ALWAYS SHOW ENGLISH
-      else if (msg.direction === 'outbound') {
-        // The agent typed in English, so show what they typed
-        // (Even though the customer received it in Urdu/Arabic)
-        msg.displayContent = msg.content; // Show English original
-        msg.originalContent = null;
-        msg.isTranslated = false;
-      } 
-      else {
-        // English inbound message - no translation needed
+      } else {
+        // Outbound: Always show what the agent originally typed
         msg.displayContent = msg.content;
         msg.originalContent = null;
         msg.isTranslated = false;
       }
-      
       translatedMessages.push(msg);
     }
 
@@ -1511,29 +1483,20 @@ app.get('/api/agent/chat-history/:number', authenticateToken, async (req, res) =
   }
 });
 
-// 🚨 NEW: DEDICATED TRANSLATION ENDPOINT FOR AGENT DASHBOARD
-app.post('/api/agent/translate', authenticateToken, async (req, res) => {
+app.post('/api/agent/update-preference', authenticateToken, async (req, res) => {
   try {
-    const { text, targetLang } = req.body; // targetLang: 'English' or 'Arabic'
-    const agent = await prisma.agent.findFirst({ where: { email: req.user.email }, include: { tenant: true } });
-    
-    if (!agent || !agent.tenant) return res.status(404).json({ error: 'Tenant not found.' });
-
-    const translated = await translateText(
-      text, 
-      targetLang, 
-      agent.tenant.llmProvider, 
-      agent.tenant.llmApiKey, 
-      agent.tenant.llmModel,
-      agent.tenant.llmBaseUrl
-    );
-
-    res.json({ success: true, translatedText: translated });
+    const { preferredLanguage } = req.body;
+    await prisma.agent.updateMany({
+      where: { email: req.user.email },
+      data: { preferredLanguage }
+    });
+    res.json({ success: true });
   } catch (error) {
-    console.error('Translation error:', error);
-    res.status(500).json({ error: 'Translation failed.' });
+    res.status(500).json({ error: 'Failed to update preference.' });
   }
 });
+
+
 
 //  Serve agent dashboard
 app.get('/agent-dashboard', (req, res) => {

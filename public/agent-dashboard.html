@@ -48,7 +48,23 @@
       <!-- Reply Box with Quick Replies -->
       <div id="replyBox" class="hidden bg-white border-2 border-indigo-100 rounded-xl p-5 shadow-sm">
         
-        <!-- 🚨 Chat History Container -->
+        <!-- 🚨 NEW: Agent Language Preference Dropdown -->
+        <div class="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100 flex items-center justify-between">
+          <div>
+            <label class="block text-xs font-semibold text-blue-800 mb-1">🌍 My Preferred Language:</label>
+            <p class="text-[10px] text-blue-600">All customer messages will be translated to this language.</p>
+          </div>
+          <select id="agentPreferredLang" onchange="updatePreferredLanguage()" class="px-3 py-1.5 border border-blue-200 rounded-md text-sm font-medium text-blue-900 bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+            <option value="English">English</option>
+            <option value="Arabic">Arabic (العربية)</option>
+            <option value="Urdu">Urdu (اردو)</option>
+            <option value="Spanish">Spanish (Español)</option>
+            <option value="French">French (Français)</option>
+            <option value="Hindi">Hindi (हिन्दी)</option>
+          </select>
+        </div>
+
+        <!-- Chat History Container -->
         <div id="chatHistoryContainer" class="mb-4 p-4 bg-gray-50 rounded-lg max-h-64 overflow-y-auto border border-gray-200 hidden">
           <!-- Messages will be injected here -->
         </div>
@@ -59,6 +75,8 @@
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
         </div>
+        
+        <!-- Rest of the reply box (Quick Replies, Textarea, Send Button) remains the same... -->
         
         <!-- Quick Replies Dropdown -->
         <div class="mb-3">
@@ -98,6 +116,8 @@
     } catch (e) {
       console.error('Invalid token');
     }
+
+
 
     // Load team info and chats
     async function loadAgentInfo() {
@@ -142,13 +162,50 @@
       }
     }
 
-    // 🚨 NEW: Load chat history for a specific number
-    async function loadChatHistory(number) {
+
+    // 🚨 NEW: Handle Language Preference
+    let currentPreferredLang = localStorage.getItem('agentPreferredLang') || 'English';
+    
+    // Set dropdown to saved preference on load
+    document.addEventListener('DOMContentLoaded', () => {
+      const langSelect = document.getElementById('agentPreferredLang');
+      if (langSelect) langSelect.value = currentPreferredLang;
+    });
+
+    async function updatePreferredLanguage() {
+      const langSelect = document.getElementById('agentPreferredLang');
+      currentPreferredLang = langSelect.value;
+      localStorage.setItem('agentPreferredLang', currentPreferredLang);
+      
+      // Save to backend so it persists
       try {
-        const res = await fetch(`/api/agent/chat-history/${number}`, {
+        await fetch('/api/agent/update-preference', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
+          },
+          body: JSON.stringify({ preferredLanguage: currentPreferredLang })
+        });
+      } catch (e) { console.error('Failed to save preference', e); }
+
+      // Reload chat history with new translation
+      if (currentReplyNumber) {
+        await loadChatHistory(currentReplyNumber);
+      }
+    }
+
+    // Update loadChatHistory to use currentPreferredLang
+    async function loadChatHistory(number) {
+      // ... (keep existing code until the fetch) ...
+      try {
+        const res = await fetch(`/api/agent/chat-history/${number}?lang=${encodeURIComponent(currentPreferredLang)}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        const data = await res.json();
+        // ... (keep existing mapping code) ...
+
+
+       const data = await res.json();
         
         if (res.ok && data.messages && data.messages.length > 0) {
           const historyContainer = document.getElementById('chatHistoryContainer');
