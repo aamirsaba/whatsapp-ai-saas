@@ -12,7 +12,7 @@ const cron = require('node-cron');
 
 const multer = require('multer');
 const Tesseract = require('tesseract.js');
-const { convert } = require('pdf2pic');// 🚨 NEW: Configure storage to KEEP the original filename (so the AI can find it)
+const { fromPath } = require('pdf2pic'); // 🚨 CORRECT IMPORT (not 'convert')
 
 const knowledgeStorage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -1588,7 +1588,8 @@ app.post('/api/dashboard/upload-knowledge', authenticateToken, knowledgeUpload.s
             height: 2000
           };
           
-          const storeAsImage = convert(filePath, options);
+          // 🚨 CORRECT USAGE: Use fromPath instead of convert
+          const storeAsImage = fromPath(filePath, options);
           const pages = await storeAsImage.bulk(-1); // Convert all pages
           
           let ocrText = '';
@@ -1598,7 +1599,7 @@ app.post('/api/dashboard/upload-knowledge', authenticateToken, knowledgeUpload.s
             ocrText += text + '\n';
             
             // Clean up temp image immediately to save disk space
-            if (fs.existsSync(page.path)) {
+            if (page.path && fs.existsSync(page.path)) {
               fs.unlinkSync(page.path);
             }
           }
