@@ -1387,16 +1387,26 @@ async function editAgent(agentId) {
   }
 }
 
-// Open Password Modal
-function openPasswordModal() {
-  document.getElementById('passwordModal').classList.remove('hidden');
-}
+    // 🔑 Password Modal Functions
+    function openPasswordModal() {
+      document.getElementById('passwordModal').classList.remove('hidden');
+    }
 
-// Close Password Modal
-function closePasswordModal() {
-  document.getElementById('passwordModal').classList.add('hidden');
-  document.getElementById('passwordChangeForm').reset();
-}
+    function closePasswordModal() {
+      document.getElementById('passwordModal').classList.add('hidden');
+      document.getElementById('passwordChangeForm').reset();
+    }
+
+    // 🚨 NEW: Handle "Forgot Password" click from inside the modal
+    function forgotPasswordFromModal() {
+      closePasswordModal();
+      // Clear token to log them out safely
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('tenant');
+      // Redirect to the forgot password page
+      window.location.href = '/forgot-password.html';
+    }
 
 // Handle Password Change
 document.getElementById('passwordChangeForm')?.addEventListener('submit', async (e) => {
@@ -1426,6 +1436,7 @@ document.getElementById('passwordChangeForm')?.addEventListener('submit', async 
     alert('❌ Failed to change password. Please try again.');
   }
 });
+
 
     function logout() { 
       localStorage.clear(); 
@@ -1469,24 +1480,38 @@ document.getElementById('passwordChangeForm')?.addEventListener('submit', async 
       </div>
     </div>
   </div>
-<!-- Password Change Modal -->
-<div id="passwordModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-  <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
-    <h3 class="text-lg font-bold text-gray-800 mb-4">🔑 Change Password</h3>
+<!-- 🔑 Password Change Modal -->
+<div id="passwordModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
+  <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl border border-gray-200">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-bold text-gray-800">🔑 Change Password</h3>
+      <button onclick="closePasswordModal()" class="text-gray-400 hover:text-gray-600 transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    
     <form id="passwordChangeForm" class="space-y-4">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
-        <input type="password" id="currentPassword" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+        <input type="password" id="currentPassword" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition">
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-        <input type="password" id="newPassword" required minlength="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+        <label class="block text-sm font-medium text-gray-700 mb-1">New Password (min. 6 characters)</label>
+        <input type="password" id="newPassword" required minlength="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition">
       </div>
-      <div class="flex gap-2">
-        <button type="submit" class="flex-1 bg-green-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-green-700">
-          ✅ Change Password
+      
+      <!-- 🚨 NEW: FORGOT PASSWORD LINK INSIDE MODAL -->
+      <div class="text-right">
+        <button type="button" onclick="forgotPasswordFromModal()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium underline">
+          Don't remember your current password?
         </button>
-        <button type="button" onclick="closePasswordModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg text-sm font-semibold hover:bg-gray-400">
+      </div>
+      
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2">
+          <span>✅</span> Update Password
+        </button>
+        <button type="button" onclick="closePasswordModal()" class="flex-1 bg-gray-200 text-gray-700 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-300 transition">
           Cancel
         </button>
       </div>
