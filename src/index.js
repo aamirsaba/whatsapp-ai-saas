@@ -1127,6 +1127,7 @@ app.put('/api/dashboard/service-areas', authenticateToken, async (req, res) => {
 });
 
 // 🚀 CHANGE PASSWORD (WITH FORCED RESET FLAG & CONFIRMATION EMAIL)
+// 🚀 CHANGE PASSWORD ENDPOINT
 app.put('/api/auth/change-password', authenticateToken, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
@@ -1148,28 +1149,27 @@ app.put('/api/auth/change-password', authenticateToken, async (req, res) => {
     // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     
-    // Update password and remove the "requires change" flag
+    // Update password and clear requiresPasswordChange flag
     await prisma.user.update({
       where: { id: user.id },
       data: { 
         password: hashedPassword,
-        requiresPasswordChange: false // 🚨 UNFORCE THE CHANGE
+        requiresPasswordChange: false
       }
     });
 
-    // 🚨 SEND CONFIRMATION EMAIL WITH THE NEW PASSWORD
+    // Send confirmation email
     try {
       const { sendPasswordResetEmail } = require('./email');
       await sendPasswordResetEmail(user.email, newPassword);
       console.log(`✅ Password change confirmation email sent to ${user.email}`);
     } catch (emailError) {
-      console.error('❌ Failed to send password change confirmation email:', emailError);
-      // We don't fail the whole request if email fails, but we log it
+      console.error('❌ Failed to send confirmation email:', emailError);
     }
 
     res.json({ success: true, message: 'Password changed successfully!' });
   } catch (error) {
-    console.error('Change password error:', error);
+    console.error('❌ Change password error:', error);
     res.status(500).json({ error: 'Failed to change password.' });
   }
 });
