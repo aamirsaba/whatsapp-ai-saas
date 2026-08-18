@@ -72,8 +72,34 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
 
     const jidForNumber = msg.key.remoteJidAlt || rawJid;
     const fromNumber = jidForNumber.replace(/@(s\.whatsapp\.net|lid)/, '');
-    const text = msg.message.conversation || msg.message.extendedTextMessage?.text || msg.message.imageMessage?.caption || "";
-    if (!text) return;
+    
+    // 🚨 ROBUST MEDIA & TEXT DETECTION
+    let extractedText = "";
+    let mediaInfo = "";
+
+    if (msg.message.conversation) {
+      extractedText = msg.message.conversation;
+    } else if (msg.message.extendedTextMessage) {
+      extractedText = msg.message.extendedTextMessage.text;
+    } else if (msg.message.imageMessage) {
+      extractedText = msg.message.imageMessage.caption || "";
+      mediaInfo = "🖼️ Image";
+    } else if (msg.message.documentMessage) {
+      extractedText = msg.message.documentMessage.caption || "";
+      const fileName = msg.message.documentMessage.fileName || "unknown_file";
+      mediaInfo = `📎 Document: ${fileName}`;
+    } else if (msg.message.audioMessage) {
+      mediaInfo = msg.message.audioMessage.ptt ? "🎤 Voice Note" : "🎵 Audio File";
+    } else if (msg.message.videoMessage) {
+      extractedText = msg.message.videoMessage.caption || "";
+      mediaInfo = "🎥 Video";
+    }
+
+    // Combine media info and text, assigned to 'text' so the rest of your code works seamlessly
+    const text = mediaInfo ? (mediaInfo + (extractedText ? ` | ${extractedText}` : "")) : extractedText;
+    
+    if (!text) return; // Ignore completely empty messages
+
 
     console.log(`\n [SUCCESS] New Message from ${fromNumber}: ${text}`);
 
@@ -248,18 +274,35 @@ if (conversation.mode === 'HUMAN') {
       const identityRule = `\n\n🤖 YOUR IDENTITY: You are *${agentName}*, the official AI assistant for ${tenant.businessName || 'this business'}. You MUST introduce yourself as ${agentName}. NEVER use generic titles.`;
       const knowledgeRule = `\n\n📚 KNOWLEDGE BOUNDARY: You MUST use ONLY the information provided in your BUSINESS CONTEXT and KNOWLEDGE BASE below. When asked about courses, prices, or durations, you MUST search the knowledge base and provide EXACT details. DO NOT make up prices or course names. If you cannot find specific information in the knowledge base, say "Let me check our latest course catalog and get back to you with exact details." NEVER provide generic or approximate pricing.`;
 
-      const uploadedDocs = await prisma.knowledgeDocument.findMany({ 
+      // 🚨 1. FETCH KNOWLEDGE BASE CONTENT (Not just filenames!)
+      const knowledgeDocs = await prisma.knowledgeDocument.findMany({ 
         where: { tenantId: tenant.id },
-        select: { fileName: true }
+        select: { fileName: true, content: true, fileSize: true } // 🚨 ADDED: content and fileSize
       });
-      const pdfFileList = uploadedDocs.map(doc => doc.fileName).join(', ');
       
+      const pdfFileList = knowledgeDocs.map(doc => doc.fileName).join(', ');
+      
+      // 🚨 2. FORMAT THE KNOWLEDGE BASE TEXT FOR THE AI
+      let knowledgeBaseText = '';
+      if (knowledgeDocs.length > 0) {
+        knowledgeBaseText = '\n\n📚 UPLOADED KNOWLEDGE BASE DOCUMENTS (USE THIS FOR PRICING, COURSES, AND DETAILS):\n' + 
+          knowledgeDocs.map(doc => `[BEGIN FILE: ${doc.fileName} | Size: ${doc.fileSize} bytes]\n${doc.content}\n[END FILE: ${doc.fileName}]`).join('\n\n');
+      }
+
       const strictPdfRule = pdfFileList 
         ? `\n\n📄 AVAILABLE PDF FILES: [${pdfFileList}]. \n🚨 CRITICAL PDF RULE: You are FORBIDDEN from outputting "[SEND_PDF:..." or mentioning sending a PDF unless the user EXPLICITLY asks you to "send the pdf", "share the file", or "give me the document". If the user asks about courses or info, provide the answer in plain text ONLY. NEVER proactively offer to send a PDF.` 
         : '';
 
       const basePrompt = (tenant.systemPrompt || "You are a helpful, professional AI assistant.") + identityRule + knowledgeRule + strictPdfRule;
-      const finalSystemPrompt = basePrompt + (tenant.businessContext ? `\n\nBUSINESS CONTEXT:\n${tenant.businessContext}` : '') + (tenant.contactInfo ? `\n\nCONTACT INFO:\n${tenant.contactInfo}` : '');
+      
+      // 🚨 3. APPEND THE KNOWLEDGE BASE TEXT TO THE FINAL PROMPT
+      const finalSystemPrompt = basePrompt + 
+        (tenant.businessContext ? `\n\nBUSINESS CONTEXT:\n${tenant.businessContext}` : '') + 
+        (tenant.contactInfo ? `\n\nCONTACT INFO:\n${tenant.contactInfo}` : '') +
+        knowledgeBaseText; // <--- THIS IS THE MISSING LINK!
+
+      console.log("🔍 DEBUG: Final System Prompt length:", finalSystemPrompt.length, "characters");
+      console.log("🔍 DEBUG: Knowledge docs loaded:", knowledgeDocs.length);
 
       const recentMessages = await prisma.message.findMany({
         where: { 
