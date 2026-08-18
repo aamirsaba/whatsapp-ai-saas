@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>Dashboard - Universal AI SaaS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  
+<nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+    <h1 class="text-xl font-bold text-green-600">Universal AI SaaS</h1>
+    <div class="flex items-center space-x-3">
+      <div class="text-right hidden sm:block">
+        <span id="topBusinessName" class="text-sm text-gray-600 font-medium block">Loading...</span>
+        <span id="topWhatsappNumber" class="text-xs text-gray-400">Loading...</span>
+      </div>
+      <!-- 🔑 Change Password -->
+      <a href="/update-password.html" class="text-sm bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition font-medium hidden sm:block flex items-center gap-1">
+        🔑 Change Password
+      </a>
+      <!-- 🔑 Forgot Password -->
+      <a href="/forgot-password.html" class="text-sm bg-indigo-50 text-indigo-700 px-3 py-2 rounded-lg hover:bg-indigo-100 transition font-medium hidden sm:block flex items-center gap-1">
+        🔑 Forgot Password?
+      </a>
+      <!-- Logout -->
+      <button onclick="logout()" class="text-sm bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition font-medium">Logout</button>
+    </div>
+  </div>
+</nav>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-6 mb-8 text-white shadow-lg">
+      <h2 class="text-2xl font-bold mb-2">Welcome back, <span id="businessName">User</span>! 👋</h2>
+      <p class="text-green-100">Your AI agent is active. Choose a persona below to instantly reprogram its personality.</p>
+    </div>
+
+    <!-- 📊 Visual Analytics Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">📈 Messages (Last 7 Days)</h3>
+        <div class="h-64"><canvas id="messageChart"></canvas></div>
+      </div>
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">🎯 New Leads (Last 7 Days)</h3>
+        <div class="h-64"><canvas id="leadChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- 🚀 Autopilot Daily Brief Card -->
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">🤖 Autopilot Daily Brief</h3>
+          <p class="text-sm text-gray-500">Automatically send an AI summary of today's leads to your WhatsApp "Message Yourself" chat.</p>
+        </div>
+        <button type="button" onclick="generateDailySummary(this)" class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg hover:bg-indigo-700 transition text-sm font-medium whitespace-nowrap flex items-center gap-2 shadow-md">✨ Generate Now</button>
+      </div>
+      
+      <!-- 📊 Lead Manager CRM -->
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-800">📊 Lead Manager CRM</h3>
+          <button onclick="loadLeads()" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"><span>🔄</span> Refresh</button>
+        </div>
+        <div class="overflow-x-auto -mx-6 px-6">
+          <div class="min-w-full inline-block">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th class="px-4 py-3 text-left font-semibold text-gray-700">DATE</th>
+                  <th class="px-4 py-3 text-left font-semibold text-gray-700">PHONE NUMBER</th>
+                  <th class="px-4 py-3 text-left font-semibold text-gray-700">FIRST MESSAGE</th>
+                  <th class="px-4 py-3 text-left font-semibold text-gray-700">STATUS</th>
+                  <th class="px-4 py-3 text-left font-semibold text-gray-700">NOTES</th>
+                  <th class="px-4 py-3 text-left font-semibold text-gray-700">ACTION</th>
+                </tr>
+              </thead>
+              <tbody id="leadsTableBody" class="divide-y divide-gray-100">
+                <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Loading leads...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🚨 Schedule Settings -->
+      <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="isSummaryEnabled" class="sr-only peer">
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+          </label>
+          <span class="text-sm font-medium text-gray-700">Enable Daily Auto-Send</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-sm text-gray-600">Send at:</label>
+          <input type="time" id="summaryTime" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+      </div>
+      <div id="summaryBox" class="hidden bg-indigo-50 border border-indigo-100 rounded-lg p-4 mt-4">
+        <p id="summaryText" class="text-sm text-indigo-900 whitespace-pre-wrap leading-relaxed font-mono"></p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div class="lg:col-span-1 space-y-6">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">🤖 AI Configuration</h3>
+          <form id="settingsForm" class="space-y-4">
+            
+            <!-- 🚨 Business Name -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
+              <input type="text" id="settingsBusinessName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition" placeholder="e.g., Knowledge Grid Academy">
+            </div>
+
+            <!-- 🚨 WhatsApp Number -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number (with country code, no + or spaces)</label>
+              <input type="text" id="settingsWhatsappNumber" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition" placeholder="e.g., 96891293119">
+            </div>
+
+            <!-- Persona Template -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Choose a Persona Template</label>
+              <select id="personaTemplate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white transition">
+                <option value="custom">✨ Custom / Keep Current</option>
+              </select>
+            </div>
+
+            <!-- System Prompt -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">System Prompt (Personality) <span class="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">Auto-Generated & Locked</span></label>
+              <textarea id="systemPrompt" rows="3" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 text-sm font-mono cursor-not-allowed" title="This is automatically managed by the system to ensure safety and quality."></textarea>
+            </div>
+
+            <!-- Website URL -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Website URL (Optional)</label>
+              <div class="flex gap-2">
+                <input type="url" id="websiteUrl" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="https://yourbusiness.com">
+                <button type="button" onclick="autoGenerateContext()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium whitespace-nowrap flex items-center gap-1">✨ Auto-Generate</button>
+              </div>
+            </div>
+
+            <!-- Business Context -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Business / Topic Context</label>
+              <textarea id="businessContext" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm transition"></textarea>
+            </div>
+            
+            <!-- Knowledge Base Upload -->
+            <div class="mt-4">
+              <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">📄 Knowledge Base (PDF/TXT) <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Premium</span></label>
+              <p class="text-xs text-gray-500 mb-2">Upload a PDF or TXT file. The AI will read it and use it to answer questions.</p>
+              <div class="flex flex-col gap-2">
+                <input type="file" id="knowledgeFile" accept=".pdf,.txt" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                <button onclick="uploadKnowledge()" id="uploadBtn" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition"><span>📤</span> Upload & Train</button>
+              </div>
+              <p id="uploadStatus" class="text-xs mt-2 font-medium"></p>
+
+              <div class="mt-6 border-t border-gray-100 pt-4">
+                <div class="flex justify-between items-center mb-3">
+                  <h3 class="text-sm font-bold text-gray-800">📚 Uploaded Documents</h3>
+                  <button onclick="loadKnowledgeDocuments()" class="text-xs text-blue-600 hover:text-blue-800 font-medium">Refresh</button>
+                </div>
+                <div id="documentList" class="space-y-2"></div>
+                <p id="emptyDocsMsg" class="text-gray-400 text-xs italic text-center py-3 hidden">No documents uploaded yet.</p>
+              </div>
+            </div>
+
+            <!-- Service Zone Manager -->
+            <div class="flex items-center justify-between bg-blue-50 p-4 rounded-lg border border-blue-100 mt-4">
+              <div>
+                <h4 class="text-sm font-bold text-blue-900">📍 Service Zones Manager</h4>
+                <p class="text-xs text-blue-700 mt-1">Manage locations where you operate.</p>
+              </div>
+              <button type="button" onclick="openZoneModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition">Manage Zones</button>
+            </div>
+            <p id="currentZonesDisplay" class="text-xs text-gray-500 mt-2 italic">Loading zones...</p>
+
+            <!-- AI Provider Selection -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">AI Provider</label>
+              <select id="llmProviderSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white transition">
+                <option value="openai">OpenAI (ChatGPT)</option>
+                <option value="deepseek">DeepSeek (Best Value)</option>
+                <option value="alibaba">Alibaba (Qwen)</option>
+                <option value="groq">Groq (Fastest)</option>
+                <option value="anthropic">Anthropic (Claude)</option>
+                <option value="google">Google (Gemini)</option>
+                <option value="custom">Custom / Local Server</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">LLM API Key <span class="text-red-500">*</span></label>
+              <div class="flex gap-2">
+                <input type="password" id="llmApiKey" required class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="sk-...">
+                <button type="button" id="loadModelsBtn" onclick="loadAvailableModels()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium whitespace-nowrap flex items-center gap-1">🔄 Load Models</button>
+              </div>
+              <p id="llmValidationMsg" class="text-xs mt-1"></p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Detected Provider</label>
+                <input type="text" id="llmProvider" readonly class="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-lg text-sm text-gray-600 font-bold" placeholder="e.g., OPENAI">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Selected Model</label>
+                <select id="llmModelSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white text-sm">
+                  <option value="">-- Load models first --</option>
+                </select>
+                <input type="text" id="llmModel" readonly class="hidden w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-lg text-sm text-gray-600" placeholder="Auto-selected">
+              </div>
+            </div>
+
+            <div id="customBaseUrlContainer" class="hidden">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Custom Base URL</label>
+              <input type="text" id="llmBaseUrl" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm font-mono" placeholder="https://api.your-provider.com/v1">
+            </div>
+
+            <hr class="my-6 border-gray-200">
+
+            <div class="mb-4">
+              <label class="block text-sm font-semibold text-gray-700 mb-1 flex items-center gap-2">🔗 Lead Webhook URL <span class="text-xs font-normal text-gray-500">(Optional)</span></label>
+              <input type="url" id="leadWebhookUrl" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="https://hooks.zapier.com/hooks/catch/...">
+              <p class="text-xs text-gray-500 mt-1">Auto-send new leads to Zapier, Make.com, or Google Sheets</p>
+            </div>
+
+            <div class="flex justify-between items-center mb-3">
+              <h4 class="text-sm font-semibold text-gray-800">📞 Official Contact Information</h4>
+              <button type="button" onclick="fillContactTemplate()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium underline">Fill Template</button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div><label class="block text-xs font-medium text-gray-600 mb-1">Contact Person</label><input type="text" id="contactPerson" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm"></div>
+              <div><label class="block text-xs font-medium text-gray-600 mb-1">Business Email</label><input type="email" id="contactEmail" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm"></div>
+              <div><label class="block text-xs font-medium text-gray-600 mb-1">Phone / WhatsApp</label><input type="text" id="contactPhone" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm"></div>
+              <div><label class="block text-xs font-medium text-gray-600 mb-1">Website</label><input type="text" id="contactWebsite" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm"></div>
+            </div>
+            <div class="mt-3">
+              <label class="block text-xs font-medium text-gray-600 mb-1">Additional Notes</label>
+              <textarea id="contactNotes" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm"></textarea>
+            </div>
+
+            <!-- AI Agent Name -->
+            <div class="mt-6">
+              <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                🤖 AI Agent Name <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Optional</span>
+              </label>
+              <p class="text-xs text-gray-500 mb-2">Give your AI a human name (e.g., Noor, Haya, Ammar). It will introduce itself with this name.</p>
+              <input type="text" id="aiAgentName" placeholder="e.g., Noor" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+            </div>
+
+            <button type="submit" class="w-full bg-green-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-green-700 transition shadow-md flex items-center justify-center gap-2">💾 Save AI Settings</button>
+          </form>
+          <p id="settingsMsg" class="mt-3 text-center text-sm font-medium min-h-[20px]"></p>
+
+          <!-- Human Takeover Toggle -->
+          <div class="flex items-center justify-between bg-yellow-50 p-4 rounded-lg border border-yellow-200 mt-6">
+            <div>
+              <h4 class="text-sm font-bold text-gray-800 flex items-center gap-2">👤 Human Takeover Mode</h4>
+              <p id="humanModeStatus" class="text-xs text-gray-600 mt-1">Pause the AI and reply manually from your phone.</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="humanModeToggle" class="sr-only peer">
+              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
+            </label>
+          </div>
+          
+          <hr class="my-6 border-gray-200">
+          <div id="connectionStatusSection"></div>
+        </div>
+
+        <!-- 👨‍💼 Agent Management -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">👨‍💼 Agent Management</h3>
+          
+          <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-6 mb-6 border border-indigo-100">
+            <h4 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <span class="text-2xl">➕</span> Add New Agent
+            </h4>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Agent Name <span class="text-red-500">*</span></label>
+                <input type="text" id="agentName" placeholder="e.g., Ahmed Khan" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Email Address <span class="text-red-500">*</span></label>
+                <input type="email" id="agentEmail" placeholder="agent@company.com" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">WhatsApp Number <span class="text-red-500">*</span></label>
+                <input type="text" id="agentWhatsapp" placeholder="e.g., 96891293119 (with country code)" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Languages Spoken <span class="text-red-500">*</span></label>
+                <input type="text" id="agentLanguages" placeholder="e.g., English, Arabic, Urdu" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white">
+                <p class="text-xs text-gray-500 mt-1.5">Separate multiple languages with commas</p>
+              </div>
+              <button onclick="createAgent()" id="agentSubmitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg mt-2">
+                <span>➕</span><span>Add Agent & Send Invite</span>
+              </button>
+            </div>
+          </div>
+          
+          <div id="agentsList" class="space-y-3">
+            <p class="text-gray-400 text-sm italic text-center py-8 bg-gray-50 rounded-lg">No agents yet. Add your first agent above!</p>
+          </div>
+        </div>
+
+        <!-- 💬 Active Conversations -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">💬 Active Conversations</h3>
+          <p class="text-xs text-gray-500 mb-4">Toggle between 🤖 AI and 👨‍💻 Human mode for each user individually.</p>
+          <div id="conversationsList" class="space-y-3 max-h-64 overflow-y-auto">
+            <p class="text-gray-400 text-sm italic text-center py-4">Loading conversations...</p>
+          </div>
+        </div>
+
+        <!-- 📥 Live Inbox (Manual Reply) -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">📥 Live Inbox (Manual Reply)</h3>
+          <p class="text-xs text-gray-500 mb-4">Select a customer from the list below to reply manually.</p>
+          
+          <!-- 🚨 CHANGED TO SINGLE COLUMN ROWS -->
+          <div id="recentChats" class="flex flex-col gap-3 mb-6 max-h-96 overflow-y-auto p-1">
+            <div class="text-center text-gray-400 py-8">Loading recent chats...</div>
+          </div>
+
+          <!-- Manual Reply Box -->
+          <div id="replyBox" class="hidden bg-white border-2 border-indigo-100 rounded-xl p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <p class="text-sm font-bold text-gray-800">Replying to: <span id="replyToNumber" class="text-indigo-600"></span></p>
+              <button onclick="closeReplyBox()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+            <div class="mb-3">
+              <label class="block text-xs font-medium text-gray-600 mb-1">⚡ Quick Reply:</label>
+              <select id="quickReplies" onchange="insertQuickReply()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                <option value="">-- Select a template --</option>
+                <option value="Hello! Thank you for contacting us. How can I assist you today?">👋 Standard Greeting</option>
+                <option value="Could you please provide a few more details so I can assist you better?">ℹ️ Request More Info</option>
+                <option value="You can reach our official support team at [Insert Email/Phone] for further assistance.">📞 Share Contact Info</option>
+                <option value="Thank you for your inquiry. We will get back to you shortly.">⏳ Holding Response</option>
+                <option value="Thank you for contacting us! Have a great day.">✅ Closing / Thank You</option>
+              </select>
+            </div>
+            <textarea id="manualReplyText" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none mb-3" placeholder="Type your manual reply..."></textarea>
+            <button onclick="sendManualReply()" class="w-full bg-green-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition flex items-center justify-center gap-2">
+              <span>📤</span> Send via WhatsApp
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-6 pt-6 border-t-2 border-red-100">
+          <h4 class="text-sm font-bold text-red-600 mb-3 flex items-center gap-2">⚠️ Danger Zone</h4>
+          <button type="button" onclick="deleteAccount()" class="w-full bg-red-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-red-700 transition shadow-md flex items-center justify-center gap-2">🗑️ Delete My Account Permanently</button>
+        </div>
+      </div>
+
+      <div class="lg:col-span-2">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-full flex flex-col">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">💬 Recent Chat History <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">Last 20</span></h3>
+          <div id="chatHistory" class="space-y-4 flex-1 overflow-y-auto pr-2 max-h-[600px]"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- SERVICE ZONE MANAGER MODAL -->
+  <div id="zoneModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="bg-blue-600 text-white p-6 flex justify-between items-center">
+        <h3 class="text-xl font-bold flex items-center gap-2">📍 Service Zone Manager</h3>
+        <button onclick="closeZoneModal()" class="text-white hover:text-gray-200 text-2xl">&times;</button>
+      </div>
+      <div class="p-6 overflow-y-auto flex-1">
+        <div class="mb-6">
+          <label class="block text-sm font-bold text-gray-700 mb-2">Add Location Manually</label>
+          <div class="flex gap-2">
+            <input type="text" id="newZoneInput" placeholder="e.g., Olaya, Riyadh" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+            <button onclick="addZoneManual()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700">Add</button>
+          </div>
+        </div>
+        <div class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <label class="block text-sm font-bold text-gray-700 mb-2">📂 Bulk Upload via CSV</label>
+          <p class="text-xs text-gray-500 mb-2">Upload a .csv or .txt file with one city/area per line.</p>
+          <input type="file" id="csvFileInput" accept=".csv, .txt" onchange="handleFileUpload(this)" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+        </div>
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <label class="block text-sm font-bold text-gray-700">Active Zones (<span id="zoneCount">0</span>)</label>
+            <button onclick="clearAllZones()" class="text-xs text-red-600 hover:text-red-800 underline">Clear All</button>
+          </div>
+          <div id="zonesListContainer" class="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 bg-gray-50 rounded-lg border border-gray-200">
+            <p class="text-gray-400 text-sm w-full text-center py-4">No zones added yet.</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-gray-50 p-4 border-t border-gray-200 flex justify-end gap-3">
+        <button onclick="closeZoneModal()" class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-lg">Cancel</button>
+        <button onclick="saveZones()" class="px-6 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-md">💾 Save All Zones</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🔑 Password Change Modal -->
+  <div id="passwordModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl border border-gray-200">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold text-gray-800">🔑 Change Password</h3>
+        <button onclick="closePasswordModal()" class="text-gray-400 hover:text-gray-600 transition">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <form id="passwordChangeForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+          <input type="password" id="currentPassword" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">New Password (min. 6 characters)</label>
+          <input type="password" id="newPassword" required minlength="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition">
+        </div>
+        <div class="text-right">
+          <button type="button" onclick="forgotPasswordFromModal()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium underline">
+            Don't remember your current password?
+          </button>
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button type="submit" id="updatePasswordBtn" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2">
+            <span>✅</span> Update Password
+          </button>
+          <button type="button" onclick="closePasswordModal()" class="flex-1 bg-gray-200 text-gray-700 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-300 transition">
+            Cancel
+          </button>
+        </div>
+      </form>
+      <p id="passwordChangeMessage" class="mt-3 text-center text-sm font-medium"></p>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    let messageChartInstance = null;
+    let leadChartInstance = null;
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    if (!token) { window.location.href = '/login'; }
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.role === 'AGENT') { window.location.href = '/agent-dashboard.html'; }
+    } catch (e) { console.error('Invalid token'); }
+
+    const personas = {
+      emotional: { systemPrompt: "You are an empathetic, supportive Emotional Support Companion.", businessContext: "Listen actively and validate feelings. Offer coping strategies. ⚠️ CRITICAL: Never diagnose mental health conditions." },
+      islamic: { systemPrompt: "You are a knowledgeable, compassionate, and respectful Islamic assistant.", businessContext: "Answer based on Quran and authentic Sunnah. Be polite. Admit if you don't know." },
+      depression_relief: { systemPrompt: "You are a gentle, uplifting Wellness and Depression Relief Companion.", businessContext: "Provide encouraging, positive, and safe conversations. ⚠️ CRITICAL: You are not a therapist." },
+      storytelling: { systemPrompt: "You are a master Creative Storyteller.", businessContext: "Write engaging, imaginative stories with vivid descriptions and strong plots." },
+      content_creation: { systemPrompt: "You are a viral, creative Content Creation Assistant.", businessContext: "Help users brainstorm ideas, write scripts, and optimize content for social media." },
+      cooking: { systemPrompt: "You are a passionate, knowledgeable Cooking and Recipe Assistant.", businessContext: "Provide recipes, cooking tips, and ingredient substitutions." },
+      faith_spirituality: { systemPrompt: "You are a respectful, insightful Faith and Spirituality Guide.", businessContext: "Discuss spiritual growth, mindfulness, and general faith principles respectfully." },
+      personal_development: { systemPrompt: "You are a motivating, structured Personal Development Coach.", businessContext: "Help users set goals, build habits, and improve productivity." },
+      business: { systemPrompt: "You are a helpful, professional, and polite AI assistant.", businessContext: "Represent the business accurately. Be concise, professional, and solution-oriented." },
+      realestate: { systemPrompt: "You are a professional, enthusiastic Real Estate Agent.", businessContext: "Help clients find properties. Ask about budget and location. Be persuasive but honest." },
+      legal: { systemPrompt: "You are a professional, discreet Legal Assistant.", businessContext: "Help with practice areas and booking consultations. ⚠️ CRITICAL: Never provide specific legal advice." },
+      financial: { systemPrompt: "You are a trustworthy, professional Financial Services Assistant.", businessContext: "Help with service info and appointments. ⚠️ CRITICAL: Never provide specific financial advice." },
+      marketing: { systemPrompt: "You are a creative, results-focused Marketing Agency Assistant.", businessContext: "Help potential clients with service offerings and case studies." },
+      it: { systemPrompt: "You are a knowledgeable, solution-oriented IT Support Assistant.", businessContext: "Help with product demos, pricing, and technical questions." },
+      hr: { systemPrompt: "You are a professional, empathetic HR and Recruitment Assistant.", businessContext: "Help with candidate screening, company policies, and onboarding info." },
+      coaching: { systemPrompt: "You are a professional, goal-oriented Business Coach.", businessContext: "Help clients with strategy, leadership, and business growth." },
+      medical: { systemPrompt: "You are a compassionate Medical Clinic Assistant.", businessContext: "Provide general health info and appointment booking. ⚠️ CRITICAL: Always state you are an AI, not a doctor." },
+      hospital: { systemPrompt: "You are a professional Hospital Information Assistant.", businessContext: "Help with department info, visiting hours, and general guidance. ⚠️ CRITICAL: Direct emergencies to 911." },
+      mental_health: { systemPrompt: "You are a supportive Mental Health Counseling Assistant.", businessContext: "Provide resources and appointment info. ⚠️ CRITICAL: Never provide therapy. Direct crises to emergency services." },
+      fitness: { systemPrompt: "You are a motivating, energetic Fitness Coach Assistant.", businessContext: "Help with membership plans and class schedules." },
+      beauty: { systemPrompt: "You are a friendly, stylish Beauty Salon Assistant.", businessContext: "Help clients with service menus, pricing, and booking." },
+      vet: { systemPrompt: "You are a caring, knowledgeable Vet Clinic Assistant.", businessContext: "Help pet owners with appointment info. ⚠️ CRITICAL: Never provide emergency medical advice." },
+      restaurant: { systemPrompt: "You are a warm, welcoming Restaurant Host Assistant.", businessContext: "Help customers with menu questions, dietary restrictions, and operating hours." },
+      hotel: { systemPrompt: "You are an elegant, helpful Hotel Concierge Assistant.", businessContext: "Assist with room types, amenities, and check-in/out times." },
+      travel: { systemPrompt: "You are an enthusiastic, knowledgeable Travel Agent Assistant.", businessContext: "Help with itineraries, visa info, and package details." },
+      ecommerce: { systemPrompt: "You are a friendly, helpful E-commerce Customer Support Assistant.", businessContext: "Help customers with product questions, order status, shipping info, and returns." },
+      retail: { systemPrompt: "You are a friendly, knowledgeable Retail Store Assistant.", businessContext: "Help customers with product availability, store hours, and location." },
+      automotive: { systemPrompt: "You are a knowledgeable, trustworthy Automotive Dealership Assistant.", businessContext: "Help customers with vehicle inquiries, test drive bookings, and financing." },
+      field_services: { systemPrompt: "You are a professional Field Services and Home Maintenance Assistant.", businessContext: "Help customers book appointments, get quotes, and check service areas." },
+      cleaning: { systemPrompt: "You are a professional Cleaning Services Assistant.", businessContext: "Help customers get quotes, book appointments, and understand your services." },
+      logistics: { systemPrompt: "You are an efficient Logistics and Delivery Assistant.", businessContext: "Help with tracking, shipping rates, and delivery schedules." },
+      construction: { systemPrompt: "You are a professional Construction and Contracting Assistant.", businessContext: "Help with project inquiries, quotes, and service descriptions." },
+      education: { systemPrompt: "You are an informative, welcoming Educational Institution Assistant.", businessContext: "Help with admissions, programs, fees, and campus info." },
+      event: { systemPrompt: "You are an organized, creative Event Planning Assistant.", businessContext: "Help clients with venue options, packages, and guest management." },
+      nonprofit: { systemPrompt: "You are a passionate, informative Non-Profit Organization Assistant.", businessContext: "Help with donation info, volunteer opportunities, and mission statements." }
+    };
+
+    async function loadDashboard() {
+      try {
+        const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.success) {
+          const nameString = data.tenant.businessName || 'My Business';
+          const waString = data.tenant.whatsappNumber || '';
+          
+          const topNameEl = document.getElementById('topBusinessName');
+          if (topNameEl) topNameEl.textContent = nameString;
+          
+          const topWaEl = document.getElementById('topWhatsappNumber');
+          if (topWaEl) topWaEl.textContent = waString ? `📱 +${waString}` : '';
+
+          const welcomeNameEl = document.getElementById('businessName');
+          if (welcomeNameEl) welcomeNameEl.textContent = nameString;
+          
+          const settingsNameEl = document.getElementById('settingsBusinessName');
+          if (settingsNameEl) settingsNameEl.value = nameString;
+          
+          const settingsWaEl = document.getElementById('settingsWhatsappNumber');
+          if (settingsWaEl) settingsWaEl.value = waString;
+
+          document.getElementById('llmApiKey').value = data.tenant.llmApiKey || '';
+          document.getElementById('systemPrompt').value = data.tenant.systemPrompt || '';
+          
+          // 🚨 FIX: Safely decode HTML entities for Business Context
+          const contextEl = document.getElementById('businessContext');
+          if (contextEl && data.tenant.businessContext) {
+            const txt = document.createElement("textarea");
+            txt.innerHTML = data.tenant.businessContext;
+            contextEl.value = txt.value;
+          } else if (contextEl) {
+            contextEl.value = '';
+          }
+
+          document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
+          document.getElementById('llmModel').value = data.tenant.llmModel || '';
+          document.getElementById('aiAgentName').value = data.tenant.aiAgentName || '';
+          
+          let botType = data.tenant.botType;
+          if (!botType) botType = 'business';
+          
+          const personaDropdown = document.getElementById('personaTemplate');
+          personaDropdown.innerHTML = '<option value="custom">✨ Custom / Keep Current</option>';
+          
+          if (botType === 'business') {
+            const groups = {
+              '🏢 Professional & Corporate': ['business', 'realestate', 'legal', 'financial', 'marketing', 'it', 'hr', 'coaching'],
+              '🏥 Healthcare & Wellness': ['medical', 'hospital', 'mental_health', 'fitness', 'beauty', 'vet'],
+              '🍽️ Hospitality, Retail & Services': ['restaurant', 'hotel', 'travel', 'ecommerce', 'retail', 'automotive', 'field_services', 'cleaning', 'logistics', 'construction'],
+              '🎓 Education & Community': ['education', 'event', 'nonprofit']
+            };
+            for (const [groupName, values] of Object.entries(groups)) {
+              const optgroup = document.createElement('optgroup');
+              optgroup.label = groupName;
+              values.forEach(value => {
+                if (personas[value]) {
+                  const option = document.createElement('option');
+                  option.value = value;
+                  const labels = { business: '💼 General Business', realestate: '🏡 Real Estate', legal: '⚖️ Legal / Law Firm', financial: '💰 Financial Services', marketing: '📈 Marketing Agency', it: '💻 IT Support', hr: '👥 HR & Recruitment', coaching: '🎯 Business Coaching', medical: '🩺 Medical Clinic', hospital: '🏥 Hospital & Urgent Care', mental_health: '🧠 Mental Health Counseling', fitness: '💪 Fitness / Gym', beauty: '💅 Beauty Salon / Spa', vet: '🐾 Vet Clinic', restaurant: '🍽️ Restaurant / Cafe', hotel: '🏨 Hotel / Hospitality', travel: '✈️ Travel / Tourism', ecommerce: '🛍️ E-commerce Store', retail: '🏪 Retail Shop', automotive: '🚗 Automotive', field_services: '🔧 Field Services', cleaning: '🧹 Cleaning Services', logistics: '📦 Logistics / Delivery', construction: '🏗️ Construction / Contracting', education: '🎓 School / Academy', event: '🎉 Event Planning', nonprofit: '🤝 Non-Profit / Community' };
+                  option.textContent = labels[value] || value;
+                  optgroup.appendChild(option);
+                }
+              });
+              personaDropdown.appendChild(optgroup);
+            }
+          } else {
+            const personalGroups = { '👤 Personal & Niche': ['emotional', 'islamic', 'depression_relief', 'storytelling', 'content_creation', 'cooking', 'faith_spirituality', 'personal_development'] };
+            for (const [groupName, values] of Object.entries(personalGroups)) {
+              const optgroup = document.createElement('optgroup');
+              optgroup.label = groupName;
+              values.forEach(value => {
+                if (personas[value]) {
+                  const option = document.createElement('option');
+                  option.value = value;
+                  const pLabels = { emotional: '💙 Emotional Support', islamic: '🕌 Islamic Scholar', depression_relief: '🌱 Depression Relief', storytelling: '📚 Creative Storyteller', content_creation: '🎬 Content Creation', cooking: '🍳 Cooking Assistant', faith_spirituality: '🙏 Faith & Spirituality', personal_development: '📈 Personal Development' };
+                  option.textContent = pLabels[value] || value;
+                  optgroup.appendChild(option);
+                }
+              });
+              personaDropdown.appendChild(optgroup);
+            }
+          }
+
+          let foundMatch = false;
+          if (data.tenant.systemPrompt) {
+            for (const [key, value] of Object.entries(personas)) {
+              if (data.tenant.systemPrompt === value.systemPrompt) { personaDropdown.value = key; foundMatch = true; break; }
+            }
+            if (!foundMatch) personaDropdown.value = 'custom';
+          }
+
+          if (data.tenant.contactInfo) {
+            const lines = data.tenant.contactInfo.split('\n');
+            const getValue = (prefix) => lines.find(l => l.startsWith(prefix))?.split(': ')[1]?.trim() || '';
+            document.getElementById('contactPerson').value = getValue('Contact Person');
+            document.getElementById('contactEmail').value = getValue('Email');
+            document.getElementById('contactPhone').value = getValue('Phone/WhatsApp');
+            document.getElementById('contactWebsite').value = getValue('Website');
+            document.getElementById('contactNotes').value = getValue('Notes');
+          }
+
+          document.getElementById('humanModeToggle').checked = data.tenant.isHumanMode || false;
+          document.getElementById('isSummaryEnabled').checked = data.tenant.isSummaryEnabled || false;
+          document.getElementById('summaryTime').value = data.tenant.summaryTime || '21:00';
+          document.getElementById('leadWebhookUrl').value = data.tenant.leadWebhookUrl || '';
+          if (data.tenant.llmProvider) document.getElementById('llmProviderSelect').value = data.tenant.llmProvider.toLowerCase();
+
+          const statusContainer = document.getElementById('connectionStatusSection');
+          if (data.tenant.isActive) {
+            const humanModeText = data.tenant.isHumanMode ? "⚠️ Human Takeover Mode is ON - AI is paused." : "✅ Your AI bot is currently active and replying.";
+            const humanModeColor = data.tenant.isHumanMode ? "text-yellow-600" : "text-green-600";
+            const humanModeDot = data.tenant.isHumanMode ? "bg-yellow-500" : "bg-green-500";
+            statusContainer.innerHTML = `<button type="button" onclick="disconnectBot()" class="w-full bg-yellow-500 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-yellow-600 transition shadow-md flex items-center justify-center gap-2">🔌 Disconnect WhatsApp Number</button><p class="text-xs ${humanModeColor} font-medium mt-2 text-center flex items-center justify-center gap-1"><span class="w-2 h-2 ${humanModeDot} rounded-full animate-pulse"></span> ${humanModeText}</p>`;
+          } else {
+            statusContainer.innerHTML = `<a href="/connect/${data.tenant.whatsappNumber}" class="block w-full bg-green-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-green-700 transition shadow-md flex items-center justify-center gap-2 text-center">📱 Reconnect & Scan QR Code</a><p class="text-xs text-red-500 font-medium mt-2 text-center flex items-center justify-center gap-1"><span class="w-2 h-2 bg-red-500 rounded-full"></span> Your AI bot is currently paused. Click to reactivate.</p>`;
+          }
+          
+          renderChatHistory(data.messages);
+          loadLeads();
+          loadAnalytics();
+          loadOwnerChats();
+        }
+      } catch (err) { console.error('Failed to load dashboard', err); }
+    }
+
+    document.getElementById('personaTemplate').addEventListener('change', function() {
+      if (personas[this.value]) {
+        document.getElementById('systemPrompt').value = personas[this.value].systemPrompt;
+        document.getElementById('businessContext').value = personas[this.value].businessContext;
+        const msg = document.getElementById('settingsMsg');
+        msg.textContent = '✨ Template applied! Review and edit, then click Save.';
+        msg.className = 'mt-3 text-center text-sm text-blue-600 font-bold';
+      }
+    });
+
+    function renderChatHistory(messages) {
+      const container = document.getElementById('chatHistory');
+      if (!messages || messages.length === 0) { container.innerHTML = '<p class="text-gray-500 text-center py-8">No messages yet. Send a WhatsApp message to see it here!</p>'; return; }
+      container.innerHTML = messages.reverse().map(msg => `
+        <div class="flex ${msg.direction === 'inbound' ? 'justify-start' : 'justify-end'}">
+          <div class="max-w-[85%] rounded-2xl p-4 shadow-sm ${msg.direction === 'inbound' ? 'bg-gray-100 text-gray-800 rounded-tl-none' : 'bg-green-100 text-green-900 rounded-tr-none'}">
+            <p class="text-[10px] font-bold mb-1.5 uppercase tracking-wide ${msg.direction === 'inbound' ? 'text-gray-500' : 'text-green-700'}">${msg.direction === 'inbound' ? '👤 Customer (' + msg.fromNumber + ')' : '🤖 AI Agent'}</p>
+            <p class="text-sm whitespace-pre-wrap leading-relaxed">${msg.content}</p>
+            <p class="text-[10px] text-gray-400 mt-2 text-right">${new Date(msg.createdAt).toLocaleString()}</p>
+          </div>
+        </div>
+      `).join('');
+      container.scrollTop = container.scrollHeight;
+    }
+
+    async function autoGenerateContext() {
+      const url = document.getElementById('websiteUrl').value;
+      const msg = document.getElementById('settingsMsg');
+      if (!url) { msg.textContent = '⚠️ Please enter a Website URL first.'; msg.className = 'mt-3 text-center text-sm text-yellow-600 font-bold'; return; }
+      msg.textContent = '⏳ Reading website...'; msg.className = 'mt-3 text-center text-sm text-indigo-600 font-bold';
+      try {
+        const res = await fetch('/api/dashboard/scrape-website', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ websiteUrl: url }) });
+        const data = await res.json();
+        if (data.success) { document.getElementById('businessContext').value = data.generatedContext; msg.textContent = '✅ Context generated! Review and click Save.'; msg.className = 'mt-3 text-center text-sm text-green-600 font-bold'; } 
+        else { msg.textContent = '❌ ' + (data.error || 'Failed.'); msg.className = 'mt-3 text-center text-sm text-red-600 font-bold'; }
+      } catch (err) { msg.textContent = '❌ Server error.'; msg.className = 'mt-3 text-center text-sm text-red-600 font-bold'; }
+    }
+
+    async function loadAvailableModels() {
+      const btn = document.getElementById('loadModelsBtn');
+      const provider = document.getElementById('llmProviderSelect').value;
+      const apiKey = document.getElementById('llmApiKey').value.trim();
+      const msgElement = document.getElementById('llmValidationMsg');
+      if (!apiKey) { msgElement.textContent = '❌ Please enter an API Key first.'; msgElement.className = 'text-red-600 text-xs mt-1'; return; }
+      btn.textContent = '🔄 Loading...'; btn.disabled = true; msgElement.textContent = '⏳ Fetching models...'; msgElement.className = 'text-blue-600 text-xs mt-1';
+      try {
+        const res = await fetch('/api/fetch-models', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ provider, apiKey }) });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          const modelDropdown = document.getElementById('llmModelSelect');
+          modelDropdown.innerHTML = data.models.map(m => `<option value="${m.id}" ${m.isRecommended ? 'selected' : ''}>${m.name} ${m.isRecommended ? '⭐' : ''}</option>`).join('');
+          document.getElementById('llmModel').value = modelDropdown.value;
+          document.getElementById('llmProvider').value = provider.toUpperCase();
+          msgElement.textContent = `✅ Loaded ${data.models.length} models!`; msgElement.className = 'text-green-600 text-xs mt-1 font-semibold';
+        } else { msgElement.textContent = `❌ ${data.error || 'Failed to load models'}`; msgElement.className = 'text-red-600 text-xs mt-1'; }
+      } catch (error) { msgElement.textContent = '❌ Network error while loading models'; msgElement.className = 'text-red-600 text-xs mt-1'; }
+      finally { btn.textContent = '🔄 Load Models'; btn.disabled = false; }
+    }
+
+    document.getElementById('llmProviderSelect').addEventListener('change', function() {
+      const provider = this.value;
+      const customContainer = document.getElementById('customBaseUrlContainer');
+      const modelSelect = document.getElementById('llmModelSelect');
+      const modelInput = document.getElementById('llmModel');
+      if (provider === 'custom') { customContainer.classList.remove('hidden'); modelSelect.classList.add('hidden'); modelInput.classList.remove('hidden'); modelInput.placeholder = 'e.g., llama3, mistral'; } 
+      else { customContainer.classList.add('hidden'); modelSelect.classList.remove('hidden'); modelInput.classList.add('hidden'); }
+      document.getElementById('llmApiKey').value = '';
+      document.getElementById('llmValidationMsg').textContent = '';
+    });
+
+    document.getElementById('llmModelSelect').addEventListener('change', function() { document.getElementById('llmModel').value = this.value; });
+
+    function fillContactTemplate() {
+      document.getElementById('contactPerson').value = 'Aamir Durrani';
+      document.getElementById('contactEmail').value = 'info@tabarak.solutions';
+      document.getElementById('contactPhone').value = '+968 9129 3119';
+      document.getElementById('contactWebsite').value = 'www.tabarak.solutions';
+      document.getElementById('contactNotes').value = 'Available Sun-Thr, 9 AM - 5 PM GST.';
+      const msg = document.getElementById('settingsMsg');
+      msg.textContent = '✨ Template filled! Edit details, then click Save.'; msg.className = 'mt-3 text-center text-sm text-indigo-600 font-bold';
+    }
+
+    document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('settingsMsg');
+      msg.textContent = 'Saving...'; 
+      msg.className = 'mt-3 text-center text-sm text-gray-600';
+      
+      const contactInfo = `Contact Person: ${document.getElementById('contactPerson').value || 'Not provided'}\nEmail: ${document.getElementById('contactEmail').value || 'Not provided'}\nPhone/WhatsApp: ${document.getElementById('contactPhone').value || 'Not provided'}\nWebsite: ${document.getElementById('contactWebsite').value || 'Not provided'}\nNotes: ${document.getElementById('contactNotes').value || 'None'}`.trim();
+      
+      try {
+        const res = await fetch('/api/dashboard/settings', { 
+          method: 'PUT', 
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, 
+          body: JSON.stringify({ 
+            businessName: document.getElementById('settingsBusinessName').value.trim(),
+            whatsappNumber: document.getElementById('settingsWhatsappNumber').value.replace(/\D/g, ''),
+            systemPrompt: document.getElementById('systemPrompt').value, 
+            businessContext: document.getElementById('businessContext').value, 
+            contactInfo: contactInfo, 
+            llmApiKey: document.getElementById('llmApiKey').value, 
+            llmModel: document.getElementById('llmModel').value, 
+            llmProvider: document.getElementById('llmProvider').value, 
+            llmBaseUrl: document.getElementById('llmBaseUrl').value, 
+            isHumanMode: document.getElementById('humanModeToggle').checked, 
+            leadWebhookUrl: document.getElementById('leadWebhookUrl').value, 
+            isSummaryEnabled: document.getElementById('isSummaryEnabled').checked, 
+            summaryTime: document.getElementById('summaryTime').value,
+            aiAgentName: document.getElementById('aiAgentName').value.trim()
+          }) 
+        });
+        
+        const data = await res.json();
+        if (data.success) { 
+          msg.textContent = '✅ Settings saved successfully!'; 
+          msg.className = 'mt-3 text-center text-sm text-green-600 font-bold'; 
+          if (typeof loadDashboard === 'function') loadDashboard();
+        } else { 
+          msg.textContent = '❌ ' + data.error; 
+          msg.className = 'mt-3 text-center text-sm text-red-600 font-bold'; 
+        }
+      } catch (err) { 
+        msg.textContent = '❌ Server error.'; 
+        msg.className = 'mt-3 text-center text-sm text-red-600 font-bold'; 
+      }
+    });
+
+    async function disconnectBot() {
+      if (!confirm('⚠️ Log out WhatsApp number? You will need to scan QR again.')) return;
+      try {
+        const res = await fetch('/api/dashboard/disconnect', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.success) { alert('✅ ' + data.message); window.location.reload(); } else { alert('❌ ' + data.error); }
+      } catch (err) { alert('Failed to disconnect.'); }
+    }
+
+    async function deleteAccount() {
+      if (!confirm('⚠️ WARNING: Permanently delete account and all data?')) return;
+      if (!confirm('Are you ABSOLUTELY sure?')) return;
+      try {
+        const res = await fetch('/api/dashboard/account', { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.success) { localStorage.clear(); window.location.href = '/login'; } else { alert('❌ ' + data.error); }
+      } catch (err) { alert('Server error.'); }
+    }
+
+    async function generateDailySummary(btn) {
+      const summaryBox = document.getElementById('summaryBox');
+      const summaryText = document.getElementById('summaryText');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '⏳ AI is analyzing chats...'; btn.disabled = true;
+      try {
+        const res = await fetch('/api/dashboard/daily-summary', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.success) {
+          summaryText.textContent = data.summary;
+          summaryBox.classList.remove('hidden');
+          btn.innerHTML = '✅ Brief Sent to WhatsApp!';
+          setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 4000);
+        } else { alert('❌ ' + (data.error || 'Failed to generate summary')); btn.innerHTML = originalText; btn.disabled = false; }
+      } catch (err) { alert('❌ Server error while generating summary.'); btn.innerHTML = originalText; btn.disabled = false; }
+    }
+
+    document.getElementById('humanModeToggle').addEventListener('change', async function() {
+      const isChecked = this.checked;
+      const statusText = document.getElementById('humanModeStatus');
+      const originalText = statusText ? statusText.textContent : 'Pause the AI and reply manually from your phone.';
+      if (statusText) { statusText.textContent = '⏳ Updating AI status...'; statusText.className = 'text-xs text-yellow-600 mt-1 font-medium'; }
+      try {
+        const res = await fetch('/api/dashboard/toggle-human-mode', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ isHumanMode: isChecked }) });
+        const data = await res.json();
+        if (data.success) {
+          if (statusText) {
+            if (isChecked) { statusText.textContent = '✅ AI is PAUSED. You are in control.'; statusText.className = 'text-xs text-red-600 mt-1 font-bold'; } 
+            else { statusText.textContent = '🤖 AI is ACTIVE and replying automatically.'; statusText.className = 'text-xs text-green-600 mt-1 font-bold'; }
+          }
+          const connectionStatusSection = document.getElementById('connectionStatusSection');
+          if (connectionStatusSection) {
+            const bottomStatus = connectionStatusSection.querySelector('p');
+            if (bottomStatus) {
+              if (isChecked) { bottomStatus.innerHTML = '<span class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span> ⚠️ Human Takeover Mode is ON - AI is paused.'; bottomStatus.className = 'text-xs text-yellow-600 font-medium mt-2 text-center flex items-center justify-center gap-1'; } 
+              else { bottomStatus.innerHTML = '<span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> ✅ Your AI bot is currently active and replying.'; bottomStatus.className = 'text-xs text-green-600 font-medium mt-2 text-center flex items-center justify-center gap-1'; }
+            }
+          }
+        } else { this.checked = !isChecked; if (statusText) statusText.textContent = originalText; alert('❌ Failed to update mode.'); }
+      } catch (err) { this.checked = !isChecked; if (statusText) statusText.textContent = originalText; alert('❌ Server error while toggling.'); }
+    });
+
+    async function loadLeads() {
+      const tbody = document.getElementById('leadsTableBody');
+      tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Loading leads...</td></tr>';
+      try {
+        const res = await fetch('/api/dashboard/leads', { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.success && data.leads.length > 0) {
+          tbody.innerHTML = data.leads.map(lead => {
+            const date = new Date(lead.createdAt).toLocaleDateString();
+            const statusColors = { 'NEW': 'bg-yellow-100 text-yellow-800', 'CONTACTED': 'bg-blue-100 text-blue-800', 'CONVERTED': 'bg-green-100 text-green-800', 'LOST': 'bg-red-100 text-red-800' };
+            return `<tr class="bg-white border-b hover:bg-gray-50">
+              <td class="px-4 py-3 whitespace-nowrap">${date}</td>
+              <td class="px-4 py-3 font-medium text-gray-900">${lead.phoneNumber}</td>
+              <td class="px-4 py-3 max-w-xs truncate" title="${lead.firstMessage}">${lead.firstMessage}</td>
+              <td class="px-4 py-3"><select onchange="updateLead('${lead.id}', 'status', this.value)" class="text-xs font-semibold px-2 py-1 rounded-full border-0 ${statusColors[lead.status]} cursor-pointer outline-none">
+                <option value="NEW" ${lead.status === 'NEW' ? 'selected' : ''}>🟡 New</option>
+                <option value="CONTACTED" ${lead.status === 'CONTACTED' ? 'selected' : ''}>🔵 Contacted</option>
+                <option value="CONVERTED" ${lead.status === 'CONVERTED' ? 'selected' : ''}>🟢 Converted</option>
+                <option value="LOST" ${lead.status === 'LOST' ? 'selected' : ''}>🔴 Lost</option>
+              </select></td>
+              <td class="px-4 py-3"><input type="text" id="note-${lead.id}" value="${lead.notes || ''}" placeholder="Add note..." class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500 outline-none"></td>
+              <td class="px-4 py-3"><button onclick="updateLead('${lead.id}', 'notes', document.getElementById('note-${lead.id}').value)" class="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded hover:bg-indigo-700 transition">Save</button></td>
+            </tr>`;
+          }).join('');
+        } else { tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">No leads captured yet. When a new customer messages, they will appear here!</td></tr>'; }
+      } catch (err) { console.error('Failed to load leads', err); tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-red-500">Failed to load leads.</td></tr>'; }
+    }
+
+    async function updateLead(leadId, field, value) {
+      try {
+        const res = await fetch(`/api/dashboard/leads/${leadId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ [field]: value }) });
+        const data = await res.json();
+        if (data.success) console.log('Lead updated successfully');
+      } catch (err) { console.error('Failed to update lead', err); alert('Failed to save changes.'); }
+    }
+
+    async function loadAnalytics() {
+      try {
+        const res = await fetch('/api/dashboard/analytics', { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.success) {
+          if (messageChartInstance) messageChartInstance.destroy();
+          if (leadChartInstance) leadChartInstance.destroy();
+          messageChartInstance = new Chart(document.getElementById('messageChart'), { type: 'bar', data: { labels: data.chartData.labels, datasets: [{ label: 'Messages', data: data.chartData.messageCounts, backgroundColor: 'rgba(59, 130, 246, 0.5)', borderColor: 'rgb(59, 130, 246)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } });
+          leadChartInstance = new Chart(document.getElementById('leadChart'), { type: 'line', data: { labels: data.chartData.labels, datasets: [{ label: 'New Leads', data: data.chartData.leadCounts, borderColor: 'rgb(16, 185, 129)', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } });
+        }
+      } catch (err) { console.error('Failed to load analytics', err); }
+    }
+
+    let currentZones = [];
+    function openZoneModal() {
+      document.getElementById('zoneModal').classList.remove('hidden');
+      const displayText = document.getElementById('currentZonesDisplay').textContent;
+      if (displayText.includes('[')) { try { currentZones = JSON.parse(displayText.replace('Current Zones: ', '')); } catch(e) { currentZones = []; } } 
+      else { currentZones = []; }
+      renderZonesList();
+    }
+    function closeZoneModal() { document.getElementById('zoneModal').classList.add('hidden'); }
+    function renderZonesList() {
+      const container = document.getElementById('zonesListContainer');
+      document.getElementById('zoneCount').textContent = currentZones.length;
+      if (currentZones.length === 0) { container.innerHTML = '<p class="text-gray-400 text-sm w-full text-center py-4">No zones added yet.</p>'; return; }
+      container.innerHTML = currentZones.map((zone, index) => `<div class="bg-white border border-gray-300 text-gray-700 px-3 py-1 rounded-full text-sm flex items-center gap-2 shadow-sm"><span>${zone}</span><button onclick="removeZone(${index})" class="text-red-500 hover:text-red-700 font-bold">&times;</button></div>`).join('');
+    }
+    function addZoneManual() {
+      const input = document.getElementById('newZoneInput');
+      const val = input.value.trim();
+      if (val && !currentZones.includes(val)) { currentZones.push(val); input.value = ''; renderZonesList(); }
+    }
+    function removeZone(index) { currentZones.splice(index, 1); renderZonesList(); }
+    function clearAllZones() { if(confirm('Clear all zones?')) { currentZones = []; renderZonesList(); } }
+    function handleFileUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        const lines = text.split(/[\n,]+/).map(l => l.trim()).filter(l => l.length > 0);
+        let addedCount = 0;
+        lines.forEach(line => { if (!currentZones.includes(line)) { currentZones.push(line); addedCount++; } });
+        alert(`✅ Successfully added ${addedCount} new locations from file!`);
+        renderZonesList();
+        input.value = '';
+      };
+      reader.readAsText(file);
+    }
+    async function saveZones() {
+      try {
+        const res = await fetch('/api/dashboard/service-areas', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ areas: currentZones }) });
+        const data = await res.json();
+        if (data.success) { alert('✅ Service Zones Saved Successfully!'); document.getElementById('currentZonesDisplay').textContent = `Current Zones: ${JSON.stringify(currentZones)}`; closeZoneModal(); } 
+        else { alert('❌ Failed to save.'); }
+      } catch (err) { alert('❌ Server error.'); }
+    }
+
+    function closeReplyBox() { document.getElementById('replyBox').classList.add('hidden'); }
+
+    async function uploadKnowledge() {
+      const fileInput = document.getElementById('knowledgeFile');
+      const statusText = document.getElementById('uploadStatus');
+      const uploadBtn = document.getElementById('uploadBtn');
+      const file = fileInput.files[0];
+      if (!file) { statusText.textContent = '❌ Please select a file first.'; statusText.className = 'text-xs mt-2 font-medium text-red-600'; return; }
+      uploadBtn.disabled = true;
+      uploadBtn.innerHTML = '<span class="animate-spin">⏳</span> Processing...';
+      statusText.textContent = '';
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const res = await fetch('/api/dashboard/upload-knowledge', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData });
+        const data = await res.json();
+        if (res.ok) { 
+          statusText.textContent = `✅ ${data.message}`; 
+          statusText.className = 'text-xs mt-2 font-medium text-green-600'; 
+          fileInput.value = ''; 
+          loadKnowledgeDocuments();
+        } else { statusText.textContent = `❌ ${data.error}`; statusText.className = 'text-xs mt-2 font-medium text-red-600'; }
+      } catch (error) { statusText.textContent = '❌ Network error. Please try again.'; statusText.className = 'text-xs mt-2 font-medium text-red-600'; } 
+      finally { uploadBtn.disabled = false; uploadBtn.innerHTML = '<span>📤</span> Upload & Train'; }
+    }
+
+    async function loadOwnerChats() {
+      try {
+        const res = await fetch('/api/dashboard/chats', { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        const chatContainer = document.getElementById('recentChats');
+        if (!chatContainer) return;
+        if (res.ok && data.chats && data.chats.length > 0) {
+          // 🚨 CHANGED TO SINGLE COLUMN ROWS
+          chatContainer.className = 'flex flex-col gap-3 mb-6 max-h-96 overflow-y-auto p-1';
+          chatContainer.innerHTML = data.chats.map(chat => {
+            const truncatedMessage = chat.lastMessage.length > 80 ? chat.lastMessage.substring(0, 80) + '...' : chat.lastMessage;
+            const date = new Date(chat.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            return `
+              <div onclick="openReplyBox('${chat.phoneNumber}')" class="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:border-indigo-300 hover:shadow-md cursor-pointer transition bg-white hover:bg-gray-50">
+                <div class="flex-1 min-w-0 pr-4">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="font-bold text-gray-800 text-sm truncate">+${chat.phoneNumber}</span>
+                    <span class="text-xs text-gray-500 whitespace-nowrap ml-2">${date}</span>
+                  </div>
+                  <p class="text-sm text-gray-600 truncate">${truncatedMessage}</p>
+                </div>
+                <div class="flex-shrink-0">
+                  <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition">
+                    Reply →
+                  </span>
+                </div>
+              </div>
+            `;
+          }).join('');
+        } else { 
+          chatContainer.className = 'mb-6';
+          chatContainer.innerHTML = '<div class="text-center text-gray-400 py-12">No recent conversations</div>'; 
+        }
+      } catch (error) { console.error('Load owner chats error:', error); }
+    }
+
+    async function loadRecentChatHistory() {
+      try {
+        const res = await fetch('/api/dashboard/chat-history', { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        const chatContainer = document.getElementById('chatHistory');
+        if (!chatContainer) return;
+        if (res.ok && data.messages && data.messages.length > 0) {
+          chatContainer.innerHTML = data.messages.map(msg => {
+            const isOutbound = msg.direction === 'outbound';
+            const date = new Date(msg.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            return `<div class="mb-4 ${isOutbound ? 'ml-8' : 'mr-8'}">
+              <div class="${isOutbound ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'} border rounded-lg p-3">
+                <div class="flex items-start gap-3">
+                  <div class="flex-1">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-xs font-semibold ${isOutbound ? 'text-green-700' : 'text-gray-700'}">${isOutbound ? '🤖 AI Agent' : '👤 Customer'} <span class="text-gray-500 font-normal">(${msg.isAiReply ? 'AI' : 'Manual'})</span></span>
+                      <span class="text-xs text-gray-500">${date}</span>
+                    </div>
+                    <p class="text-sm text-gray-800 break-words">${msg.content}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="text-xs text-gray-500 mt-1 px-2">${isOutbound ? 'To: ' + msg.toNumber : 'From: ' + msg.fromNumber}</div>
+            </div>`;
+          }).join('');
+        } else { 
+          chatContainer.innerHTML = '<div class="text-center text-gray-400 py-12">No messages yet. Send a WhatsApp message to see it here!</div>'; 
+        }
+      } catch (error) { console.error('Load chat history error:', error); }
+    }
+
+    async function loadKnowledgeDocuments() {
+      const listContainer = document.getElementById('documentList');
+      const emptyMsg = document.getElementById('emptyDocsMsg');
+      try {
+        const res = await fetch('/api/dashboard/knowledge', { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (res.ok && data.documents) {
+          listContainer.innerHTML = '';
+          if (data.documents.length === 0) {
+            emptyMsg.classList.remove('hidden');
+          } else {
+            emptyMsg.classList.add('hidden');
+            data.documents.forEach(doc => {
+              const sizeMB = (doc.fileSize / (1024 * 1024)).toFixed(2);
+              const date = new Date(doc.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+              const docRow = document.createElement('div');
+              docRow.className = 'flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-gray-100 transition';
+              docRow.innerHTML = `
+                <div class="flex items-center space-x-3 overflow-hidden">
+                  <div class="text-2xl">${doc.fileName.endsWith('.pdf') ? '📄' : '📝'}</div>
+                  <div class="truncate">
+                    <p class="font-medium text-gray-800 truncate">${doc.fileName}</p>
+                    <p class="text-xs text-gray-500">${sizeMB} MB • Uploaded on ${date}</p>
+                  </div>
+                </div>
+                <button onclick="deleteKnowledgeDocument('${doc.id}', '${doc.fileName.replace(/'/g, "\\'")}')" class="ml-4 px-3 py-1.5 bg-red-50 text-red-600 text-sm font-medium rounded-md hover:bg-red-100 transition flex-shrink-0">🗑️ Delete</button>
+              `;
+              listContainer.appendChild(docRow);
+            });
+          }
+        }
+      } catch (error) { console.error('Failed to load documents:', error); }
+    }
+
+    async function deleteKnowledgeDocument(docId, fileName) {
+      if (!confirm(`Are you sure you want to delete "${fileName}"? The AI will no longer know this information.`)) return;
+      try {
+        const res = await fetch(`/api/dashboard/knowledge/${docId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (res.ok) { alert('✅ Document deleted successfully!'); loadKnowledgeDocuments(); } 
+        else { alert('❌ ' + (data.error || 'Failed to delete.')); }
+      } catch (error) { alert('❌ Network error while deleting.'); }
+    }
+
+    // ============================================
+    // 👨‍💼 AGENTS MANAGEMENT (FIXED)
+    // ============================================
+    async function loadAgents() {
+      const list = document.getElementById('agentsList');
+      if (!list) return;
+      try {
+        const res = await fetch('/api/dashboard/agents', { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (res.ok && data.agents) {
+          if (data.agents.length === 0) {
+            list.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-4">No agents yet. Add your first agent above!</p>';
+            return;
+          }
+          list.innerHTML = data.agents.map(agent => {
+            const languages = JSON.parse(agent.languages || '[]').join(', ');
+            const whatsappDisplay = agent.whatsappNumber ? `• 📱 +${agent.whatsappNumber}` : '• 📱 No WhatsApp';
+            
+            // 🚨 SAFE ESCAPING TO PREVENT HTML BREAKAGE
+            const safeName = agent.name.replace(/'/g, "\\'");
+            const safeEmail = agent.email.replace(/'/g, "\\'");
+            const safeWhatsapp = (agent.whatsappNumber || '').replace(/'/g, "\\'");
+            const safeLangs = JSON.stringify(agent.languages).replace(/"/g, '&quot;');
+            
+            return `
+              <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200">
+                <div class="flex items-center space-x-3">
+                  <div class="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm">
+                    ${agent.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p class="font-medium text-gray-800 text-sm">${agent.name}</p>
+                    <p class="text-xs text-gray-500">${languages || 'English'} ${agent.email ? '• ' + agent.email : ''} ${whatsappDisplay}</p>
+                  </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" ${agent.isAvailable ? 'checked' : ''} 
+                           onchange="toggleAgentAvailability('${agent.id}', this.checked)" class="sr-only peer">
+                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
+                    <span class="ml-2 text-xs font-medium ${agent.isAvailable ? 'text-green-600' : 'text-gray-400'}">
+                      ${agent.isAvailable ? 'Available' : 'Offline'}
+                    </span>
+                  </label>
+                  <button onclick="editAgent('${agent.id}', '${safeName}', '${safeEmail}', '${safeWhatsapp}', '${safeLangs}')" class="px-3 py-1 bg-blue-50 text-blue-600 rounded text-xs font-medium hover:bg-blue-100 transition">✏️ Edit</button>
+                  <button onclick="deleteAgent('${agent.id}', '${safeName}')" class="px-2 py-1 bg-red-50 text-red-600 text-xs rounded hover:bg-red-100 transition">🗑️</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      } catch (error) { console.error('Failed to load agents:', error); }
+    }
+
+    async function createAgent() {
+      const name = document.getElementById('agentName').value.trim();
+      const email = document.getElementById('agentEmail').value.trim();
+      const whatsapp = document.getElementById('agentWhatsapp').value.trim().replace(/\D/g, '');
+      const languagesStr = document.getElementById('agentLanguages').value.trim();
+      
+      if (!name) { alert('Please enter agent name'); return; }
+      if (!email || !email.includes('@')) { alert('Please enter a valid agent email for login.'); return; }
+      if (!whatsapp || whatsapp.length < 10) { alert('Please enter a valid WhatsApp number (min 10 digits).'); return; }
+      if (!languagesStr) { alert('Please enter at least one language.'); return; }
+      
+      const languages = languagesStr.split(',').map(l => l.trim());
+      
+      try {
+        const res = await fetch('/api/dashboard/agents', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, whatsappNumber: whatsapp, languages })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          alert(data.message);
+          document.getElementById('agentName').value = '';
+          document.getElementById('agentEmail').value = '';
+          document.getElementById('agentWhatsapp').value = '';
+          document.getElementById('agentLanguages').value = '';
+          loadAgents();
+        } else { alert('❌ ' + data.error); }
+      } catch (error) { alert('❌ Network error'); }
+    }
+
+    // 🚨 NEW: Edit Agent Function (Populates Form)
+    function editAgent(agentId, agentName, agentEmail, agentWhatsapp, agentLanguagesJson) {
+      let languagesStr = '';
+      try {
+        const langs = JSON.parse(agentLanguagesJson);
+        languagesStr = Array.isArray(langs) ? langs.join(', ') : agentLanguagesJson;
+      } catch (e) {
+        languagesStr = agentLanguagesJson;
+      }
+
+      document.getElementById('agentName').value = agentName;
+      document.getElementById('agentEmail').value = agentEmail;
+      document.getElementById('agentWhatsapp').value = agentWhatsapp || '';
+      document.getElementById('agentLanguages').value = languagesStr;
+
+      const submitBtn = document.getElementById('agentSubmitBtn');
+      if (submitBtn) {
+        submitBtn.textContent = '💾 Update Agent';
+        submitBtn.setAttribute('onclick', `updateAgent('${agentId}')`);
+        submitBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+        submitBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+      }
+      
+      document.getElementById('agentName').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // 🚨 NEW: Update Agent Function
+    async function updateAgent(agentId) {
+      const name = document.getElementById('agentName').value.trim();
+      const email = document.getElementById('agentEmail').value.trim();
+      const whatsapp = document.getElementById('agentWhatsapp').value.trim().replace(/\D/g, '');
+      const languagesStr = document.getElementById('agentLanguages').value.trim();
+      
+      if (!name || !email) { alert('Name and Email are required.'); return; }
+      
+      const languages = languagesStr ? languagesStr.split(',').map(l => l.trim()) : ['English'];
+      
+      try {
+        const res = await fetch(`/api/dashboard/agents/${agentId}`, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, whatsappNumber: whatsapp, languages })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          alert('✅ Agent updated successfully!');
+          document.getElementById('agentName').value = '';
+          document.getElementById('agentEmail').value = '';
+          document.getElementById('agentWhatsapp').value = '';
+          document.getElementById('agentLanguages').value = '';
+          
+          const submitBtn = document.getElementById('agentSubmitBtn');
+          if (submitBtn) {
+            submitBtn.textContent = '➕ Add Agent & Send Invite';
+            submitBtn.setAttribute('onclick', 'createAgent()');
+            submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            submitBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+          }
+          loadAgents();
+        } else { alert('❌ ' + data.error); }
+      } catch (error) { alert('❌ Network error'); }
+    }
+
+    async function toggleAgentAvailability(agentId, isAvailable) {
+      try {
+        await fetch(`/api/dashboard/agents/${agentId}`, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isAvailable })
+        });
+        loadAgents();
+      } catch (error) { console.error('Failed to toggle agent:', error); }
+    }
+
+    async function deleteAgent(agentId, agentName) {
+      if (!confirm(`Delete agent "${agentName}"?`)) return;
+      try {
+        const res = await fetch(`/api/dashboard/agents/${agentId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        if (res.ok) { alert('✅ Agent deleted'); loadAgents(); }
+      } catch (error) { alert('❌ Network error'); }
+    }
+
+    // ============================================
+    // 💬 PER-USER CONVERSATIONS MANAGEMENT
+    // ============================================
+    async function loadConversations() {
+      const list = document.getElementById('conversationsList');
+      if (!list) return;
+      try {
+        const res = await fetch('/api/dashboard/conversations', { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (res.ok && data.conversations) {
+          if (data.conversations.length === 0) {
+            list.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-4">No conversations yet. They appear when users message your bot.</p>';
+            return;
+          }
+          list.innerHTML = data.conversations.map(conv => {
+            const isAI = conv.mode === 'AI';
+            const agentName = conv.assignedAgent?.name || 'Unassigned';
+            const time = new Date(conv.lastMessageAt).toLocaleString();
+            return `
+              <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200">
+                <div class="flex items-center space-x-3 flex-1 min-w-0">
+                  <div class="w-8 h-8 ${isAI ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-600'} rounded-full flex items-center justify-center font-bold text-sm">
+                    ${isAI ? '🤖' : '👨‍💼'}
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <p class="font-medium text-gray-800 text-sm truncate">+${conv.userNumber}</p>
+                    <p class="text-xs text-gray-500">${isAI ? 'AI Mode' : `Human: ${agentName}`} • Last: ${time}</p>
+                  </div>
+                </div>
+                <div class="flex items-center space-x-2 flex-shrink-0">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" ${isAI ? 'checked' : ''} 
+                           onchange="toggleConversationMode('${conv.id}', this.checked)" class="sr-only peer">
+                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-500"></div>
+                    <span class="ml-2 text-xs font-medium ${isAI ? 'text-purple-600' : 'text-orange-600'}">
+                      ${isAI ? '🤖 AI' : '👨‍💻 Human'}
+                    </span>
+                  </label>
+                  <button onclick="deleteConversation('${conv.id}', '+${conv.userNumber}')" class="px-2 py-1 bg-red-50 text-red-600 text-xs rounded hover:bg-red-100">🗑️</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      } catch (error) { console.error('Failed to load conversations:', error); }
+    }
+
+    async function toggleConversationMode(convId, isAI) {
+      try {
+        await fetch(`/api/dashboard/conversations/${convId}/mode`, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: isAI ? 'AI' : 'HUMAN' })
+        });
+        loadConversations();
+      } catch (error) { console.error('Failed to toggle mode:', error); }
+    }
+
+    async function deleteConversation(convId, userNumber) {
+      if (!confirm(`Delete conversation with ${userNumber}?`)) return;
+      try {
+        const res = await fetch(`/api/dashboard/conversations/${convId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        if (res.ok) { alert('✅ Conversation deleted'); loadConversations(); }
+      } catch (error) { alert('❌ Network error'); }
+    }
+
+    // ============================================
+    // 📥 LIVE INBOX FUNCTIONS
+    // ============================================
+    let currentReplyNumber = null;
+
+    async function loadRecentChats() {
+      const chatContainer = document.getElementById('recentChats');
+      if (!chatContainer) return;
+      try {
+        const res = await fetch('/api/dashboard/chats', { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (res.ok && data.chats && data.chats.length > 0) {
+          // 🚨 CHANGED TO SINGLE COLUMN ROWS
+          chatContainer.className = 'flex flex-col gap-3 mb-6 max-h-96 overflow-y-auto p-1';
+          chatContainer.innerHTML = data.chats.map(chat => {
+            const truncatedMessage = chat.lastMessage.length > 80 ? chat.lastMessage.substring(0, 80) + '...' : chat.lastMessage;
+            const date = new Date(chat.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            return `
+              <div onclick="openReplyBox('${chat.phoneNumber}')" class="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:border-indigo-300 hover:shadow-md cursor-pointer transition bg-white hover:bg-gray-50">
+                <div class="flex-1 min-w-0 pr-4">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="font-bold text-gray-800 text-sm truncate">+${chat.phoneNumber}</span>
+                    <span class="text-xs text-gray-500 whitespace-nowrap ml-2">${date}</span>
+                  </div>
+                  <p class="text-sm text-gray-600 truncate">${truncatedMessage}</p>
+                </div>
+                <div class="flex-shrink-0">
+                  <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition">
+                    Reply →
+                  </span>
+                </div>
+              </div>
+            `;
+          }).join('');
+        } else { 
+          chatContainer.className = 'mb-6';
+          chatContainer.innerHTML = '<div class="text-center text-gray-400 py-12">No recent conversations</div>'; 
+        }
+      } catch (error) { console.error('Load recent chats error:', error); }
+    }
+
+    function openReplyBox(number) {
+      currentReplyNumber = number;
+      document.getElementById('replyToNumber').textContent = '+' + number;
+      document.getElementById('replyBox').classList.remove('hidden');
+      document.getElementById('manualReplyText').value = '';
+      document.getElementById('manualReplyText').focus();
+      setTimeout(() => { document.getElementById('replyBox').scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
+    }
+
+    function insertQuickReply() {
+      const select = document.getElementById('quickReplies');
+      const textarea = document.getElementById('manualReplyText');
+      const selectedText = select.value;
+      if (selectedText) {
+        if (textarea.value.trim().length > 0) { textarea.value = textarea.value + '\n\n' + selectedText; } 
+        else { textarea.value = selectedText; }
+        select.value = "";
+        textarea.focus();
+      }
+    }
+
+    async function sendManualReply() {
+      if (!currentReplyNumber) return;
+      const content = document.getElementById('manualReplyText').value.trim();
+      if (!content) { alert('Please type a message first.'); return; }
+      try {
+        const res = await fetch('/api/dashboard/agent/send-message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ userNumber: currentReplyNumber, content: content })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          alert('✅ Message sent successfully!');
+          document.getElementById('manualReplyText').value = '';
+          closeReplyBox();
+          loadRecentChats();
+          loadConversations();
+        } else { alert('❌ Failed to send: ' + (data.error || 'Unknown error')); }
+      } catch (error) { console.error('Send manual reply error:', error); alert('❌ Network error. Please try again.'); }
+    }
+
+    // 🔑 Password Modal Functions
+    function openPasswordModal(forceMode = false) {
+      document.getElementById('passwordModal').classList.remove('hidden');
+      const cancelBtn = document.querySelector('#passwordModal button[onclick="closePasswordModal()"]');
+      if (cancelBtn && forceMode) { cancelBtn.style.display = 'none'; }
+    }
+
+    function closePasswordModal() {
+      document.getElementById('passwordModal').classList.add('hidden');
+      document.getElementById('passwordChangeForm').reset();
+      document.getElementById('passwordChangeMessage').textContent = '';
+      const btn = document.getElementById('updatePasswordBtn');
+      if (btn) { btn.disabled = false; btn.innerHTML = '<span>✅</span> Update Password'; }
+    }
+
+    function forgotPasswordFromModal() {
+      closePasswordModal();
+      localStorage.removeItem('token');
+      window.location.href = '/forgot-password.html';
+    }
+
+    document.getElementById('passwordChangeForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const currentPassword = document.getElementById('currentPassword').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const msg = document.getElementById('passwordChangeMessage');
+      const btn = document.getElementById('updatePasswordBtn');
+      
+      if (!currentPassword || !newPassword) {
+        msg.textContent = '❌ Please fill in all fields.';
+        msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+        return;
+      }
+      if (newPassword.length < 6) {
+        msg.textContent = '❌ New password must be at least 6 characters.';
+        msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳</span> Updating...';
+      msg.textContent = '';
+
+      try {
+        const res = await fetch('/api/auth/change-password', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ currentPassword, newPassword })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          msg.textContent = '✅ Password changed successfully! You will be logged out.';
+          msg.className = 'mt-3 text-center text-sm text-green-600 font-bold';
+          setTimeout(() => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('tenant');
+            window.location.href = '/login';
+          }, 2000);
+        } else {
+          msg.textContent = '❌ ' + (data.error || 'Failed to change password.');
+          msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+          btn.disabled = false;
+          btn.innerHTML = '<span>✅</span> Update Password';
+        }
+      } catch (error) {
+        console.error('❌ Password change error:', error);
+        msg.textContent = '❌ Network error. Please try again.';
+        msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+        btn.disabled = false;
+        btn.innerHTML = '<span>✅</span> Update Password';
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('forceChange') === 'true') {
+        openPasswordModal(true); 
+        window.history.replaceState({}, document.title, "/dashboard");
+      }
+      console.log("🚀 Dashboard loading...");
+      if (typeof loadDashboard === 'function') loadDashboard();
+      if (typeof loadLeads === 'function') loadLeads();
+      if (typeof loadRecentChatHistory === 'function') loadRecentChatHistory();
+      if (typeof loadAgents === 'function') loadAgents();
+      if (typeof loadConversations === 'function') loadConversations();
+      if (typeof loadKnowledgeDocuments === 'function') loadKnowledgeDocuments();
+      console.log("✅ All dashboard functions initialized.");
+    });
+
+    function logout() { 
+      localStorage.clear(); 
+      window.location.href = '/login'; 
+    }
+  </script>
+</body>
+</html>
