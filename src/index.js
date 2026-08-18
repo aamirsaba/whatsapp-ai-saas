@@ -601,39 +601,40 @@ app.get('/forgot-password', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'forgot-password.html'));
 });
 
-// 🚀 FORGOT PASSWORD - Generate & Email a Temporary Password (Simple & Secure)
+// 🚀 FORGOT PASSWORD - Generate & Email Temporary Password (Simple & Safe)
 app.post('/api/auth/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
+    console.log(` Forgot password request for: ${email}`);
     
-    // 1. Check if user exists
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      // Security: Always return success message even if email doesn't exist
+      console.log(`⚠️ User not found: ${email} (returning success for security)`);
       return res.json({ success: true, message: 'If an account with this email exists, a new password has been sent to your inbox.' });
     }
 
-    // 2. Generate a simple, 8-character temporary password
+    // 1. Generate a simple, 8-character temporary password
     const crypto = require('crypto');
     const tempPassword = crypto.randomBytes(4).toString('hex'); // e.g., "a1b2c3d4"
+    console.log(` Generated temporary password for ${email}`);
     
-    // 3. Hash it and save to the database immediately
+    // 2. Hash it and save ONLY the password to the database (NO resetToken!)
     const bcrypt = require('bcryptjs');
     const hashedPassword = await bcrypt.hash(tempPassword, 10);
     
     await prisma.user.update({
       where: { id: user.id },
-      data: { password: hashedPassword }
+      data: { password: hashedPassword } 
     });
 
-    // 4. Send the email using your PERFECT email.js function
+    // 3. Send the email using your email.js function
     const { sendPasswordResetEmail } = require('./email');
     await sendPasswordResetEmail(email, tempPassword);
+    console.log(`✅ Password reset email sent to ${email}`);
 
-    // 5. Return success
     res.json({ success: true, message: 'If an account with this email exists, a new password has been sent to your inbox.' });
   } catch (error) {
-    console.error('Forgot password error:', error);
+    console.error(' Forgot password error:', error);
     res.status(500).json({ error: 'Failed to process request.' });
   }
 });
