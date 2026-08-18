@@ -330,6 +330,50 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
   }
 });
 
+//  CHECK AGENT AVAILABILITY (Considering Active Conversations)
+app.get('/api/dashboard/agents/available', authenticateToken, async (req, res) => {
+  try {
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    // Get all available agents
+    const agents = await prisma.agent.findMany({
+      where: { 
+        tenantId: tenant.id,
+        isAvailable: true
+      }
+    });
+
+    // Get all active human conversations
+    const activeConversations = await prisma.conversation.findMany({
+      where: {
+        tenantId: tenant.id,
+        mode: 'HUMAN',
+        assignedAgentId: { not: null }
+      },
+      include: { assignedAgent: true }
+    });
+
+    // Find which agents are busy
+    const busyAgentIds = activeConversations.map(c => c.assignedAgentId);
+    
+    // Filter to only truly available agents
+    const availableAgents = agents.filter(a => !busyAgentIds.includes(a.id));
+
+    res.json({ 
+      success: true, 
+      agents: availableAgents,
+      busyAgents: activeConversations.map(c => ({
+        agentId: c.assignedAgentId,
+        agentName: c.assignedAgent?.name,
+        userNumber: c.userNumber
+      }))
+    });
+  } catch (error) {
+    console.error('Check agent availability error:', error);
+    res.status(500).json({ error: 'Failed to check agent availability.' });
+  }
+});
 
 // 🚀 SAVE AI SETTINGS (WITH SMART WHATSAPP NUMBER CHANGE HANDLING)
 app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {

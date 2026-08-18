@@ -183,13 +183,43 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       }
 
       // ==========================================
-      // 3. HANDLE "TALK TO HUMAN" REQUEST
+      // 3. HANDLE "TALK TO HUMAN" REQUEST (SMART ROUTING)
       // ==========================================
       if (wantsHuman && conversation.mode === 'AI') {
-        const availableAgent = await prisma.agent.findFirst({
-          where: { tenantId: tenant.id, isAvailable: true },
-          orderBy: { createdAt: 'asc' }
+        // 1. Get ALL agents for this tenant
+        const allAgents = await prisma.agent.findMany({
+          where: { tenantId: tenant.id }
         });
+
+        if (allAgents.length === 0) {
+          const noAgentMsg = `👨‍💼 I understand you'd like to speak with a human. Unfortunately, we don't have any human agents set up yet. Please say "talk to AI" and I'll be happy to help you!`;
+          await sock.sendMessage(msg.key.remoteJid, { text: noAgentMsg });
+          await prisma.message.create({ data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: noAgentMsg, isAiReply: true } });
+          return;
+        }
+
+        // 2. Check if ANY agent is online (isAvailable: true)
+        const onlineAgents = allAgents.filter(a => a.isAvailable);
+        
+        if (onlineAgents.length === 0) {
+          const offlineMsg = `👨‍💼 I understand you'd like to speak with a human. Unfortunately, all our agents are currently offline. Please try again during business hours, or say "talk to AI" and I'll be happy to help you!`;
+          await sock.sendMessage(msg.key.remoteJid, { text: offlineMsg });
+          await prisma.message.create({ data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: offlineMsg, isAiReply: true } });
+          return;
+        }
+
+        // 3. Check which online agents are currently BUSY (assigned to other active HUMAN conversations)
+        const activeHumanConversations = await prisma.conversation.findMany({
+          where: { 
+            tenantId: tenant.id, 
+            mode: 'HUMAN', 
+            assignedAgentId: { not: null } 
+          }
+        });
+        const busyAgentIds = activeHumanConversations.map(c => c.assignedAgentId);
+
+        // 4. Find an online agent who is NOT busy
+        const availableAgent = onlineAgents.find(a => !busyAgentIds.includes(a.id));
 
         if (availableAgent) {
           conversation = await prisma.conversation.update({
@@ -198,7 +228,8 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
             include: { assignedAgent: true }
           });
           
-          const handoffMsg = `👨‍💼 Perfect! I'm connecting you with our specialist *${availableAgent.name}* now. They speak ${JSON.parse(availableAgent.languages).join(', ')} and will reply shortly!\n\n(Your chat is now with a human. Say "talk to AI" anytime to switch back.)`;
+          const languages = JSON.parse(availableAgent.languages || '["English"]');
+          const handoffMsg = `👨‍💼 Perfect! I'm connecting you with our specialist *${availableAgent.name}* now. They speak ${languages.join(', ')} and will reply shortly!\n\n(Your chat is now with a human. Say "talk to AI" anytime to switch back.)`;
           
           await sock.sendMessage(msg.key.remoteJid, { text: handoffMsg });
           await prisma.message.create({ data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: handoffMsg, isAiReply: true } });
@@ -206,7 +237,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
           // Send INSTANT ALERT to the AGENT via WhatsApp
           if (availableAgent.whatsappNumber) {
             const agentJid = availableAgent.whatsappNumber.replace(/\D/g, '') + '@s.whatsapp.net';
-            const alertMsg = `🚨 *URGENT: Human Handoff Required!*\n\n👤 *Customer:* +${fromNumber}\n💬 *Customer just said:* "${text}"\n\n🔗 *Login to reply:* https://bot.aamirsaba.com/login\n\nPlease log in to your Agent Dashboard immediately to assist this customer.`;            
+            const alertMsg = `🚨 *URGENT: Human Handoff Required!*\n\n👤 *Customer:* +${fromNumber}\n💬 *Customer just said:* "${text}"\n\n🔗 *Login to reply:* https://bot.aamirsaba.com/agent-dashboard\n\nPlease log in to your Agent Dashboard immediately to assist this customer.`;            
             try {
               await sock.sendMessage(agentJid, { text: alertMsg });
               console.log(`✅ Alert sent to agent ${availableAgent.name} at ${availableAgent.whatsappNumber}`);
@@ -218,9 +249,10 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
           console.log(`🔄 Auto-handoff: ${fromNumber} → Agent ${availableAgent.name}`);
           return; // Stop here, don't call AI
         } else {
-          const noAgentMsg = `👨‍💼 I understand you'd like to speak with a human. Unfortunately, all our agents are currently busy. Please try again in a few minutes, or say "talk to AI" and I'll be happy to help you!`;
-          await sock.sendMessage(msg.key.remoteJid, { text: noAgentMsg });
-          await prisma.message.create({ data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: noAgentMsg, isAiReply: true } });
+          // All online agents are currently busy with other chats
+          const busyMsg = `👨‍💼 I understand you'd like to speak with a human. Unfortunately, all our available agents are currently busy with other customers. Please try again in a few minutes, or say "talk to AI" and I'll be happy to help you!`;
+          await sock.sendMessage(msg.key.remoteJid, { text: busyMsg });
+          await prisma.message.create({ data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: busyMsg, isAiReply: true } });
           return;
         }
       }

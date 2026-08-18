@@ -42,7 +42,9 @@
     <div class="flex items-center gap-2">
       <!-- Show on all screen sizes now -->
       <a href="/update-password.html" class="text-xs sm:text-sm bg-gray-100 text-gray-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-gray-200 transition font-medium">🔑 Change</a>
-      <a href="/forgot-password.html" class="text-xs sm:text-sm bg-indigo-50 text-indigo-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-indigo-100 transition font-medium hidden sm:block">Forgot?</a>
+
+<a href="/forgot-password.html" class="text-xs sm:text-sm bg-indigo-50 text-indigo-700 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-indigo-100 transition font-medium">Forgot?</a>
+
       <button onclick="logout()" class="text-xs sm:text-sm bg-red-50 text-red-600 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-red-100 transition font-medium">Logout</button>
     </div>
   </div>
@@ -799,56 +801,63 @@ async function loadAgents() {
       } catch (error) { console.error('Failed to toggle agent:', error); }
     }
 
-// EDIT AGENT - Populates the form for editing
-function editAgent(agentId) {
-  // Find the agent card element
-  const agentCard = document.querySelector(`[data-agent-id="${agentId}"]`);
-  
-  if (!agentCard) {
-    alert('❌ Agent not found. Please refresh the page.');
-    return;
-  }
-  
-  // Get data from attributes
-  const name = agentCard.getAttribute('data-name');
-  const email = agentCard.getAttribute('data-email');
-  const whatsapp = agentCard.getAttribute('data-whatsapp');
-  const languagesJson = agentCard.getAttribute('data-languages');
-  
-  // Parse languages JSON and convert to comma-separated string
-  let languagesStr = '';
+// EDIT AGENT - Fetches fresh data from API
+async function editAgent(agentId) {
   try {
-    const languagesArray = JSON.parse(languagesJson);
-    if (Array.isArray(languagesArray)) {
-      languagesStr = languagesArray.join(', ');
-    } else {
-      languagesStr = languagesJson;
+    // Fetch fresh agent data from API
+    const res = await fetch('/api/dashboard/agents', { 
+      headers: { 'Authorization': `Bearer ${token}` } 
+    });
+    const data = await res.json();
+    
+    if (!res.ok || !data.agents) {
+      alert('❌ Failed to load agent data.');
+      return;
     }
-  } catch (e) {
-    console.error('Error parsing languages:', e);
-    languagesStr = languagesJson || '';
+    
+    // Find the specific agent
+    const agent = data.agents.find(a => a.id === agentId);
+    if (!agent) {
+      alert('❌ Agent not found.');
+      return;
+    }
+    
+    // Parse languages properly
+    let languagesStr = '';
+    try {
+      const languagesArray = JSON.parse(agent.languages || '[]');
+      if (Array.isArray(languagesArray)) {
+        languagesStr = languagesArray.join(', ');
+      } else {
+        languagesStr = agent.languages || '';
+      }
+    } catch (e) {
+      languagesStr = agent.languages || '';
+    }
+    
+    // Populate form
+    document.getElementById('agentName').value = agent.name || '';
+    document.getElementById('agentEmail').value = agent.email || '';
+    document.getElementById('agentWhatsapp').value = agent.whatsappNumber || '';
+    document.getElementById('agentLanguages').value = languagesStr;
+    
+    // Change button to Update mode
+    const submitBtn = document.getElementById('agentSubmitBtn');
+    if (submitBtn) {
+      submitBtn.innerHTML = '<span>💾</span><span>Update Agent</span>';
+      submitBtn.setAttribute('onclick', `updateAgent('${agentId}')`);
+      submitBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+      submitBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+    }
+    
+    // Scroll to form
+    document.getElementById('agentName').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    window.editingAgentId = agentId;
+    
+  } catch (error) {
+    console.error('Edit agent error:', error);
+    alert('❌ Network error. Please try again.');
   }
-  
-  // Populate the form fields
-  document.getElementById('agentName').value = name || '';
-  document.getElementById('agentEmail').value = email || '';
-  document.getElementById('agentWhatsapp').value = whatsapp || '';
-  document.getElementById('agentLanguages').value = languagesStr;
-  
-  // Change button to "Update" mode
-  const submitBtn = document.getElementById('agentSubmitBtn');
-  if (submitBtn) {
-    submitBtn.innerHTML = '<span>💾</span><span>Update Agent</span>';
-    submitBtn.setAttribute('onclick', `updateAgent('${agentId}')`);
-    submitBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
-    submitBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
-  }
-  
-  // Scroll to form
-  document.getElementById('agentName').scrollIntoView({ behavior: 'smooth', block: 'center' });
-  
-  // Store agent ID for update
-  window.editingAgentId = agentId;
 }
 
 // UPDATE AGENT - Saves the edited agent
