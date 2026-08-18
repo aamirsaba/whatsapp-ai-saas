@@ -6,6 +6,22 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <title>Dashboard - Universal AI SaaS</title>
   <script src="https://cdn.tailwindcss.com"></script>
+<style>
+  /* Mobile optimizations */
+  @media (max-width: 640px) {
+    .btn-text-sm {
+      font-size: 0.75rem;
+      padding: 0.5rem 0.75rem;
+    }
+    .table-cell-sm {
+      font-size: 0.7rem;
+      padding: 0.5rem;
+    }
+    .hide-on-mobile {
+      display: none;
+    }
+  }
+</style>
 </head>
 <body class="bg-gray-50 min-h-screen">
   
@@ -816,25 +832,38 @@ async function loadDashboard() {
       }
     }
 
-    async function sendManualReply() {
-      if (!currentReplyNumber) return;
-      const content = document.getElementById('manualReplyText').value.trim();
-      if (!content) { alert('Please type a message first.'); return; }
-      try {
-        const res = await fetch('/api/dashboard/agent/send-message', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ userNumber: currentReplyNumber, content: content })
-        });
-        const data = await res.json();
-        if (res.ok) {
-          alert('✅ Message sent successfully!');
-          document.getElementById('manualReplyText').value = '';
-          closeReplyBox();
-          loadRecentChats();
-        } else { alert('❌ Failed to send: ' + (data.error || 'Unknown error')); }
-      } catch (error) { console.error('Send manual reply error:', error); alert('❌ Network error. Please try again.'); }
+async function sendManualReply() {
+  if (!currentReplyNumber) return;
+  const content = document.getElementById('manualReplyText').value.trim();
+  if (!content) { alert('Please type a message first.'); return; }
+  
+  try {
+    const res = await fetch('/api/dashboard/agent/send-message', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      },
+      body: JSON.stringify({ 
+        userNumber: currentReplyNumber, 
+        content: content 
+      })
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      alert('✅ Message sent successfully!');
+      document.getElementById('manualReplyText').value = '';
+      closeReplyBox();
+      loadRecentChats();
+    } else {
+      alert('❌ Failed to send: ' + (data.error || 'Unknown error'));
     }
+  } catch (error) {
+    console.error('Send manual reply error:', error);
+    alert('❌ Network error. Please try again.');
+  }
+}
 
     // LOAD LEADS
     async function loadLeads() {
