@@ -625,23 +625,106 @@ async function loadDashboard() {
       if (sectionName === 'knowledge') loadKnowledgeDocuments();
     }
 
-    // LOAD DASHBOARD DATA
-    async function loadDashboardData() {
-      try {
-        const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
-        const data = await res.json();
-        if (data.success) {
-          // Update stats
-          document.getElementById('totalMessages').textContent = data.messages?.length || 0;
-          document.getElementById('activeLeads').textContent = Math.floor(Math.random() * 20) + 5; // Placeholder
-          document.getElementById('activeAgents').textContent = Math.floor(Math.random() * 5) + 1; // Placeholder
-          
-          // Load charts
-          loadAnalytics();
-        }
-      } catch (err) { console.error('Failed to load dashboard', err); }
+// LOAD DASHBOARD DATA (With REAL stats)
+async function loadDashboardData() {
+  try {
+    // 1. Fetch tenant data
+    const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+    const data = await res.json();
+    
+    if (data.success && data.tenant) {
+      // Update top header
+      const topNameEl = document.getElementById('topBusinessName');
+      const topWaEl = document.getElementById('topWhatsappNumber');
+      
+      if (topNameEl) topNameEl.textContent = data.tenant.businessName || 'My Business';
+      if (topWaEl) topWaEl.textContent = data.tenant.whatsappNumber ? ` +${data.tenant.whatsappNumber}` : 'Loading...';
+      
+      // Update welcome banner
+      const welcomeNameEl = document.getElementById('businessName');
+      if (welcomeNameEl) welcomeNameEl.textContent = data.tenant.businessName || 'User';
+      
+      // Populate settings form
+      const settingsNameEl = document.getElementById('settingsBusinessName');
+      const settingsWaEl = document.getElementById('settingsWhatsappNumber');
+      
+      if (settingsNameEl) settingsNameEl.value = data.tenant.businessName || '';
+      if (settingsWaEl) settingsWaEl.value = data.tenant.whatsappNumber || '';
+      
+      document.getElementById('llmApiKey').value = data.tenant.llmApiKey || '';
+      document.getElementById('systemPrompt').value = data.tenant.systemPrompt || '';
+      
+      // Safely decode HTML entities for Business Context
+      const contextEl = document.getElementById('businessContext');
+      if (contextEl && data.tenant.businessContext) {
+        const txt = document.createElement("textarea");
+        txt.innerHTML = data.tenant.businessContext;
+        contextEl.value = txt.value;
+      } else if (contextEl) {
+        contextEl.value = '';
+      }
+      
+      document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
+      document.getElementById('llmModel').value = data.tenant.llmModel || '';
+      document.getElementById('aiAgentName').value = data.tenant.aiAgentName || '';
+      
+      // Populate contact info
+      if (data.tenant.contactInfo) {
+        const lines = data.tenant.contactInfo.split('\n');
+        const getValue = (prefix) => lines.find(l => l.startsWith(prefix))?.split(': ')[1]?.trim() || '';
+        document.getElementById('contactPerson').value = getValue('Contact Person');
+        document.getElementById('contactEmail').value = getValue('Email');
+        document.getElementById('contactPhone').value = getValue('Phone/WhatsApp');
+        document.getElementById('contactWebsite').value = getValue('Website');
+        document.getElementById('contactNotes').value = getValue('Notes');
+      }
+      
+      // Update Human Mode Toggle
+      document.getElementById('humanModeToggle').checked = data.tenant.isHumanMode || false;
+      
+      // 2. Fetch REAL stats from multiple endpoints
+      await loadRealStats();
+      
+      // 3. Load charts
+      loadAnalytics();
     }
+  } catch (err) { 
+    console.error('Failed to load dashboard', err); 
+  }
+}
 
+// LOAD REAL STATS (Messages, Leads, Agents)
+async function loadRealStats() {
+  try {
+    // Fetch messages count
+    const messagesRes = await fetch('/api/dashboard/chat-history', { headers: { 'Authorization': `Bearer ${token}` } });
+    const messagesData = await messagesRes.json();
+    const totalMessages = messagesData.success ? messagesData.messages.length : 0;
+    
+    // Fetch leads count
+    const leadsRes = await fetch('/api/dashboard/leads', { headers: { 'Authorization': `Bearer ${token}` } });
+    const leadsData = await leadsRes.json();
+    const activeLeads = leadsData.success ? leadsData.leads.length : 0;
+    
+    // Fetch agents count
+    const agentsRes = await fetch('/api/dashboard/agents', { headers: { 'Authorization': `Bearer ${token}` } });
+    const agentsData = await agentsRes.json();
+    const activeAgents = agentsData.success ? agentsData.agents.length : 0;
+    
+    // Update the stat cards with REAL numbers
+    const totalMsgEl = document.getElementById('totalMessages');
+    const activeLeadsEl = document.getElementById('activeLeads');
+    const activeAgentsEl = document.getElementById('activeAgents');
+    
+    if (totalMsgEl) totalMsgEl.textContent = totalMessages;
+    if (activeLeadsEl) activeLeadsEl.textContent = activeLeads;
+    if (activeAgentsEl) activeAgentsEl.textContent = activeAgents;
+    
+    console.log(`✅ Real stats loaded: ${totalMessages} messages, ${activeLeads} leads, ${activeAgents} agents`);
+  } catch (err) {
+    console.error('Failed to load real stats:', err);
+  }
+}
     // LOAD ANALYTICS
     async function loadAnalytics() {
       try {
