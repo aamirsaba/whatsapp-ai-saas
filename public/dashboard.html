@@ -801,33 +801,39 @@ async function loadAgents() {
 
 // EDIT AGENT - Populates the form for editing
 function editAgent(agentId) {
-  // Find the agent from the current list
-  const agentsList = document.getElementById('agentsList');
-  const agentCards = agentsList.querySelectorAll('[data-agent-id]');
+  // Find the agent card element
+  const agentCard = document.querySelector(`[data-agent-id="${agentId}"]`);
   
-  let agentData = null;
-  agentCards.forEach(card => {
-    if (card.getAttribute('data-agent-id') === agentId) {
-      agentData = {
-        id: agentId,
-        name: card.getAttribute('data-name'),
-        email: card.getAttribute('data-email'),
-        whatsapp: card.getAttribute('data-whatsapp'),
-        languages: card.getAttribute('data-languages')
-      };
-    }
-  });
-  
-  if (!agentData) {
+  if (!agentCard) {
     alert('❌ Agent not found. Please refresh the page.');
     return;
   }
   
-  // Populate the form
-  document.getElementById('agentName').value = agentData.name;
-  document.getElementById('agentEmail').value = agentData.email;
-  document.getElementById('agentWhatsapp').value = agentData.whatsapp;
-  document.getElementById('agentLanguages').value = agentData.languages;
+  // Get data from attributes
+  const name = agentCard.getAttribute('data-name');
+  const email = agentCard.getAttribute('data-email');
+  const whatsapp = agentCard.getAttribute('data-whatsapp');
+  const languagesJson = agentCard.getAttribute('data-languages');
+  
+  // Parse languages JSON and convert to comma-separated string
+  let languagesStr = '';
+  try {
+    const languagesArray = JSON.parse(languagesJson);
+    if (Array.isArray(languagesArray)) {
+      languagesStr = languagesArray.join(', ');
+    } else {
+      languagesStr = languagesJson;
+    }
+  } catch (e) {
+    console.error('Error parsing languages:', e);
+    languagesStr = languagesJson || '';
+  }
+  
+  // Populate the form fields
+  document.getElementById('agentName').value = name || '';
+  document.getElementById('agentEmail').value = email || '';
+  document.getElementById('agentWhatsapp').value = whatsapp || '';
+  document.getElementById('agentLanguages').value = languagesStr;
   
   // Change button to "Update" mode
   const submitBtn = document.getElementById('agentSubmitBtn');
