@@ -1540,47 +1540,63 @@ app.get('/api/agent/info', authenticateToken, async (req, res) => {
 });
 
 
-// 🚀 UPLOAD KNOWLEDGE BASE (Multi-File Support)
+// 🚀 UPLOAD KNOWLEDGE BASE (Ultra-Bulletproof PDF/TXT Support)
 app.post('/api/dashboard/upload-knowledge', authenticateToken, knowledgeUpload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Please upload a file.' });
 
+    // 🚨 1. ENSURE DIRECTORY EXISTS (Prevents Multer crashes)
+    const uploadDir = path.join(__dirname, '..', 'uploads', 'knowledge');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+      console.log('📁 Created missing uploads/knowledge directory');
+    }
+
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
     if (!tenant) {
-      const fs = require('fs');
-      fs.unlinkSync(req.file.path);
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       return res.status(404).json({ error: 'Tenant not found.' });
     }
 
     let extractedText = '';
     const filePath = req.file.path;
     const fileExtension = req.file.originalname.split('.').pop().toLowerCase();
-    const fs = require('fs');
     
-    // Bulletproof PDF parser
-    delete require.cache[require.resolve('pdf-parse')];
-    const pdfModule = require('pdf-parse');
-    const parseFn = typeof pdfModule === 'function' ? pdfModule : (pdfModule.default || pdfModule.parse || pdfModule);
-
+    // 🚨 2. SAFE FILE PARSING
     if (fileExtension === 'pdf') {
-      const dataBuffer = fs.readFileSync(filePath);
-      const data = await parseFn(dataBuffer);
-      extractedText = data.text;
-    } else if (fileExtension === 'txt') {
-      extractedText = fs.readFileSync(filePath, 'utf8');
-    } else {
-      
+      try {
+        const dataBuffer = fs.readFileSync(filePath);
+        const data = await pdf(dataBuffer);
+        extractedText = data.text || '';
+      } catch (pdfError) {
+        console.error('❌ PDF Parse Error:', pdfError.message);
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        return res.status(400).json({ error: 'Could not extract text. The PDF might be a scanned image, password-protected, or corrupted.' });
+      }
+    } 
+    else if (fileExtension === 'txt') {
+      try {
+        extractedText = fs.readFileSync(filePath, 'utf8');
+      } catch (txtError) {
+        console.error('❌ TXT Read Error:', txtError.message);
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        return res.status(400).json({ error: 'Could not read the text file. It may have unsupported encoding.' });
+      }
+    } 
+    else {
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
       return res.status(400).json({ error: 'Only PDF and TXT files are allowed.' });
     }
 
+    // Clean up the extracted text
     extractedText = extractedText.replace(/\s+/g, ' ').trim();
 
     if (extractedText.length < 10) {
-      fs.unlinkSync(filePath);
-      return res.status(400).json({ error: 'Could not extract enough text. File might be image-based.' });
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      return res.status(400).json({ error: 'Could not extract enough text. File might be image-based or empty.' });
     }
 
-    // 🚨 SAVE AS A NEW DOCUMENT (No overwriting!)
+    // 🚨 3. SAVE AS A NEW DOCUMENT
     await prisma.knowledgeDocument.create({
       data: {
         tenantId: tenant.id,
@@ -1590,15 +1606,22 @@ app.post('/api/dashboard/upload-knowledge', authenticateToken, knowledgeUpload.s
       }
     });
 
-    // 🚨 THERE SHOULD BE NO fs.unlinkSync(filePath) HERE! 
-    // The file must stay in the uploads/knowledge/ folder.
-
+    console.log(`✅ Successfully uploaded and trained on: ${req.file.originalname}`);
+    
     res.json({ 
       success: true, 
       message: `✅ Successfully uploaded "${req.file.originalname}"!`
     });
+    
   } catch (error) {
-    console.error('❌ Upload knowledge error:', error);
+    // 🚨 4. EXACT ERROR LOGGING (This will tell us exactly what is failing)
+    console.error('❌ Upload knowledge FATAL error:', error.message);
+    
+    // Try to clean up the file on fatal error
+    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+      try { fs.unlinkSync(req.file.path); } catch (e) {}
+    }
+    
     res.status(500).json({ error: 'Failed to process file: ' + error.message });
   }
 });
