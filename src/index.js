@@ -1071,6 +1071,40 @@ app.put('/api/dashboard/service-areas', authenticateToken, async (req, res) => {
   }
 });
 
+// 🚀 CHANGE PASSWORD
+app.put('/api/auth/change-password', authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current and new password are required.' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+
+    // Verify current password
+    const bcrypt = require('bcryptjs');
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) {
+      return res.status(401).json({ error: 'Current password is incorrect.' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    // Update password
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword }
+    });
+
+    res.json({ success: true, message: 'Password changed successfully!' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ error: 'Failed to change password.' });
+  }
+});
 
 // 🚀 FETCH AVAILABLE MODELS FOR A GIVEN PROVIDER
 app.post('/api/fetch-models', authenticateToken, async (req, res) => {

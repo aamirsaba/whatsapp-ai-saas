@@ -17,8 +17,8 @@
         <span id="topBusinessName" class="text-sm text-gray-600 font-medium block">Loading...</span>
         <span id="topWhatsappNumber" class="text-xs text-gray-400">Loading...</span>
       </div>
-      <button onclick="alert('Password change feature coming soon!')" class="text-sm bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition font-medium hidden sm:block">🔑 Change Password</button>
-      <button onclick="logout()" class="text-sm bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition font-medium">Logout</button>
+<button onclick="openPasswordModal()" class="text-sm bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition font-medium hidden sm:block">🔑 Change Password</button>
+<button onclick="logout()" class="text-sm bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition font-medium">Logout</button>
     </div>
   </div>
 </nav>
@@ -1118,6 +1118,10 @@
                       ${agent.isAvailable ? 'Available' : 'Offline'}
                     </span>
                   </label>
+// In your loadAgents() function, add this to each agent card:
+<button onclick="editAgent('${agent.id}')" class="px-3 py-1 bg-blue-500 text-white rounded text-xs">
+  ️ Edit
+</button>
                   <button onclick="deleteAgent('${agent.id}', '${agent.name}')" class="px-2 py-1 bg-red-50 text-red-600 text-xs rounded hover:bg-red-100">🗑️</button>
                 </div>
               </div>
@@ -1367,6 +1371,62 @@
       }
     }
 
+
+async function editAgent(agentId) {
+  const newName = prompt('Enter new agent name:');
+  if (newName) {
+    await fetch(`/api/dashboard/agents/${agentId}`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({ name: newName })
+    });
+    loadAgents(); // Refresh the list
+  }
+}
+
+// Open Password Modal
+function openPasswordModal() {
+  document.getElementById('passwordModal').classList.remove('hidden');
+}
+
+// Close Password Modal
+function closePasswordModal() {
+  document.getElementById('passwordModal').classList.add('hidden');
+  document.getElementById('passwordChangeForm').reset();
+}
+
+// Handle Password Change
+document.getElementById('passwordChangeForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const currentPassword = document.getElementById('currentPassword').value;
+  const newPassword = document.getElementById('newPassword').value;
+  
+  try {
+    const res = await fetch('/api/auth/change-password', {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({ currentPassword, newPassword })
+    });
+    
+    const data = await res.json();
+    if (res.ok) {
+      alert('✅ Password changed successfully!');
+      closePasswordModal();
+    } else {
+      alert('❌ ' + data.error);
+    }
+  } catch (error) {
+    alert('❌ Failed to change password. Please try again.');
+  }
+});
+
     function logout() { 
       localStorage.clear(); 
       window.location.href = '/login'; 
@@ -1409,5 +1469,30 @@
       </div>
     </div>
   </div>
+<!-- Password Change Modal -->
+<div id="passwordModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+    <h3 class="text-lg font-bold text-gray-800 mb-4">🔑 Change Password</h3>
+    <form id="passwordChangeForm" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+        <input type="password" id="currentPassword" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+        <input type="password" id="newPassword" required minlength="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+      </div>
+      <div class="flex gap-2">
+        <button type="submit" class="flex-1 bg-green-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-green-700">
+          ✅ Change Password
+        </button>
+        <button type="button" onclick="closePasswordModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg text-sm font-semibold hover:bg-gray-400">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 </body>
 </html>
