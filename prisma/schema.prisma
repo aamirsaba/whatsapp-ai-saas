@@ -30,17 +30,20 @@ enum LeadStatus {
 }
 
 // 3. The User Model (For Login & Admin)
-model User {
-  id              String         @id @default(cuid())
-  email           String         @unique
-  password        String
-  role            Role           @default(TENANT)
-  isAgency        Boolean        @default(false)
-  createdAt       DateTime       @default(now())
 
-  tenants         Tenant[]
-  teamMemberships TeamMember[]
-  requiresPasswordChange Boolean @default(false) // 🚨 NEW: Force password change on next l
+model User {
+  id                     String   @id @default(cuid())
+  email                  String   @unique
+  password               String
+  role                   Role     @default(TENANT)
+  isAgency               Boolean  @default(false)
+  createdAt              DateTime @default(now())
+  
+  // 🚨 MAKE SURE THIS LINE IS HERE:
+  requiresPasswordChange Boolean  @default(false) 
+  
+  tenants                Tenant[]
+  teamMemberships        TeamMember[]
 }
 
 // 4. The Upgraded Tenant Model
