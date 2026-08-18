@@ -25,7 +25,7 @@ const knowledgeStorage = multer.diskStorage({
 
 const knowledgeUpload = multer({ 
   storage: knowledgeStorage,
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  limits: { fileSize: 50 * 1024 * 1024 } // 🚨 INCREASED TO 50MB (was 10MB)
 });
 
 // Ensure the folder exists on startup
@@ -2061,7 +2061,15 @@ app.delete('/api/dashboard/conversations/:id', authenticateToken, async (req, re
   }
 });
 
-
+// 🚨 MULTER ERROR HANDLER (Catches "File too large" before it crashes)
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'File is too large. Please upload a PDF or TXT file under 50MB.' });
+    }
+  }
+  next(err);
+});
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
