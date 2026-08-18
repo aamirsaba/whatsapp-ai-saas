@@ -246,8 +246,8 @@ if (conversation.mode === 'HUMAN') {
       const agentName = tenant.aiAgentName || 'AI Assistant';
       
       const identityRule = `\n\n🤖 YOUR IDENTITY: You are *${agentName}*, the official AI assistant for ${tenant.businessName || 'this business'}. You MUST introduce yourself as ${agentName}. NEVER use generic titles.`;
-      const knowledgeRule = `\n\n📚 KNOWLEDGE BOUNDARY: ONLY discuss courses, services, and information that are explicitly provided in your BUSINESS CONTEXT or KNOWLEDGE BASE below. DO NOT invent, hallucinate, or add courses, dates, prices, or details that are not in your provided context.`;
-      
+      const knowledgeRule = `\n\n📚 KNOWLEDGE BOUNDARY: You MUST use ONLY the information provided in your BUSINESS CONTEXT and KNOWLEDGE BASE below. When asked about courses, prices, or durations, you MUST search the knowledge base and provide EXACT details. DO NOT make up prices or course names. If you cannot find specific information in the knowledge base, say "Let me check our latest course catalog and get back to you with exact details." NEVER provide generic or approximate pricing.`;
+
       const uploadedDocs = await prisma.knowledgeDocument.findMany({ 
         where: { tenantId: tenant.id },
         select: { fileName: true }
