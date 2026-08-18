@@ -331,12 +331,12 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
 });
 
 
-// 🚀 SAVE AI SETTINGS
+// 🚀 SAVE AI SETTINGS (WITH SMART WHATSAPP NUMBER CHANGE HANDLING)
 app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
   try {
     const { 
-      businessName,       // 🚨 ADDED
-      whatsappNumber,     // 🚨 ADDED
+      businessName,       
+      whatsappNumber,     
       systemPrompt, 
       businessContext, 
       contactInfo, 
@@ -354,11 +354,38 @@ app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
     if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
 
+    // 🚨 1. CHECK IF WHATSAPP NUMBER IS ACTUALLY CHANGING
+    const cleanNewNumber = whatsappNumber ? whatsappNumber.replace(/\D/g, '') : tenant.whatsappNumber;
+    const numberChanged = cleanNewNumber && cleanNewNumber !== tenant.whatsappNumber;
+
+    if (numberChanged) {
+      console.log(`🔄 WhatsApp number changing from ${tenant.whatsappNumber} to ${cleanNewNumber}`);
+      
+      // 2. Disconnect old session gracefully
+      const oldSock = activeSockets.get(tenant.whatsappNumber);
+      if (oldSock) {
+        try {
+          await oldSock.logout();
+        } catch (e) {
+          console.log('Old socket already closed or logged out.');
+        }
+        activeSockets.delete(tenant.whatsappNumber);
+      }
+      
+      // 3. Delete old auth folder so it doesn't conflict
+      const oldAuthDir = path.join(__dirname, `auth_info_${tenant.whatsappNumber}`);
+      if (fs.existsSync(oldAuthDir)) {
+        fs.rmSync(oldAuthDir, { recursive: true, force: true });
+        console.log(`🗑️ Deleted old auth folder: ${oldAuthDir}`);
+      }
+    }
+
+    // 4. Update Tenant in Database
     await prisma.tenant.update({
       where: { id: tenant.id },
       data: {
         businessName: businessName !== undefined ? businessName : tenant.businessName,
-        whatsappNumber: whatsappNumber !== undefined ? whatsappNumber.replace(/\D/g, '') : tenant.whatsappNumber,
+        whatsappNumber: cleanNewNumber,
         systemPrompt: systemPrompt !== undefined ? systemPrompt : tenant.systemPrompt,
         businessContext: businessContext !== undefined ? businessContext : tenant.businessContext,
         contactInfo: contactInfo !== undefined ? contactInfo : tenant.contactInfo,
@@ -373,6 +400,19 @@ app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
         aiAgentName: aiAgentName !== undefined ? aiAgentName : tenant.aiAgentName
       }
     });
+
+    // 5. If number changed, start a brand new session (which will generate a new QR code)
+    if (numberChanged) {
+      // Import startWhatsAppSession if not already at the top (it should be)
+      startWhatsAppSession(tenant.id, cleanNewNumber, handleQr, handleSuccess);
+      
+      return res.json({ 
+        success: true, 
+        message: 'Settings saved! WhatsApp number changed. Please scan the new QR code to connect.',
+        needsQRScan: true,
+        newNumber: cleanNewNumber
+      });
+    }
 
     res.json({ success: true, message: 'Settings saved successfully!' });
   } catch (error) {
@@ -561,11 +601,16 @@ app.get('/forgot-password', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'forgot-password.html'));
 });
 
+// 🚀 FORGOT PASSWORD - Send Reset Link
 app.post('/api/auth/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.json({ success: true, message: 'If email exists, reset link sent.' }); // Security: don't reveal if email exists
+    
+    if (!user) {
+      // Don't reveal if email exists (security)
+      return res.json({ success: true, message: 'If email exists, reset link sent.' });
+    }
 
     // Generate reset token
     const crypto = require('crypto');
@@ -579,12 +624,51 @@ app.post('/api/auth/forgot-password', async (req, res) => {
 
     // Send email with reset link
     const { sendPasswordResetEmail } = require('./email');
-    const resetUrl = `https://bot.aamirsaba.com/reset-password?token=${resetToken}`;
+    const resetUrl = `https://bot.aamirsaba.com/reset-password?token=${resetToken}&email=${email}`;
     await sendPasswordResetEmail(email, resetUrl);
 
     res.json({ success: true, message: 'If email exists, reset link sent.' });
   } catch (error) {
+    console.error('Forgot password error:', error);
     res.status(500).json({ error: 'Failed to process request.' });
+  }
+});
+
+// 🚀 RESET PASSWORD - Use Token
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { token, email, newPassword } = req.body;
+    
+    const user = await prisma.user.findFirst({
+      where: { 
+        email, 
+        resetToken: token,
+        resetTokenExpiry: { gt: new Date() } // Not expired
+      }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: 'Invalid or expired reset link.' });
+    }
+
+    // Hash new password
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password and clear reset token
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { 
+        password: hashedPassword,
+        resetToken: null,
+        resetTokenExpiry: null
+      }
+    });
+
+    res.json({ success: true, message: 'Password reset successfully! Please login.' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Failed to reset password.' });
   }
 });
 
