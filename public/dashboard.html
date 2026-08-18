@@ -363,36 +363,46 @@
       </section>
 
       <!-- LEADS CRM SECTION -->
-      <section id="section-leads" class="section-content hidden">
-        <div class="mb-8">
-          <h2 class="text-2xl font-bold text-gray-800 mb-2">📊 Lead Manager CRM</h2>
-          <p class="text-gray-600">Track and manage all customer leads captured by your AI agent.</p>
-        </div>
+<section id="section-leads" class="section-content hidden">
+  <div class="mb-8">
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">📊 Lead Manager CRM</h2>
+    <p class="text-gray-600">Track and manage all customer leads captured by your AI agent.</p>
+  </div>
 
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-800">All Leads</h3>
-            <button onclick="loadLeads()" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"><span>🔄</span> Refresh</button>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead class="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th class="px-4 py-3 text-left font-semibold text-gray-700">DATE</th>
-                  <th class="px-4 py-3 text-left font-semibold text-gray-700">PHONE NUMBER</th>
-                  <th class="px-4 py-3 text-left font-semibold text-gray-700">FIRST MESSAGE</th>
-                  <th class="px-4 py-3 text-left font-semibold text-gray-700">STATUS</th>
-                  <th class="px-4 py-3 text-left font-semibold text-gray-700">NOTES</th>
-                  <th class="px-4 py-3 text-left font-semibold text-gray-700">ACTION</th>
-                </tr>
-              </thead>
-              <tbody id="leadsTableBody" class="divide-y divide-gray-100">
-                <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Loading leads...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
+  <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-gray-800">All Leads</h3>
+      <button onclick="loadLeads()" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
+        <span>🔄</span> Refresh
+      </button>
+    </div>
+    
+    <!-- Mobile Card View (visible on mobile only) -->
+    <div id="leadsMobileView" class="space-y-3 sm:hidden">
+      <p class="text-gray-400 text-sm italic text-center py-8">Loading leads...</p>
+    </div>
+    
+    <!-- Desktop Table View (visible on desktop only) -->
+    <div class="hidden sm:block overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th class="px-4 py-3 text-left font-semibold text-gray-700">DATE</th>
+            <th class="px-4 py-3 text-left font-semibold text-gray-700">PHONE NUMBER</th>
+            <th class="px-4 py-3 text-left font-semibold text-gray-700">FIRST MESSAGE</th>
+            <th class="px-4 py-3 text-left font-semibold text-gray-700">STATUS</th>
+            <th class="px-4 py-3 text-left font-semibold text-gray-700">NOTES</th>
+            <th class="px-4 py-3 text-left font-semibold text-gray-700">ACTION</th>
+          </tr>
+        </thead>
+        <tbody id="leadsTableBody" class="divide-y divide-gray-100">
+          <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Loading leads...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
 
       <!-- KNOWLEDGE BASE SECTION -->
       <section id="section-knowledge" class="section-content hidden">
@@ -1026,88 +1036,118 @@ async function sendManualReply() {
   }
 }
 
-    // LOAD LEADS (Mobile Cards / Desktop Table)
 async function loadLeads() {
-  const container = document.getElementById('leadsTableBody');
-  if (!container) return;
+  const tableBody = document.getElementById('leadsTableBody');
+  const mobileView = document.getElementById('leadsMobileView');
   
-  container.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Loading leads...</td></tr>';
+  if (tableBody) {
+    tableBody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Loading leads...</td></tr>';
+  }
+  if (mobileView) {
+    mobileView.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-8">Loading leads...</p>';
+  }
   
   try {
     const res = await fetch('/api/dashboard/leads', { headers: { 'Authorization': `Bearer ${token}` } });
     const data = await res.json();
     
     if (data.success && data.leads.length > 0) {
-      // Always use card layout (no table at all)
-      container.innerHTML = data.leads.map(lead => {
-        const date = new Date(lead.createdAt).toLocaleDateString();
-        const shortMessage = lead.firstMessage.length > 80 ? 
-          lead.firstMessage.substring(0, 80) + '...' : lead.firstMessage;
-        
-        const statusColors = { 
-          'NEW': 'bg-yellow-100 text-yellow-800 border-yellow-200', 
-          'CONTACTED': 'bg-blue-100 text-blue-800 border-blue-200', 
-          'CONVERTED': 'bg-green-100 text-green-800 border-green-200', 
-          'LOST': 'bg-red-100 text-red-800 border-red-200' 
-        };
-        
-        return `
-          <tr>
-            <td colspan="6" class="px-2 py-3">
-              <div class="bg-white border-2 border-gray-200 rounded-xl p-4 shadow-sm space-y-3">
-                <!-- Header: Phone & Status -->
-                <div class="flex justify-between items-start">
-                  <div class="font-bold text-gray-900 text-base">${lead.phoneNumber}</div>
-                  <span class="text-xs font-bold px-3 py-1 rounded-full border ${statusColors[lead.status]}">
-                    ${lead.status}
-                  </span>
-                </div>
-                
-                <!-- Date -->
-                <div class="text-xs text-gray-500 flex items-center gap-1">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                  </svg>
-                  ${date}
-                </div>
-                
-                <!-- Message -->
-                <div class="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  ${shortMessage}
-                </div>
-                
-                <!-- Notes Input -->
-                <div>
-                  <input type="text" id="note-${lead.id}" value="${lead.notes || ''}" 
-                         placeholder="Add note..." 
-                         class="w-full px-3 py-2.5 text-sm border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
-                </div>
-                
-                <!-- Action Buttons -->
-                <div class="flex flex-col sm:flex-row gap-2 pt-2 border-t border-gray-100">
-                  <button onclick="updateLead('${lead.id}', 'notes', document.getElementById('note-${lead.id}').value)" 
-                          class="flex-1 bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 font-semibold text-sm transition shadow-sm">
-                    💾 Save Note
-                  </button>
-                  <select onchange="updateLead('${lead.id}', 'status', this.value)" 
-                          class="flex-1 text-sm font-bold px-3 py-2.5 rounded-lg border-2 ${statusColors[lead.status]} cursor-pointer">
-                    <option value="NEW" ${lead.status === 'NEW' ? 'selected' : ''}> New</option>
-                    <option value="CONTACTED" ${lead.status === 'CONTACTED' ? 'selected' : ''}>🔵 Contacted</option>
-                    <option value="CONVERTED" ${lead.status === 'CONVERTED' ? 'selected' : ''}>🟢 Converted</option>
-                    <option value="LOST" ${lead.status === 'LOST' ? 'selected' : ''}> Lost</option>
-                  </select>
-                </div>
+      const statusColors = { 
+        'NEW': 'bg-yellow-100 text-yellow-800 border-yellow-200', 
+        'CONTACTED': 'bg-blue-100 text-blue-800 border-blue-200', 
+        'CONVERTED': 'bg-green-100 text-green-800 border-green-200', 
+        'LOST': 'bg-red-100 text-red-800 border-red-200' 
+      };
+      
+      // Mobile Cards
+      if (mobileView) {
+        mobileView.innerHTML = data.leads.map(lead => {
+          const date = new Date(lead.createdAt).toLocaleDateString();
+          const shortMessage = lead.firstMessage.length > 80 ? 
+            lead.firstMessage.substring(0, 80) + '...' : lead.firstMessage;
+          
+          return `
+            <div class="bg-white border-2 border-gray-200 rounded-xl p-4 shadow-sm space-y-3">
+              <div class="flex justify-between items-start">
+                <div class="font-bold text-gray-900 text-base">${lead.phoneNumber}</div>
+                <span class="text-xs font-bold px-3 py-1 rounded-full border ${statusColors[lead.status]}">
+                  ${lead.status}
+                </span>
               </div>
+              <div class="text-xs text-gray-500 flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                ${date}
+              </div>
+              <div class="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                ${shortMessage}
+              </div>
+              <div>
+                <input type="text" id="note-mobile-${lead.id}" value="${lead.notes || ''}" 
+                       placeholder="Add note..." 
+                       class="w-full px-3 py-2.5 text-sm border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+              </div>
+              <div class="flex flex-col gap-2 pt-2 border-t border-gray-100">
+                <button onclick="updateLead('${lead.id}', 'notes', document.getElementById('note-mobile-${lead.id}').value)" 
+                        class="w-full bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 font-semibold text-sm transition shadow-sm">
+                  💾 Save Note
+                </button>
+                <select onchange="updateLead('${lead.id}', 'status', this.value)" 
+                        class="w-full text-sm font-bold px-3 py-2.5 rounded-lg border-2 ${statusColors[lead.status]} cursor-pointer">
+                  <option value="NEW" ${lead.status === 'NEW' ? 'selected' : ''}>🟡 New</option>
+                  <option value="CONTACTED" ${lead.status === 'CONTACTED' ? 'selected' : ''}>🔵 Contacted</option>
+                  <option value="CONVERTED" ${lead.status === 'CONVERTED' ? 'selected' : ''}> Converted</option>
+                  <option value="LOST" ${lead.status === 'LOST' ? 'selected' : ''}>🔴 Lost</option>
+                </select>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+      
+      // Desktop Table
+      if (tableBody) {
+        tableBody.innerHTML = data.leads.map(lead => {
+          const date = new Date(lead.createdAt).toLocaleDateString();
+          
+          return `<tr class="bg-white border-b hover:bg-gray-50 transition">
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${date}</td>
+            <td class="px-4 py-3 font-semibold text-gray-900">${lead.phoneNumber}</td>
+            <td class="px-4 py-3 text-sm text-gray-700 max-w-xs truncate" title="${lead.firstMessage}">${lead.firstMessage}</td>
+            <td class="px-4 py-3">
+              <select onchange="updateLead('${lead.id}', 'status', this.value)" 
+                      class="text-xs font-bold px-3 py-1.5 rounded-full border-0 ${statusColors[lead.status]} cursor-pointer">
+                <option value="NEW" ${lead.status === 'NEW' ? 'selected' : ''}>🟡 New</option>
+                <option value="CONTACTED" ${lead.status === 'CONTACTED' ? 'selected' : ''}> Contacted</option>
+                <option value="CONVERTED" ${lead.status === 'CONVERTED' ? 'selected' : ''}>🟢 Converted</option>
+                <option value="LOST" ${lead.status === 'LOST' ? 'selected' : ''}>🔴 Lost</option>
+              </select>
             </td>
-          </tr>
-        `;
-      }).join('');
+            <td class="px-4 py-3">
+              <input type="text" id="note-${lead.id}" value="${lead.notes || ''}" 
+                     placeholder="Add note..." 
+                     class="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none">
+            </td>
+            <td class="px-4 py-3">
+              <button onclick="updateLead('${lead.id}', 'notes', document.getElementById('note-${lead.id}').value)" 
+                      class="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 font-medium transition">
+                Save
+              </button>
+            </td>
+          </tr>`;
+        }).join('');
+      }
     } else { 
-      container.innerHTML = '<tr><td colspan="6" class="px-4 py-12 text-center text-gray-400"> No leads captured yet. When a new customer messages, they will appear here!</td></tr>'; 
+      const emptyMsg = '<p class="text-gray-400 text-sm italic text-center py-8">No leads captured yet. When a new customer messages, they will appear here!</p>';
+      if (mobileView) mobileView.innerHTML = emptyMsg;
+      if (tableBody) tableBody.innerHTML = `<tr><td colspan="6" class="px-4 py-12 text-center text-gray-400">${emptyMsg}</td></tr>`;
     }
   } catch (err) { 
     console.error('Failed to load leads', err); 
-    container.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-red-500">❌ Failed to load leads.</td></tr>'; 
+    const errorMsg = '<p class="text-red-500 text-sm italic text-center py-8">❌ Failed to load leads.</p>';
+    if (mobileView) mobileView.innerHTML = errorMsg;
+    if (tableBody) tableBody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-red-500">${errorMsg}</td></tr>`;
   }
 }
 
