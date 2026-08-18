@@ -463,6 +463,70 @@
       overlay.classList.toggle('hidden');
     }
 
+// LOAD DASHBOARD (Populates business name, WhatsApp, settings, etc.)
+async function loadDashboard() {
+  try {
+    const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+    const data = await res.json();
+    
+    if (data.success && data.tenant) {
+      // Update top header
+      const topNameEl = document.getElementById('topBusinessName');
+      const topWaEl = document.getElementById('topWhatsappNumber');
+      
+      if (topNameEl) topNameEl.textContent = data.tenant.businessName || 'My Business';
+      if (topWaEl) topWaEl.textContent = data.tenant.whatsappNumber ? ` +${data.tenant.whatsappNumber}` : 'Loading...';
+      
+      // Update welcome banner
+      const welcomeNameEl = document.getElementById('businessName');
+      if (welcomeNameEl) welcomeNameEl.textContent = data.tenant.businessName || 'User';
+      
+      // Populate settings form
+      const settingsNameEl = document.getElementById('settingsBusinessName');
+      const settingsWaEl = document.getElementById('settingsWhatsappNumber');
+      
+      if (settingsNameEl) settingsNameEl.value = data.tenant.businessName || '';
+      if (settingsWaEl) settingsWaEl.value = data.tenant.whatsappNumber || '';
+      
+      document.getElementById('llmApiKey').value = data.tenant.llmApiKey || '';
+      document.getElementById('systemPrompt').value = data.tenant.systemPrompt || '';
+      
+      // Safely decode HTML entities for Business Context
+      const contextEl = document.getElementById('businessContext');
+      if (contextEl && data.tenant.businessContext) {
+        const txt = document.createElement("textarea");
+        txt.innerHTML = data.tenant.businessContext;
+        contextEl.value = txt.value;
+      } else if (contextEl) {
+        contextEl.value = '';
+      }
+      
+      document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
+      document.getElementById('llmModel').value = data.tenant.llmModel || '';
+      document.getElementById('aiAgentName').value = data.tenant.aiAgentName || '';
+      
+      // Populate contact info
+      if (data.tenant.contactInfo) {
+        const lines = data.tenant.contactInfo.split('\n');
+        const getValue = (prefix) => lines.find(l => l.startsWith(prefix))?.split(': ')[1]?.trim() || '';
+        document.getElementById('contactPerson').value = getValue('Contact Person');
+        document.getElementById('contactEmail').value = getValue('Email');
+        document.getElementById('contactPhone').value = getValue('Phone/WhatsApp');
+        document.getElementById('contactWebsite').value = getValue('Website');
+        document.getElementById('contactNotes').value = getValue('Notes');
+      }
+      
+      // Update stats
+      document.getElementById('totalMessages').textContent = data.messages?.length || 0;
+      
+      // Load charts
+      loadAnalytics();
+    }
+  } catch (err) { 
+    console.error('Failed to load dashboard', err); 
+  }
+}
+
     // SHOW SECTION
     function showSection(sectionName) {
       // Hide all sections
@@ -893,9 +957,13 @@
     }
 
     // INITIALIZATION
-    document.addEventListener('DOMContentLoaded', () => {
-      showSection('dashboard'); // Show dashboard by default
-    });
+document.addEventListener('DOMContentLoaded', async () => {
+  // First, load the main dashboard data (business name, WhatsApp, settings, etc.)
+  await loadDashboard();
+  
+  // Then show the dashboard section (which loads charts)
+  showSection('dashboard');
+});
   </script>
 </body>
 </html>
