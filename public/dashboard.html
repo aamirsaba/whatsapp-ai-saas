@@ -865,41 +865,148 @@ async function sendManualReply() {
   }
 }
 
-    // LOAD LEADS
+    // LOAD LEADS (Mobile Cards / Desktop Table)
     async function loadLeads() {
       const tbody = document.getElementById('leadsTableBody');
       tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Loading leads...</td></tr>';
+      
       try {
         const res = await fetch('/api/dashboard/leads', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
+        
         if (data.success && data.leads.length > 0) {
-          tbody.innerHTML = data.leads.map(lead => {
-            const date = new Date(lead.createdAt).toLocaleDateString();
-            const statusColors = { 'NEW': 'bg-yellow-100 text-yellow-800', 'CONTACTED': 'bg-blue-100 text-blue-800', 'CONVERTED': 'bg-green-100 text-green-800', 'LOST': 'bg-red-100 text-red-800' };
-            return `<tr class="bg-white border-b hover:bg-gray-50">
-              <td class="px-4 py-3 whitespace-nowrap">${date}</td>
-              <td class="px-4 py-3 font-medium text-gray-900">${lead.phoneNumber}</td>
-              <td class="px-4 py-3 max-w-xs truncate" title="${lead.firstMessage}">${lead.firstMessage}</td>
-              <td class="px-4 py-3"><select onchange="updateLead('${lead.id}', 'status', this.value)" class="text-xs font-semibold px-2 py-1 rounded-full border-0 ${statusColors[lead.status]} cursor-pointer outline-none">
-                <option value="NEW" ${lead.status === 'NEW' ? 'selected' : ''}>🟡 New</option>
-                <option value="CONTACTED" ${lead.status === 'CONTACTED' ? 'selected' : ''}>🔵 Contacted</option>
-                <option value="CONVERTED" ${lead.status === 'CONVERTED' ? 'selected' : ''}>🟢 Converted</option>
-                <option value="LOST" ${lead.status === 'LOST' ? 'selected' : ''}>🔴 Lost</option>
-              </select></td>
-              <td class="px-4 py-3"><input type="text" id="note-${lead.id}" value="${lead.notes || ''}" placeholder="Add note..." class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500 outline-none"></td>
-              <td class="px-4 py-3"><button onclick="updateLead('${lead.id}', 'notes', document.getElementById('note-${lead.id}').value)" class="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded hover:bg-indigo-700 transition">Save</button></td>
-            </tr>`;
-          }).join('');
-        } else { tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">No leads captured yet.</td></tr>'; }
-      } catch (err) { console.error('Failed to load leads', err); tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-red-500">Failed to load leads.</td></tr>'; }
+          // Check if screen is mobile (< 768px)
+          const isMobile = window.innerWidth < 768;
+          
+          if (isMobile) {
+            // 📱 MOBILE: Beautiful Card Layout (NO SCROLL)
+            tbody.innerHTML = data.leads.map(lead => {
+              const date = new Date(lead.createdAt).toLocaleDateString();
+              const shortMessage = lead.firstMessage.length > 60 ? lead.firstMessage.substring(0, 60) + '...' : lead.firstMessage;
+              
+              const statusColors = { 
+                'NEW': 'bg-yellow-100 text-yellow-800', 
+                'CONTACTED': 'bg-blue-100 text-blue-800', 
+                'CONVERTED': 'bg-green-100 text-green-800', 
+                'LOST': 'bg-red-100 text-red-800' 
+              };
+              
+              return `
+                <tr>
+                  <td colspan="6" class="px-3 py-3">
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm space-y-3">
+                      <!-- Phone & Status -->
+                      <div class="flex justify-between items-start">
+                        <div class="font-bold text-gray-900 text-sm break-all">${lead.phoneNumber}</div>
+                        <span class="text-xs font-bold px-2.5 py-1 rounded-full ${statusColors[lead.status]} whitespace-nowrap ml-2">
+                          ${lead.status}
+                        </span>
+                      </div>
+                      
+                      <!-- Date -->
+                      <div class="text-xs text-gray-500 flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        ${date}
+                      </div>
+                      
+                      <!-- Message -->
+                      <div class="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg break-words">
+                        ${shortMessage}
+                      </div>
+                      
+                      <!-- Notes & Actions -->
+                      <div class="pt-3 border-t border-gray-100 space-y-2">
+                        <input type="text" id="note-${lead.id}" value="${lead.notes || ''}" 
+                               placeholder="Add note..." 
+                               class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                        
+                        <div class="flex gap-2">
+                          <button onclick="updateLead('${lead.id}', 'notes', document.getElementById('note-${lead.id}').value)" 
+                                  class="flex-1 text-xs bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700 font-medium transition">
+                            💾 Save
+                          </button>
+                          <select onchange="updateLead('${lead.id}', 'status', this.value)" 
+                                  class="flex-1 text-xs font-bold px-2 py-2 rounded-lg border-0 ${statusColors[lead.status]} cursor-pointer">
+                            <option value="NEW" ${lead.status === 'NEW' ? 'selected' : ''}>🟡 New</option>
+                            <option value="CONTACTED" ${lead.status === 'CONTACTED' ? 'selected' : ''}>🔵 Contacted</option>
+                            <option value="CONVERTED" ${lead.status === 'CONVERTED' ? 'selected' : ''}>🟢 Converted</option>
+                            <option value="LOST" ${lead.status === 'LOST' ? 'selected' : ''}>🔴 Lost</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              `;
+            }).join('');
+          } else {
+            // 💻 DESKTOP: Standard Table Layout
+            tbody.innerHTML = data.leads.map(lead => {
+              const date = new Date(lead.createdAt).toLocaleDateString();
+              const statusColors = { 
+                'NEW': 'bg-yellow-100 text-yellow-800', 
+                'CONTACTED': 'bg-blue-100 text-blue-800', 
+                'CONVERTED': 'bg-green-100 text-green-800', 
+                'LOST': 'bg-red-100 text-red-800' 
+              };
+              
+              return `<tr class="bg-white border-b hover:bg-gray-50 transition">
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${date}</td>
+                <td class="px-4 py-3 font-semibold text-gray-900">${lead.phoneNumber}</td>
+                <td class="px-4 py-3 text-sm text-gray-700 max-w-xs truncate" title="${lead.firstMessage}">${lead.firstMessage}</td>
+                <td class="px-4 py-3">
+                  <select onchange="updateLead('${lead.id}', 'status', this.value)" 
+                          class="text-xs font-bold px-3 py-1.5 rounded-full border-0 ${statusColors[lead.status]} cursor-pointer">
+                    <option value="NEW" ${lead.status === 'NEW' ? 'selected' : ''}>🟡 New</option>
+                    <option value="CONTACTED" ${lead.status === 'CONTACTED' ? 'selected' : ''}>🔵 Contacted</option>
+                    <option value="CONVERTED" ${lead.status === 'CONVERTED' ? 'selected' : ''}>🟢 Converted</option>
+                    <option value="LOST" ${lead.status === 'LOST' ? 'selected' : ''}>🔴 Lost</option>
+                  </select>
+                </td>
+                <td class="px-4 py-3">
+                  <input type="text" id="note-${lead.id}" value="${lead.notes || ''}" 
+                         placeholder="Add note..." 
+                         class="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none">
+                </td>
+                <td class="px-4 py-3">
+                  <button onclick="updateLead('${lead.id}', 'notes', document.getElementById('note-${lead.id}').value)" 
+                          class="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 font-medium transition">
+                    Save
+                  </button>
+                </td>
+              </tr>`;
+            }).join('');
+          }
+        } else { 
+          tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-12 text-center text-gray-400">No leads captured yet. When a new customer messages, they will appear here!</td></tr>'; 
+        }
+      } catch (err) { 
+        console.error('Failed to load leads', err); 
+        tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-red-500">❌ Failed to load leads.</td></tr>'; 
+      }
     }
 
+    // UPDATE LEAD
     async function updateLead(leadId, field, value) {
       try {
-        const res = await fetch(`/api/dashboard/leads/${leadId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ [field]: value }) });
+        const res = await fetch(`/api/dashboard/leads/${leadId}`, { 
+          method: 'PATCH', 
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, 
+          body: JSON.stringify({ [field]: value }) 
+        });
         const data = await res.json();
-        if (data.success) console.log('Lead updated successfully');
-      } catch (err) { console.error('Failed to update lead', err); alert('Failed to save changes.'); }
+        if (data.success) {
+          console.log('Lead updated successfully');
+          // Optional: Show a quick success toast or message
+        } else {
+          alert('Failed to save changes: ' + (data.error || 'Unknown error'));
+        }
+      } catch (err) { 
+        console.error('Failed to update lead', err); 
+        alert('❌ Network error. Failed to save changes.'); 
+      }
     }
 
     // UPLOAD KNOWLEDGE
