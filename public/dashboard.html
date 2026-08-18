@@ -855,8 +855,28 @@ async function loadAgents() {
         const safeWhatsapp = (agent.whatsappNumber || '').replace(/'/g, "\\'");
         const safeLangs = (agent.languages || '[]').replace(/'/g, "\\'");
         
+        // 🚨 NEW: Determine 3-state status for visual display
+        let statusText = '🔴 Offline';
+        let statusColor = 'text-gray-500';
+        let dotColor = 'bg-gray-400';
+        let borderColor = 'border-gray-200';
+
+        if (agent.isAvailable) {
+          if (agent.isBusy) {
+            statusText = '🟡 Busy';
+            statusColor = 'text-yellow-700';
+            dotColor = 'bg-yellow-500';
+            borderColor = 'border-yellow-200';
+          } else {
+            statusText = '🟢 Available';
+            statusColor = 'text-green-700';
+            dotColor = 'bg-green-500';
+            borderColor = 'border-green-200';
+          }
+        }
+
         return `
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200 gap-3" 
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-gray-50 p-4 rounded-lg border ${borderColor} gap-3 transition" 
                data-agent-id="${agent.id}"
                data-name="${agent.name}"
                data-email="${agent.email}"
@@ -871,15 +891,24 @@ async function loadAgents() {
                 <p class="text-xs text-gray-500 truncate">${languages || 'English'} ${agent.email ? '• ' + agent.email : ''} ${whatsappDisplay}</p>
               </div>
             </div>
-            <div class="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
-              <label class="relative inline-flex items-center cursor-pointer">
+            <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+              
+              <!-- 🚨 NEW: Visual Status Badge -->
+              <div class="flex items-center gap-1.5 px-2.5 py-1 bg-white rounded-full border border-gray-100 shadow-sm">
+                <span class="w-2 h-2 ${dotColor} rounded-full"></span>
+                <span class="text-xs font-bold ${statusColor}">${statusText}</span>
+              </div>
+
+              <!-- YOUR EXISTING TOGGLE (Keeps working perfectly for On/Off) -->
+              <label class="relative inline-flex items-center cursor-pointer" title="Toggle Online/Offline">
                 <input type="checkbox" ${agent.isAvailable ? 'checked' : ''} onchange="toggleAgentAvailability('${agent.id}', this.checked)" class="sr-only peer">
                 <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
                 <span class="ml-2 text-xs font-medium ${agent.isAvailable ? 'text-green-600' : 'text-gray-400'}">
-                  ${agent.isAvailable ? 'Available' : 'Offline'}
+                  ${agent.isAvailable ? 'Online' : 'Offline'}
                 </span>
               </label>
-              <button onclick="editAgent('${agent.id}')" class="px-3 py-1.5 bg-blue-50 text-blue-600 text-xs rounded-lg hover:bg-blue-100 transition font-medium">️ Edit</button>
+              
+              <button onclick="editAgent('${agent.id}')" class="px-3 py-1.5 bg-blue-50 text-blue-600 text-xs rounded-lg hover:bg-blue-100 transition font-medium">✏️ Edit</button>
               <button onclick="deleteAgent('${agent.id}', '${safeName}')" class="px-3 py-1.5 bg-red-50 text-red-600 text-xs rounded-lg hover:bg-red-100 transition">🗑️</button>
             </div>
           </div>

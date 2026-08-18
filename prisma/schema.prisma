@@ -167,11 +167,14 @@ model Agent {
   email             String
   whatsappNumber    String?
   languages         String   @default("[]") 
-  preferredLanguage String   @default("English") // 🚨 NEW: Agent's preferred reading/replying language
+  preferredLanguage String   @default("English")
   isAvailable       Boolean  @default(true)
+  isBusy            Boolean  @default(false) // 🚨 NEW: Manual busy status
   avatar            String?  
   createdAt         DateTime @default(now())
   conversations     Conversation[]
+  
+  @@unique([tenantId, email])
 }
 
 // 💬 PER-USER CONVERSATION CONTROL

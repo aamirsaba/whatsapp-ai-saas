@@ -35,6 +35,27 @@
       </p>
     </div>
 
+    <!-- 🚨 NEW: Agent Availability Status Toggle -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">👤 Your Availability Status</h3>
+      <div class="flex flex-col sm:flex-row gap-3">
+        <button onclick="setAgentStatus(true, false)" id="btnAvailable" class="flex-1 px-4 py-3 rounded-lg font-semibold transition bg-gray-200 text-gray-700 hover:bg-green-100">
+          ✅ Available
+        </button>
+        <button onclick="setAgentStatus(true, true)" id="btnBusy" class="flex-1 px-4 py-3 rounded-lg font-semibold transition bg-gray-200 text-gray-700 hover:bg-yellow-100">
+          🚫 Busy (On Break/Call)
+        </button>
+        <button onclick="setAgentStatus(false, false)" id="btnOffline" class="flex-1 px-4 py-3 rounded-lg font-semibold transition bg-gray-200 text-gray-700 hover:bg-red-100">
+          🔴 Offline
+        </button>
+      </div>
+      <p class="text-xs text-gray-500 mt-3">
+        <strong>Available:</strong> Ready to receive chats | 
+        <strong>Busy:</strong> Temporarily unavailable | 
+        <strong>Offline:</strong> Not taking any chats
+      </p>
+    </div>
+
     <!-- Live Inbox -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <h3 class="text-lg font-semibold text-gray-800 mb-4">💬 Team Inbox (Manual Reply)</h3>
@@ -330,6 +351,86 @@
         alert('❌ Network error. Please try again.');
       }
     }
+
+    // ==========================================
+    // 🚨 AGENT STATUS MANAGEMENT
+    // ==========================================
+    let currentAgentId = null;
+
+    async function loadAgentStatus() {
+      try {
+        const res = await fetch('/api/agent/info', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        
+        if (res.ok && data.agent) {
+          currentAgentId = data.agent.id;
+          const { isAvailable, isBusy } = data.agent;
+          updateStatusButtons(isAvailable, isBusy);
+        }
+      } catch (error) {
+        console.error('Load agent status error:', error);
+      }
+    }
+
+    function updateStatusButtons(isAvailable, isBusy) {
+      const btnAvailable = document.getElementById('btnAvailable');
+      const btnBusy = document.getElementById('btnBusy');
+      const btnOffline = document.getElementById('btnOffline');
+
+      // Reset all to default gray
+      const defaultClass = "flex-1 px-4 py-3 rounded-lg font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300";
+      btnAvailable.className = defaultClass;
+      btnBusy.className = defaultClass;
+      btnOffline.className = defaultClass;
+
+      // Apply active colored class based on state
+      if (isAvailable && !isBusy) {
+        btnAvailable.className = "flex-1 px-4 py-3 rounded-lg font-semibold transition bg-green-500 text-white shadow-md";
+      } else if (isAvailable && isBusy) {
+        btnBusy.className = "flex-1 px-4 py-3 rounded-lg font-semibold transition bg-yellow-500 text-white shadow-md";
+      } else {
+        btnOffline.className = "flex-1 px-4 py-3 rounded-lg font-semibold transition bg-red-500 text-white shadow-md";
+      }
+    }
+
+    async function setAgentStatus(isAvailable, isBusy) {
+      if (!currentAgentId) {
+        alert('❌ Agent ID not found. Please refresh the page.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/dashboard/agents/${currentAgentId}`, {
+          method: 'PUT',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ isAvailable, isBusy })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          updateStatusButtons(isAvailable, isBusy);
+          console.log(`✅ Status updated: Available=${isAvailable}, Busy=${isBusy}`);
+        } else {
+          alert('❌ Failed to update status: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Status update error:', error);
+        alert('❌ Network error. Please try again.');
+      }
+    }
+
+    // Load on page load
+    loadAgentInfo();
+    loadAgentStatus(); // 🚨 NEW: Load status on page load
+    loadRecentChats();
+    
+    // Auto-refresh recent chats every 10 seconds
+    setInterval(loadRecentChats, 10000);
 
     function logout() {
       localStorage.removeItem('token');

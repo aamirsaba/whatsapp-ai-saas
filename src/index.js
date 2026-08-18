@@ -1645,7 +1645,7 @@ app.get('/agent-dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'agent-dashboard.html'));
 });
 
-//  AGENT: Get team info
+// AGENT: Get team info
 app.get('/api/agent/info', authenticateToken, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({ 
@@ -1669,10 +1669,16 @@ app.get('/api/agent/info', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'No team access found.' });
     }
 
+    // Get agent details
+    const agent = await prisma.agent.findFirst({
+      where: { email: user.email }
+    });
+
     // Return first team (for MVP - can be enhanced for multiple teams)
     res.json({ 
       success: true, 
       team: user.teamMemberships[0].tenant,
+      agent: agent,
       role: user.teamMemberships[0].role
     });
   } catch (error) {
@@ -2148,7 +2154,8 @@ app.put('/api/dashboard/agents/:id', authenticateToken, async (req, res) => {
         name: req.body.name ?? agent.name,
         email: req.body.email ?? agent.email,
         languages: req.body.languages ? JSON.stringify(req.body.languages) : agent.languages,
-        isAvailable: req.body.isAvailable ?? agent.isAvailable
+        isAvailable: req.body.isAvailable ?? agent.isAvailable,
+        isBusy: req.body.isBusy ?? agent.isBusy // 🚨 NEW
       }
     });
 

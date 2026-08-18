@@ -192,7 +192,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         });
 
         if (allAgents.length === 0) {
-          const noAgentMsg = `👨‍💼 I understand you'd like to speak with a human. Unfortunately, we don't have any human agents set up yet. Please say "talk to AI" and I'll be happy to help you!`;
+          const noAgentMsg = `👨‍ I understand you'd like to speak with a human. Unfortunately, we don't have any human agents set up yet. Please say "talk to AI" and I'll be happy to help you!`;
           await sock.sendMessage(msg.key.remoteJid, { text: noAgentMsg });
           await prisma.message.create({ data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: noAgentMsg, isAiReply: true } });
           return;
@@ -208,7 +208,17 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
           return;
         }
 
-        // 3. Check which online agents are currently BUSY (assigned to other active HUMAN conversations)
+        // 3. Filter out manually busy agents
+        const notManuallyBusy = onlineAgents.filter(a => !a.isBusy);
+        
+        if (notManuallyBusy.length === 0) {
+          const busyMsg = `👨‍💼 I understand you'd like to speak with a human. Unfortunately, all our agents are currently busy. Please try again in a few minutes, or say "talk to AI" and I'll be happy to help you!`;
+          await sock.sendMessage(msg.key.remoteJid, { text: busyMsg });
+          await prisma.message.create({ data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: busyMsg, isAiReply: true } });
+          return;
+        }
+
+        // 4. Check which agents are currently IN CHAT (assigned to other active HUMAN conversations)
         const activeHumanConversations = await prisma.conversation.findMany({
           where: { 
             tenantId: tenant.id, 
@@ -216,10 +226,10 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
             assignedAgentId: { not: null } 
           }
         });
-        const busyAgentIds = activeHumanConversations.map(c => c.assignedAgentId);
+        const inChatAgentIds = activeHumanConversations.map(c => c.assignedAgentId);
 
-        // 4. Find an online agent who is NOT busy
-        const availableAgent = onlineAgents.find(a => !busyAgentIds.includes(a.id));
+        // 5. Find an agent who is online, not manually busy, and not in another chat
+        const availableAgent = notManuallyBusy.find(a => !inChatAgentIds.includes(a.id));
 
         if (availableAgent) {
           conversation = await prisma.conversation.update({
@@ -229,7 +239,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
           });
           
           const languages = JSON.parse(availableAgent.languages || '["English"]');
-          const handoffMsg = `👨‍💼 Perfect! I'm connecting you with our specialist *${availableAgent.name}* now. They speak ${languages.join(', ')} and will reply shortly!\n\n(Your chat is now with a human. Say "talk to AI" anytime to switch back.)`;
+          const handoffMsg = `‍💼 Perfect! I'm connecting you with our specialist *${availableAgent.name}* now. They speak ${languages.join(', ')} and will reply shortly!\n\n(Your chat is now with a human. Say "talk to AI" anytime to switch back.)`;
           
           await sock.sendMessage(msg.key.remoteJid, { text: handoffMsg });
           await prisma.message.create({ data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: handoffMsg, isAiReply: true } });
@@ -249,8 +259,8 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
           console.log(`🔄 Auto-handoff: ${fromNumber} → Agent ${availableAgent.name}`);
           return; // Stop here, don't call AI
         } else {
-          // All online agents are currently busy with other chats
-          const busyMsg = `👨‍💼 I understand you'd like to speak with a human. Unfortunately, all our available agents are currently busy with other customers. Please try again in a few minutes, or say "talk to AI" and I'll be happy to help you!`;
+          // All online agents are currently in other chats
+          const busyMsg = `👨‍ I understand you'd like to speak with a human. Unfortunately, all our available agents are currently busy with other customers. Please try again in a few minutes, or say "talk to AI" and I'll be happy to help you!`;
           await sock.sendMessage(msg.key.remoteJid, { text: busyMsg });
           await prisma.message.create({ data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: busyMsg, isAiReply: true } });
           return;
