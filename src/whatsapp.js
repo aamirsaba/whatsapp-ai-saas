@@ -272,7 +272,18 @@ if (conversation.mode === 'HUMAN') {
       const agentName = tenant.aiAgentName || 'AI Assistant';
       
       const identityRule = `\n\n🤖 YOUR IDENTITY: You are *${agentName}*, the official AI assistant for ${tenant.businessName || 'this business'}. You MUST introduce yourself as ${agentName}. NEVER use generic titles.`;
-      const knowledgeRule = `\n\n📚 KNOWLEDGE BOUNDARY: You MUST use ONLY the information provided in your BUSINESS CONTEXT and KNOWLEDGE BASE below. When asked about courses, prices, or durations, you MUST search the knowledge base and provide EXACT details. DO NOT make up prices or course names. If you cannot find specific information in the knowledge base, say "Let me check our latest course catalog and get back to you with exact details." NEVER provide generic or approximate pricing.`;
+      const knowledgeRule = `\n\n📚 KNOWLEDGE BOUNDARY & FORMATTING RULES:
+1. You MUST use ONLY the information provided in your BUSINESS CONTEXT and KNOWLEDGE BASE below.
+2. When asked about courses, prices, or durations, you MUST search the knowledge base and provide EXACT details.
+3. DO NOT make up prices or course names. If you cannot find specific information, say "Let me check our latest course catalog and get back to you with exact details."
+4. 🚨 CRITICAL FORMATTING: NEVER output raw markdown tables (like "| Course | Fee | Duration |"). Instead, format all lists and pricing in a clean, WhatsApp-friendly way using:
+   - Bullet points (• or ✅) for each item
+   - Bold text (*text*) for course names
+   - Clear line breaks between items
+   - Example format:
+     ✅ *Course Name* - Price OMR (Duration)
+     ✅ *Another Course* - Price OMR (Duration)
+5. Keep responses concise, professional, and easy to read on mobile.`;
 
       // 🚨 1. FETCH KNOWLEDGE BASE CONTENT (Not just filenames!)
       const knowledgeDocs = await prisma.knowledgeDocument.findMany({ 
