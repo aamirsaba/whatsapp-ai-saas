@@ -1426,69 +1426,78 @@ async function editAgent(agentId) {
       window.location.href = '/forgot-password.html';
     }
 
-    // Handle Password Change Form Submission
-    document.getElementById('passwordChangeForm')?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const currentPassword = document.getElementById('currentPassword').value;
-      const newPassword = document.getElementById('newPassword').value;
-      const msg = document.getElementById('passwordChangeMessage');
-      const btn = document.getElementById('updatePasswordBtn');
-      
-      if (!currentPassword || !newPassword) {
-        msg.textContent = ' Please fill in all fields.';
-        msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
-        return;
-      }
-      
-      if (newPassword.length < 6) {
-        msg.textContent = '❌ New password must be at least 6 characters.';
-        msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
-        return;
-      }
+// Handle Password Change Form Submission
+document.getElementById('passwordChangeForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const currentPassword = document.getElementById('currentPassword').value;
+  const newPassword = document.getElementById('newPassword').value;
+  const msg = document.getElementById('passwordChangeMessage');
+  const btn = document.getElementById('updatePasswordBtn');
+  
+  console.log('🔑 Attempting password change...');
+  console.log('Current password:', currentPassword ? '***' : 'empty');
+  console.log('New password:', newPassword ? '***' : 'empty');
+  
+  if (!currentPassword || !newPassword) {
+    msg.textContent = '❌ Please fill in all fields.';
+    msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+    return;
+  }
+  
+  if (newPassword.length < 6) {
+    msg.textContent = '❌ New password must be at least 6 characters.';
+    msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+    return;
+  }
 
-      // Disable button and show loading
-      btn.disabled = true;
-      btn.innerHTML = '<span>⏳</span> Updating...';
-      msg.textContent = '';
+  // Disable button and show loading
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span> Updating...';
+  msg.textContent = '';
 
-      try {
-        const res = await fetch('/api/auth/change-password', {
-          method: 'PUT',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify({ currentPassword, newPassword })
-        });
-        
-        const data = await res.json();
-        
-        if (res.ok && data.success) {
-          msg.textContent = '✅ Password changed successfully! You will be logged out.';
-          msg.className = 'mt-3 text-center text-sm text-green-600 font-bold';
-          
-          // Wait 2 seconds then logout
-          setTimeout(() => {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            localStorage.removeItem('tenant');
-            window.location.href = '/login';
-          }, 2000);
-        } else {
-          msg.textContent = '❌ ' + (data.error || 'Failed to change password.');
-          msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
-          btn.disabled = false;
-          btn.innerHTML = '<span>✅</span> Update Password';
-        }
-      } catch (error) {
-        console.error('Password change error:', error);
-        msg.textContent = '❌ Network error. Please try again.';
-        msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
-        btn.disabled = false;
-        btn.innerHTML = '<span>✅</span> Update Password';
-      }
+  try {
+    const token = localStorage.getItem('token');
+    console.log('🔑 Using token:', token ? '***' : 'NO TOKEN!');
+    
+    const res = await fetch('/api/auth/change-password', {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ currentPassword, newPassword })
     });
+    
+    console.log(' Response status:', res.status);
+    const data = await res.json();
+    console.log('📡 Response data:', data);
+    
+    if (res.ok && data.success) {
+      msg.textContent = '✅ Password changed successfully! You will be logged out.';
+      msg.className = 'mt-3 text-center text-sm text-green-600 font-bold';
+      
+      // Wait 2 seconds then logout
+      setTimeout(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('tenant');
+        window.location.href = '/login';
+      }, 2000);
+    } else {
+      msg.textContent = ' ' + (data.error || 'Failed to change password.');
+      msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+      btn.disabled = false;
+      btn.innerHTML = '<span>✅</span> Update Password';
+    }
+  } catch (error) {
+    console.error('❌ Password change error:', error);
+    msg.textContent = ' Network error. Please try again.';
+    msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+    btn.disabled = false;
+    btn.innerHTML = '<span>✅</span> Update Password';
+  }
+});
 
 
 // 🚨 FORCE PASSWORD CHANGE ON LOGIN

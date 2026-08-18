@@ -1126,28 +1126,36 @@ app.put('/api/dashboard/service-areas', authenticateToken, async (req, res) => {
   }
 });
 
-// 🚀 CHANGE PASSWORD (WITH FORCED RESET FLAG & CONFIRMATION EMAIL)
 // 🚀 CHANGE PASSWORD ENDPOINT
 app.put('/api/auth/change-password', authenticateToken, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
+    
+    console.log('🔑 Change password request received for user:', req.user.userId);
+    console.log(' Current password length:', currentPassword?.length);
+    console.log('📝 New password length:', newPassword?.length);
     
     if (!currentPassword || !newPassword) {
       return res.status(400).json({ error: 'Current and new password are required.' });
     }
 
     const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
-    if (!user) return res.status(404).json({ error: 'User not found.' });
+    if (!user) {
+      console.error('❌ User not found:', req.user.userId);
+      return res.status(404).json({ error: 'User not found.' });
+    }
 
     // Verify current password
     const bcrypt = require('bcryptjs');
     const isValid = await bcrypt.compare(currentPassword, user.password);
     if (!isValid) {
+      console.error('❌ Current password is incorrect');
       return res.status(401).json({ error: 'Current password is incorrect.' });
     }
 
     // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
+    console.log('✅ Password hashed successfully');
     
     // Update password and clear requiresPasswordChange flag
     await prisma.user.update({
@@ -1157,6 +1165,8 @@ app.put('/api/auth/change-password', authenticateToken, async (req, res) => {
         requiresPasswordChange: false
       }
     });
+    
+    console.log('✅ Password updated in database for user:', user.email);
 
     // Send confirmation email
     try {
@@ -1165,6 +1175,7 @@ app.put('/api/auth/change-password', authenticateToken, async (req, res) => {
       console.log(`✅ Password change confirmation email sent to ${user.email}`);
     } catch (emailError) {
       console.error('❌ Failed to send confirmation email:', emailError);
+      // We don't fail the whole request if email fails
     }
 
     res.json({ success: true, message: 'Password changed successfully!' });
