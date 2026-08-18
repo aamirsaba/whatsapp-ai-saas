@@ -65,7 +65,12 @@ async function loginUser(email, password) {
   const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
   const tenant = await prisma.tenant.findFirst({ where: { userId: user.id } });
 
-  return { token, user: { id: user.id, email: user.email, role: user.role }, tenant };
+// Inside your loginUser function, after verifying the password:
+return {
+  token,
+  user: { id: user.id, email: user.email, role: user.role },
+  requiresPasswordChange: user.requiresPasswordChange // 🚨 ADD THIS
+};
 }
 
 module.exports = { registerUser, loginUser };

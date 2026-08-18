@@ -35,7 +35,8 @@
 
       <div class="flex items-center justify-between">
         <div class="text-sm">
-          <a href="/forgot-password" class="font-medium text-green-600 hover:text-green-500">Forgot your password?</a>
+          <!-- 🚨 UPDATED: Points to the correct .html file -->
+          <a href="/forgot-password.html" class="font-medium text-green-600 hover:text-green-500">Forgot your password?</a>
         </div>
       </div>
 
@@ -70,7 +71,6 @@
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
       loginForm.addEventListener('submit', async (e) => {
-        // 🚨 CRITICAL: Stop the page from reloading
         e.preventDefault();
         
         const email = document.getElementById('email').value.trim();
@@ -93,7 +93,6 @@
             body: JSON.stringify({ email, password })
           });
 
-          // Check if the response is actually JSON
           const contentType = res.headers.get('content-type');
           if (!contentType || !contentType.includes('application/json')) {
             throw new Error('Server returned non-JSON response');
@@ -111,23 +110,27 @@
             msg.textContent = '✅ Login successful! Redirecting...';
             msg.className = 'mt-4 text-center text-sm text-green-600 font-bold';
             
-            // 🚨 NEW: Check user role and redirect to the correct dashboard
-            setTimeout(() => {
-              try {
-                // Decode the JWT token to check the user's role
-                const payload = JSON.parse(atob(data.token.split('.')[1]));
-                
-                if (payload.role === 'AGENT') {
-                  window.location.href = '/agent-dashboard.html';
-                } else {
-                  window.location.href = '/dashboard';
+            // 🚨 NEW: Check if user needs to change password FIRST
+            if (data.requiresPasswordChange) {
+              setTimeout(() => {
+                window.location.href = '/dashboard?forceChange=true';
+              }, 1000);
+            } else {
+              // Normal redirect based on role
+              setTimeout(() => {
+                try {
+                  const payload = JSON.parse(atob(data.token.split('.')[1]));
+                  if (payload.role === 'AGENT') {
+                    window.location.href = '/agent-dashboard.html';
+                  } else {
+                    window.location.href = '/dashboard';
+                  }
+                } catch (e) {
+                  console.error('Token parse error:', e);
+                  window.location.href = '/dashboard'; 
                 }
-              } catch (e) {
-                console.error('Token parse error:', e);
-                // Fallback in case of any token parsing error
-                window.location.href = '/dashboard'; 
-              }
-            }, 1000);
+              }, 1000);
+            }
             
           } else {
             msg.textContent = '❌ ' + (data.error || 'Invalid email or password.');
