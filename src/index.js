@@ -335,6 +335,8 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
 app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
   try {
     const { 
+      businessName,       // 🚨 ADDED
+      whatsappNumber,     // 🚨 ADDED
       systemPrompt, 
       businessContext, 
       contactInfo, 
@@ -346,17 +348,17 @@ app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
       leadWebhookUrl,
       isSummaryEnabled,
       summaryTime,
-      aiAgentName // 🚨 NEW: Added aiAgentName
+      aiAgentName 
     } = req.body;
 
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
-    if (!tenant) {
-      return res.status(404).json({ error: 'Tenant not found.' });
-    }
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
 
     await prisma.tenant.update({
       where: { id: tenant.id },
       data: {
+        businessName: businessName !== undefined ? businessName : tenant.businessName,
+        whatsappNumber: whatsappNumber !== undefined ? whatsappNumber.replace(/\D/g, '') : tenant.whatsappNumber,
         systemPrompt: systemPrompt !== undefined ? systemPrompt : tenant.systemPrompt,
         businessContext: businessContext !== undefined ? businessContext : tenant.businessContext,
         contactInfo: contactInfo !== undefined ? contactInfo : tenant.contactInfo,
@@ -368,11 +370,10 @@ app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
         leadWebhookUrl: leadWebhookUrl !== undefined ? leadWebhookUrl : tenant.leadWebhookUrl,
         isSummaryEnabled: isSummaryEnabled !== undefined ? isSummaryEnabled : tenant.isSummaryEnabled,
         summaryTime: summaryTime !== undefined ? summaryTime : tenant.summaryTime,
-        aiAgentName: aiAgentName !== undefined ? aiAgentName : tenant.aiAgentName // 🚨 NEW: Save aiAgentName
+        aiAgentName: aiAgentName !== undefined ? aiAgentName : tenant.aiAgentName
       }
     });
 
-    console.log('✅ Settings saved successfully for tenant:', tenant.id);
     res.json({ success: true, message: 'Settings saved successfully!' });
   } catch (error) {
     console.error('❌ Save settings error:', error);
