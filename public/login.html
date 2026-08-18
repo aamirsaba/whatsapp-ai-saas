@@ -113,7 +113,7 @@
             // 🚨 NEW: Check if user needs to change password FIRST
             if (data.requiresPasswordChange) {
               setTimeout(() => {
-                window.location.href = '/dashboard?forceChange=true';
+                window.location.href = '/update-password.html';
               }, 1000);
             } else {
               // Normal redirect based on role
