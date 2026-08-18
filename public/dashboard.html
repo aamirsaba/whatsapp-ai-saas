@@ -17,19 +17,18 @@
         <span id="topBusinessName" class="text-sm text-gray-600 font-medium block">Loading...</span>
         <span id="topWhatsappNumber" class="text-xs text-gray-400">Loading...</span>
       </div>
-<!-- 🔑 Change Password (Now a proper link to a dedicated page) -->
-<a href="/update-password.html" class="text-sm bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition font-medium hidden sm:block flex items-center gap-1">
-  🔑 Change Password
-</a>
-
-<!-- 🔑 Forgot Password -->
-<a href="/forgot-password.html" class="text-sm bg-indigo-50 text-indigo-700 px-3 py-2 rounded-lg hover:bg-indigo-100 transition font-medium hidden sm:block flex items-center gap-1">
-  🔑 Forgot Password?
-</a>
-
-<!-- Logout -->
-<button onclick="logout()" class="text-sm bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition font-medium">Logout</button>
-
+      <!-- 🔑 Change Password -->
+      <a href="/update-password.html" class="text-sm bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition font-medium hidden sm:block flex items-center gap-1">
+        🔑 Change Password
+      </a>
+      <!-- 🔑 Forgot Password -->
+      <a href="/forgot-password.html" class="text-sm bg-indigo-50 text-indigo-700 px-3 py-2 rounded-lg hover:bg-indigo-100 transition font-medium hidden sm:block flex items-center gap-1">
+        🔑 Forgot Password?
+      </a>
+      <!-- Logout -->
+      <button onclick="logout()" class="text-sm bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition font-medium">Logout</button>
+    </div>
+  </div>
 </nav>
 
   <main class="max-w-6xl mx-auto px-4 py-8">
@@ -110,47 +109,21 @@
       <div class="lg:col-span-1 space-y-6">
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">🤖 AI Configuration</h3>
-                  <form id="settingsForm" class="space-y-4">
-          
-          <!-- 🚨 NEW: Business Name -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
-            <input type="text" id="settingsBusinessName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition" placeholder="e.g., Knowledge Grid Academy">
-          </div>
-
-          <!-- 🚨 NEW: WhatsApp Number -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number (with country code, no + or spaces)</label>
-            <input type="text" id="settingsWhatsappNumber" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition" placeholder="e.g., 96891293119">
-          </div>
-
-          <!-- Existing Fields -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Choose a Persona Template</label>
-            <select id="personaTemplate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white transition">
-              <option value="custom">✨ Custom / Keep Current</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">System Prompt (Personality) <span class="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">Auto-Generated & Locked</span></label>
-            <textarea id="systemPrompt" rows="3" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 text-sm font-mono cursor-not-allowed" title="This is automatically managed by the system to ensure safety and quality."></textarea>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Website URL (Optional)</label>
-            <div class="flex gap-2">
-              <input type="url" id="websiteUrl" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="https://yourbusiness.com">
-              <button type="button" onclick="autoGenerateContext()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium whitespace-nowrap flex items-center gap-1">✨ Auto-Generate</button>
+          <form id="settingsForm" class="space-y-4">
+            
+            <!-- 🚨 Business Name -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
+              <input type="text" id="settingsBusinessName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition" placeholder="e.g., Knowledge Grid Academy">
             </div>
-          </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Business / Topic Context</label>
-            <textarea id="businessContext" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm transition"></textarea>
-          </div>
-          
-          <!-- ... keep the rest of your existing form fields (Contact Info, LLM Settings, etc.) ... -->
+            <!-- 🚨 WhatsApp Number -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number (with country code, no + or spaces)</label>
+              <input type="text" id="settingsWhatsappNumber" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition" placeholder="e.g., 96891293119">
+            </div>
+
+            <!-- Persona Template -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Choose a Persona Template</label>
               <select id="personaTemplate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white transition">
@@ -158,11 +131,13 @@
               </select>
             </div>
 
+            <!-- System Prompt -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">System Prompt (Personality) <span class="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">Auto-Generated & Locked</span></label>
               <textarea id="systemPrompt" rows="3" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 text-sm font-mono cursor-not-allowed" title="This is automatically managed by the system to ensure safety and quality."></textarea>
             </div>
 
+            <!-- Website URL -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Website URL (Optional)</label>
               <div class="flex gap-2">
@@ -171,12 +146,13 @@
               </div>
             </div>
 
+            <!-- Business Context -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Business / Topic Context</label>
               <textarea id="businessContext" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm transition"></textarea>
             </div>
-
-            <!-- 📄 Knowledge Base Upload -->
+            
+            <!-- Knowledge Base Upload -->
             <div class="mt-4">
               <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">📄 Knowledge Base (PDF/TXT) <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Premium</span></label>
               <p class="text-xs text-gray-500 mb-2">Upload a PDF or TXT file. The AI will read it and use it to answer questions.</p>
@@ -186,27 +162,17 @@
               </div>
               <p id="uploadStatus" class="text-xs mt-2 font-medium"></p>
 
-              <!--  NEW: Document List Container -->
               <div class="mt-6 border-t border-gray-100 pt-4">
                 <div class="flex justify-between items-center mb-3">
                   <h3 class="text-sm font-bold text-gray-800">📚 Uploaded Documents</h3>
-                  <button onclick="loadKnowledgeDocuments()" class="text-xs text-blue-600 hover:text-blue-800 font-medium">
-                     Refresh
-                  </button>
+                  <button onclick="loadKnowledgeDocuments()" class="text-xs text-blue-600 hover:text-blue-800 font-medium">Refresh</button>
                 </div>
-                
-                <div id="documentList" class="space-y-2">
-                  <!-- Documents will be injected here by JavaScript -->
-                </div>
-                
-                <p id="emptyDocsMsg" class="text-gray-400 text-xs italic text-center py-3 hidden">
-                  No documents uploaded yet.
-                </p>
+                <div id="documentList" class="space-y-2"></div>
+                <p id="emptyDocsMsg" class="text-gray-400 text-xs italic text-center py-3 hidden">No documents uploaded yet.</p>
               </div>
             </div>
 
-
-            <!-- 📍 Service Zone Manager Trigger -->
+            <!-- Service Zone Manager -->
             <div class="flex items-center justify-between bg-blue-50 p-4 rounded-lg border border-blue-100 mt-4">
               <div>
                 <h4 class="text-sm font-bold text-blue-900">📍 Service Zones Manager</h4>
@@ -216,7 +182,7 @@
             </div>
             <p id="currentZonesDisplay" class="text-xs text-gray-500 mt-2 italic">Loading zones...</p>
 
-            <!-- 🚨 AI Provider Selection -->
+            <!-- AI Provider Selection -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">AI Provider</label>
               <select id="llmProviderSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white transition">
@@ -280,21 +246,22 @@
             <div class="mt-3">
               <label class="block text-xs font-medium text-gray-600 mb-1">Additional Notes</label>
               <textarea id="contactNotes" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm"></textarea>
-
-<!-- 🤖 AI AGENT NAME -->
-<div class="mt-6">
-  <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
-    🤖 AI Agent Name <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Optional</span>
-  </label>
-  <p class="text-xs text-gray-500 mb-2">Give your AI a human name (e.g., Noor, Haya, Ammar, Richard). It will introduce itself with this name.</p>
-  <input type="text" id="aiAgentName" placeholder="e.g., Noor" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
-</div>
             </div>
+
+            <!-- AI Agent Name -->
+            <div class="mt-6">
+              <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                🤖 AI Agent Name <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Optional</span>
+              </label>
+              <p class="text-xs text-gray-500 mb-2">Give your AI a human name (e.g., Noor, Haya, Ammar). It will introduce itself with this name.</p>
+              <input type="text" id="aiAgentName" placeholder="e.g., Noor" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+            </div>
+
             <button type="submit" class="w-full bg-green-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-green-700 transition shadow-md flex items-center justify-center gap-2">💾 Save AI Settings</button>
           </form>
           <p id="settingsMsg" class="mt-3 text-center text-sm font-medium min-h-[20px]"></p>
 
-          <!-- 🚨 Human Takeover Toggle -->
+          <!-- Human Takeover Toggle -->
           <div class="flex items-center justify-between bg-yellow-50 p-4 rounded-lg border border-yellow-200 mt-6">
             <div>
               <h4 class="text-sm font-bold text-gray-800 flex items-center gap-2">👤 Human Takeover Mode</h4>
@@ -307,67 +274,47 @@
           </div>
           
           <hr class="my-6 border-gray-200">
-          
-          <!-- 🚨 DYNAMIC CONNECTION STATUS SECTION -->
           <div id="connectionStatusSection"></div>
         </div>
 
-        <!-- ========================================== -->
-        <!-- 👨‍💼 1. AGENT MANAGEMENT (With WhatsApp & Email) -->
-        <!-- ========================================== -->
-<!-- 👨‍💼 Agent Management -->
-<div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
-  <h3 class="text-lg font-semibold text-gray-800 mb-4">👨‍💼 Agent Management</h3>
-  
-  <!-- Add New Agent Card -->
-  <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-6 mb-6 border border-indigo-100">
-    <h4 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-      <span class="text-2xl">➕</span> Add New Agent
-    </h4>
-    
-    <div class="space-y-4">
-      <!-- Agent Name -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1.5">Agent Name <span class="text-red-500">*</span></label>
-        <input type="text" id="agentName" placeholder="e.g., Ahmed Khan" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition bg-white">
-      </div>
-      
-      <!-- Email -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1.5">Email Address <span class="text-red-500">*</span></label>
-        <input type="email" id="agentEmail" placeholder="agent@company.com" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition bg-white">
-      </div>
-      
-      <!-- WhatsApp Number -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1.5">WhatsApp Number <span class="text-red-500">*</span></label>
-        <input type="text" id="agentWhatsapp" placeholder="e.g., 96891293119 (with country code)" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition bg-white">
-      </div>
-      
-      <!-- Languages -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1.5">Languages Spoken <span class="text-red-500">*</span></label>
-        <input type="text" id="agentLanguages" placeholder="e.g., English, Arabic, Urdu" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition bg-white">
-        <p class="text-xs text-gray-500 mt-1.5">Separate multiple languages with commas</p>
-      </div>
-      
-      <!-- Submit Button -->
-      <button onclick="createAgent()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg mt-2">
-        <span>➕</span>
-        <span>Add Agent & Send Invite</span>
-      </button>
-    </div>
-  </div>
-  
-  <!-- Agents List -->
-  <div id="agentsList" class="space-y-3">
-    <p class="text-gray-400 text-sm italic text-center py-8 bg-gray-50 rounded-lg">No agents yet. Add your first agent above!</p>
-  </div>
-</div>
+        <!-- 👨‍💼 Agent Management -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">👨‍💼 Agent Management</h3>
+          
+          <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-6 mb-6 border border-indigo-100">
+            <h4 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <span class="text-2xl">➕</span> Add New Agent
+            </h4>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Agent Name <span class="text-red-500">*</span></label>
+                <input type="text" id="agentName" placeholder="e.g., Ahmed Khan" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Email Address <span class="text-red-500">*</span></label>
+                <input type="email" id="agentEmail" placeholder="agent@company.com" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">WhatsApp Number <span class="text-red-500">*</span></label>
+                <input type="text" id="agentWhatsapp" placeholder="e.g., 96891293119 (with country code)" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Languages Spoken <span class="text-red-500">*</span></label>
+                <input type="text" id="agentLanguages" placeholder="e.g., English, Arabic, Urdu" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white">
+                <p class="text-xs text-gray-500 mt-1.5">Separate multiple languages with commas</p>
+              </div>
+              <button onclick="createAgent()" id="agentSubmitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg mt-2">
+                <span>➕</span><span>Add Agent & Send Invite</span>
+              </button>
+            </div>
+          </div>
+          
+          <div id="agentsList" class="space-y-3">
+            <p class="text-gray-400 text-sm italic text-center py-8 bg-gray-50 rounded-lg">No agents yet. Add your first agent above!</p>
+          </div>
+        </div>
 
-        <!-- ========================================== -->
-        <!-- 💬 2. ACTIVE CONVERSATIONS (AI vs Human Toggle) -->
-        <!-- ========================================== -->
+        <!-- 💬 Active Conversations -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
           <h3 class="text-lg font-semibold text-gray-800 mb-2">💬 Active Conversations</h3>
           <p class="text-xs text-gray-500 mb-4">Toggle between 🤖 AI and 👨‍💻 Human mode for each user individually.</p>
@@ -376,16 +323,14 @@
           </div>
         </div>
 
-        <!-- ========================================== -->
-        <!-- 📥 3. LIVE INBOX (Manual Reply) -->
-        <!-- ========================================== -->
+        <!-- 📥 Live Inbox (Manual Reply) -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
           <h3 class="text-lg font-semibold text-gray-800 mb-2">📥 Live Inbox (Manual Reply)</h3>
           <p class="text-xs text-gray-500 mb-4">Select a customer from the list below to reply manually.</p>
           
-          <!-- Recent Chats Grid -->
-          <div id="recentChats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 max-h-80 overflow-y-auto p-1">
-            <div class="text-center text-gray-400 py-8 col-span-full">Loading recent chats...</div>
+          <!-- 🚨 CHANGED TO SINGLE COLUMN ROWS -->
+          <div id="recentChats" class="flex flex-col gap-3 mb-6 max-h-96 overflow-y-auto p-1">
+            <div class="text-center text-gray-400 py-8">Loading recent chats...</div>
           </div>
 
           <!-- Manual Reply Box -->
@@ -396,8 +341,6 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
               </button>
             </div>
-            
-            <!-- Quick Replies -->
             <div class="mb-3">
               <label class="block text-xs font-medium text-gray-600 mb-1">⚡ Quick Reply:</label>
               <select id="quickReplies" onchange="insertQuickReply()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
@@ -409,7 +352,6 @@
                 <option value="Thank you for contacting us! Have a great day.">✅ Closing / Thank You</option>
               </select>
             </div>
-
             <textarea id="manualReplyText" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none mb-3" placeholder="Type your manual reply..."></textarea>
             <button onclick="sendManualReply()" class="w-full bg-green-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition flex items-center justify-center gap-2">
               <span>📤</span> Send via WhatsApp
@@ -432,6 +374,79 @@
     </div>
   </main>
 
+  <!-- SERVICE ZONE MANAGER MODAL -->
+  <div id="zoneModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="bg-blue-600 text-white p-6 flex justify-between items-center">
+        <h3 class="text-xl font-bold flex items-center gap-2">📍 Service Zone Manager</h3>
+        <button onclick="closeZoneModal()" class="text-white hover:text-gray-200 text-2xl">&times;</button>
+      </div>
+      <div class="p-6 overflow-y-auto flex-1">
+        <div class="mb-6">
+          <label class="block text-sm font-bold text-gray-700 mb-2">Add Location Manually</label>
+          <div class="flex gap-2">
+            <input type="text" id="newZoneInput" placeholder="e.g., Olaya, Riyadh" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+            <button onclick="addZoneManual()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700">Add</button>
+          </div>
+        </div>
+        <div class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <label class="block text-sm font-bold text-gray-700 mb-2">📂 Bulk Upload via CSV</label>
+          <p class="text-xs text-gray-500 mb-2">Upload a .csv or .txt file with one city/area per line.</p>
+          <input type="file" id="csvFileInput" accept=".csv, .txt" onchange="handleFileUpload(this)" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+        </div>
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <label class="block text-sm font-bold text-gray-700">Active Zones (<span id="zoneCount">0</span>)</label>
+            <button onclick="clearAllZones()" class="text-xs text-red-600 hover:text-red-800 underline">Clear All</button>
+          </div>
+          <div id="zonesListContainer" class="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 bg-gray-50 rounded-lg border border-gray-200">
+            <p class="text-gray-400 text-sm w-full text-center py-4">No zones added yet.</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-gray-50 p-4 border-t border-gray-200 flex justify-end gap-3">
+        <button onclick="closeZoneModal()" class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-lg">Cancel</button>
+        <button onclick="saveZones()" class="px-6 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-md">💾 Save All Zones</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🔑 Password Change Modal -->
+  <div id="passwordModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl border border-gray-200">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold text-gray-800">🔑 Change Password</h3>
+        <button onclick="closePasswordModal()" class="text-gray-400 hover:text-gray-600 transition">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <form id="passwordChangeForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+          <input type="password" id="currentPassword" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">New Password (min. 6 characters)</label>
+          <input type="password" id="newPassword" required minlength="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition">
+        </div>
+        <div class="text-right">
+          <button type="button" onclick="forgotPasswordFromModal()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium underline">
+            Don't remember your current password?
+          </button>
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button type="submit" id="updatePasswordBtn" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2">
+            <span>✅</span> Update Password
+          </button>
+          <button type="button" onclick="closePasswordModal()" class="flex-1 bg-gray-200 text-gray-700 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-300 transition">
+            Cancel
+          </button>
+        </div>
+      </form>
+      <p id="passwordChangeMessage" class="mt-3 text-center text-sm font-medium"></p>
+    </div>
+  </div>
+
   <script>
     const token = localStorage.getItem('token');
     let messageChartInstance = null;
@@ -440,15 +455,10 @@
     
     if (!token) { window.location.href = '/login'; }
 
-    // 🚨 SAFEGUARD: If an agent tries to access the admin dashboard, redirect them
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
-      if (payload.role === 'AGENT') {
-        window.location.href = '/agent-dashboard.html';
-      }
-    } catch (e) {
-      console.error('Invalid token');
-    }
+      if (payload.role === 'AGENT') { window.location.href = '/agent-dashboard.html'; }
+    } catch (e) { console.error('Invalid token'); }
 
     const personas = {
       emotional: { systemPrompt: "You are an empathetic, supportive Emotional Support Companion.", businessContext: "Listen actively and validate feelings. Offer coping strategies. ⚠️ CRITICAL: Never diagnose mental health conditions." },
@@ -488,45 +498,48 @@
       nonprofit: { systemPrompt: "You are a passionate, informative Non-Profit Organization Assistant.", businessContext: "Help with donation info, volunteer opportunities, and mission statements." }
     };
 
-        async function loadDashboard() {
+    async function loadDashboard() {
       try {
         const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
         if (data.success) {
-          
-          // 🚨 1. GET THE ACTUAL TEXT STRINGS FROM DATABASE
           const nameString = data.tenant.businessName || 'My Business';
           const waString = data.tenant.whatsappNumber || '';
           
-          //  2. SET THE HEADER (Top Right)
           const topNameEl = document.getElementById('topBusinessName');
           if (topNameEl) topNameEl.textContent = nameString;
           
           const topWaEl = document.getElementById('topWhatsappNumber');
           if (topWaEl) topWaEl.textContent = waString ? `📱 +${waString}` : '';
 
-          //  3. SET THE WELCOME BANNER (Main Page)
           const welcomeNameEl = document.getElementById('businessName');
           if (welcomeNameEl) welcomeNameEl.textContent = nameString;
           
-          // 🚨 4. POPULATE THE SETTINGS FORM INPUTS (So the user can edit them)
           const settingsNameEl = document.getElementById('settingsBusinessName');
           if (settingsNameEl) settingsNameEl.value = nameString;
           
           const settingsWaEl = document.getElementById('settingsWhatsappNumber');
           if (settingsWaEl) settingsWaEl.value = waString;
 
-          // ... KEEP ALL YOUR EXISTING CODE BELOW THIS LINE ...
           document.getElementById('llmApiKey').value = data.tenant.llmApiKey || '';
           document.getElementById('systemPrompt').value = data.tenant.systemPrompt || '';
-          document.getElementById('businessContext').value = data.tenant.businessContext || '';
+          
+          // 🚨 FIX: Safely decode HTML entities for Business Context
+          const contextEl = document.getElementById('businessContext');
+          if (contextEl && data.tenant.businessContext) {
+            const txt = document.createElement("textarea");
+            txt.innerHTML = data.tenant.businessContext;
+            contextEl.value = txt.value;
+          } else if (contextEl) {
+            contextEl.value = '';
+          }
+
           document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
           document.getElementById('llmModel').value = data.tenant.llmModel || '';
           document.getElementById('aiAgentName').value = data.tenant.aiAgentName || '';
           
           let botType = data.tenant.botType;
           if (!botType) botType = 'business';
-          // ... rest of your code ...
           
           const personaDropdown = document.getElementById('personaTemplate');
           personaDropdown.innerHTML = '<option value="custom">✨ Custom / Keep Current</option>';
@@ -705,16 +718,10 @@
       try {
         const res = await fetch('/api/dashboard/settings', { 
           method: 'PUT', 
-          headers: { 
-            'Content-Type': 'application/json', 
-            'Authorization': `Bearer ${token}` 
-          }, 
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, 
           body: JSON.stringify({ 
-            // 🚨 NEW: Add Business Name and WhatsApp Number to the payload
             businessName: document.getElementById('settingsBusinessName').value.trim(),
-            whatsappNumber: document.getElementById('settingsWhatsappNumber').value.replace(/\D/g, ''), // Removes spaces, +, etc.
-            
-            // Existing fields...
+            whatsappNumber: document.getElementById('settingsWhatsappNumber').value.replace(/\D/g, ''),
             systemPrompt: document.getElementById('systemPrompt').value, 
             businessContext: document.getElementById('businessContext').value, 
             contactInfo: contactInfo, 
@@ -734,8 +741,6 @@
         if (data.success) { 
           msg.textContent = '✅ Settings saved successfully!'; 
           msg.className = 'mt-3 text-center text-sm text-green-600 font-bold'; 
-          
-          // Optional: Reload the top header/banner to show the new name instantly
           if (typeof loadDashboard === 'function') loadDashboard();
         } else { 
           msg.textContent = '❌ ' + data.error; 
@@ -844,9 +849,6 @@
       } catch (err) { console.error('Failed to update lead', err); alert('Failed to save changes.'); }
     }
 
-    let currentTenantIdForReply = null;
-
-
     async function loadAnalytics() {
       try {
         const res = await fetch('/api/dashboard/analytics', { headers: { 'Authorization': `Bearer ${token}` } });
@@ -922,13 +924,12 @@
       try {
         const res = await fetch('/api/dashboard/upload-knowledge', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData });
         const data = await res.json();
-                if (res.ok) { 
+        if (res.ok) { 
           statusText.textContent = `✅ ${data.message}`; 
           statusText.className = 'text-xs mt-2 font-medium text-green-600'; 
           fileInput.value = ''; 
-          loadKnowledgeDocuments(); // 🚨 ADD THIS LINE!
-        } 
-        else { statusText.textContent = `❌ ${data.error}`; statusText.className = 'text-xs mt-2 font-medium text-red-600'; }
+          loadKnowledgeDocuments();
+        } else { statusText.textContent = `❌ ${data.error}`; statusText.className = 'text-xs mt-2 font-medium text-red-600'; }
       } catch (error) { statusText.textContent = '❌ Network error. Please try again.'; statusText.className = 'text-xs mt-2 font-medium text-red-600'; } 
       finally { uploadBtn.disabled = false; uploadBtn.innerHTML = '<span>📤</span> Upload & Train'; }
     }
@@ -940,26 +941,33 @@
         const chatContainer = document.getElementById('recentChats');
         if (!chatContainer) return;
         if (res.ok && data.chats && data.chats.length > 0) {
-          chatContainer.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4';
+          // 🚨 CHANGED TO SINGLE COLUMN ROWS
+          chatContainer.className = 'flex flex-col gap-3 mb-6 max-h-96 overflow-y-auto p-1';
           chatContainer.innerHTML = data.chats.map(chat => {
-            const truncatedMessage = chat.lastMessage.length > 60 ? chat.lastMessage.substring(0, 60) + '...' : chat.lastMessage;
+            const truncatedMessage = chat.lastMessage.length > 80 ? chat.lastMessage.substring(0, 80) + '...' : chat.lastMessage;
             const date = new Date(chat.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-            return `<div onclick="openReplyBox('${chat.phoneNumber}')" class="p-4 border border-gray-200 rounded-xl hover:border-indigo-300 hover:shadow-md cursor-pointer transition bg-white hover:bg-gray-50 min-h-[160px] flex flex-col justify-between">
-              <div>
-                <div class="flex items-center justify-between mb-3"><span class="font-bold text-gray-800 text-sm break-all">${chat.phoneNumber}</span></div>
-                <p class="text-xs text-gray-500 mb-2">${date}</p>
-                <p class="text-sm text-gray-700 break-words leading-relaxed whitespace-normal">${truncatedMessage}</p>
+            return `
+              <div onclick="openReplyBox('${chat.phoneNumber}')" class="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:border-indigo-300 hover:shadow-md cursor-pointer transition bg-white hover:bg-gray-50">
+                <div class="flex-1 min-w-0 pr-4">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="font-bold text-gray-800 text-sm truncate">+${chat.phoneNumber}</span>
+                    <span class="text-xs text-gray-500 whitespace-nowrap ml-2">${date}</span>
+                  </div>
+                  <p class="text-sm text-gray-600 truncate">${truncatedMessage}</p>
+                </div>
+                <div class="flex-shrink-0">
+                  <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition">
+                    Reply →
+                  </span>
+                </div>
               </div>
-              <div class="mt-3 pt-3 border-t border-gray-100 text-xs text-indigo-600 font-medium">Click to reply →</div>
-            </div>`;
+            `;
           }).join('');
         } else { 
-          chatContainer.className = 'mb-4';
+          chatContainer.className = 'mb-6';
           chatContainer.innerHTML = '<div class="text-center text-gray-400 py-12">No recent conversations</div>'; 
         }
-      } catch (error) {
-        console.error('Load owner chats error:', error);
-      }
+      } catch (error) { console.error('Load owner chats error:', error); }
     }
 
     async function loadRecentChatHistory() {
@@ -968,7 +976,6 @@
         const data = await res.json();
         const chatContainer = document.getElementById('chatHistory');
         if (!chatContainer) return;
-        
         if (res.ok && data.messages && data.messages.length > 0) {
           chatContainer.innerHTML = data.messages.map(msg => {
             const isOutbound = msg.direction === 'outbound';
@@ -991,34 +998,24 @@
         } else { 
           chatContainer.innerHTML = '<div class="text-center text-gray-400 py-12">No messages yet. Send a WhatsApp message to see it here!</div>'; 
         }
-      } catch (error) {
-        console.error('Load chat history error:', error);
-      }
+      } catch (error) { console.error('Load chat history error:', error); }
     }
 
-    // 🚀 1. LOAD AND DISPLAY DOCUMENTS
     async function loadKnowledgeDocuments() {
       const listContainer = document.getElementById('documentList');
       const emptyMsg = document.getElementById('emptyDocsMsg');
-      
       try {
-        const res = await fetch('/api/dashboard/knowledge', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await fetch('/api/dashboard/knowledge', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
-        
         if (res.ok && data.documents) {
-          listContainer.innerHTML = ''; // Clear current list
-          
+          listContainer.innerHTML = '';
           if (data.documents.length === 0) {
             emptyMsg.classList.remove('hidden');
           } else {
             emptyMsg.classList.add('hidden');
-            
             data.documents.forEach(doc => {
               const sizeMB = (doc.fileSize / (1024 * 1024)).toFixed(2);
               const date = new Date(doc.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-              
               const docRow = document.createElement('div');
               docRow.className = 'flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-gray-100 transition';
               docRow.innerHTML = `
@@ -1029,67 +1026,27 @@
                     <p class="text-xs text-gray-500">${sizeMB} MB • Uploaded on ${date}</p>
                   </div>
                 </div>
-                <button onclick="deleteKnowledgeDocument('${doc.id}', '${doc.fileName.replace(/'/g, "\\'")}')" 
-                        class="ml-4 px-3 py-1.5 bg-red-50 text-red-600 text-sm font-medium rounded-md hover:bg-red-100 transition flex-shrink-0">
-                  🗑️ Delete
-                </button>
+                <button onclick="deleteKnowledgeDocument('${doc.id}', '${doc.fileName.replace(/'/g, "\\'")}')" class="ml-4 px-3 py-1.5 bg-red-50 text-red-600 text-sm font-medium rounded-md hover:bg-red-100 transition flex-shrink-0">🗑️ Delete</button>
               `;
               listContainer.appendChild(docRow);
             });
           }
         }
-      } catch (error) {
-        console.error('Failed to load documents:', error);
-      }
+      } catch (error) { console.error('Failed to load documents:', error); }
     }
 
-    // 🚀 2. DELETE A SPECIFIC DOCUMENT
     async function deleteKnowledgeDocument(docId, fileName) {
-      if (!confirm(`Are you sure you want to delete "${fileName}"? The AI will no longer know this information.`)) {
-        return;
-      }
-
+      if (!confirm(`Are you sure you want to delete "${fileName}"? The AI will no longer know this information.`)) return;
       try {
-        const res = await fetch(`/api/dashboard/knowledge/${docId}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
+        const res = await fetch(`/api/dashboard/knowledge/${docId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
-        
-        if (res.ok) {
-          alert('✅ Document deleted successfully!');
-          loadKnowledgeDocuments(); // Refresh the list
-        } else {
-          alert('❌ ' + (data.error || 'Failed to delete.'));
-        }
-      } catch (error) {
-        alert('❌ Network error while deleting.');
-      }
+        if (res.ok) { alert('✅ Document deleted successfully!'); loadKnowledgeDocuments(); } 
+        else { alert('❌ ' + (data.error || 'Failed to delete.')); }
+      } catch (error) { alert('❌ Network error while deleting.'); }
     }
-
-    // 🚀 3. AUTO-LOAD DOCUMENTS WHEN PAGE OPENS
-    document.addEventListener('DOMContentLoaded', () => {
-      // Wait a tiny bit to ensure the token is loaded
-      setTimeout(() => {
-        if (token) loadKnowledgeDocuments();
-      }, 500);
-    });
-
-    // 🚨 CRITICAL FIX: This was missing! Call loadDashboard to populate name, API key, etc.
-    document.addEventListener('DOMContentLoaded', () => {
-      console.log("🚀 Dashboard loading...");
-      if (typeof loadDashboard === 'function') loadDashboard();
-      if (typeof loadLeads === 'function') loadLeads();
-      if (typeof loadRecentChatHistory === 'function') loadRecentChatHistory(); // 🚨 ADD THIS
-      if (typeof loadAgents === 'function') loadAgents();
-      if (typeof loadConversations === 'function') loadConversations();
-      console.log("✅ All dashboard functions initialized.");
-    });
-
 
     // ============================================
-    // 👨‍💼 AGENTS MANAGEMENT (UPDATED WITH WHATSAPP)
+    // 👨‍💼 AGENTS MANAGEMENT (FIXED)
     // ============================================
     async function loadAgents() {
       const list = document.getElementById('agentsList');
@@ -1097,7 +1054,6 @@
       try {
         const res = await fetch('/api/dashboard/agents', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
-        
         if (res.ok && data.agents) {
           if (data.agents.length === 0) {
             list.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-4">No agents yet. Add your first agent above!</p>';
@@ -1106,6 +1062,12 @@
           list.innerHTML = data.agents.map(agent => {
             const languages = JSON.parse(agent.languages || '[]').join(', ');
             const whatsappDisplay = agent.whatsappNumber ? `• 📱 +${agent.whatsappNumber}` : '• 📱 No WhatsApp';
+            
+            // 🚨 SAFE ESCAPING TO PREVENT HTML BREAKAGE
+            const safeName = agent.name.replace(/'/g, "\\'");
+            const safeEmail = agent.email.replace(/'/g, "\\'");
+            const safeWhatsapp = (agent.whatsappNumber || '').replace(/'/g, "\\'");
+            const safeLangs = JSON.stringify(agent.languages).replace(/"/g, '&quot;');
             
             return `
               <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200">
@@ -1127,11 +1089,8 @@
                       ${agent.isAvailable ? 'Available' : 'Offline'}
                     </span>
                   </label>
-// In your loadAgents() function, add this to each agent card:
-<button onclick="editAgent('${agent.id}')" class="px-3 py-1 bg-blue-500 text-white rounded text-xs">
-  ️ Edit
-</button>
-                  <button onclick="deleteAgent('${agent.id}', '${agent.name}')" class="px-2 py-1 bg-red-50 text-red-600 text-xs rounded hover:bg-red-100">🗑️</button>
+                  <button onclick="editAgent('${agent.id}', '${safeName}', '${safeEmail}', '${safeWhatsapp}', '${safeLangs}')" class="px-3 py-1 bg-blue-50 text-blue-600 rounded text-xs font-medium hover:bg-blue-100 transition">✏️ Edit</button>
+                  <button onclick="deleteAgent('${agent.id}', '${safeName}')" class="px-2 py-1 bg-red-50 text-red-600 text-xs rounded hover:bg-red-100 transition">🗑️</button>
                 </div>
               </div>
             `;
@@ -1168,7 +1127,70 @@
           document.getElementById('agentLanguages').value = '';
           loadAgents();
         } else { alert('❌ ' + data.error); }
-      } catch (error) { alert(' Network error'); }
+      } catch (error) { alert('❌ Network error'); }
+    }
+
+    // 🚨 NEW: Edit Agent Function (Populates Form)
+    function editAgent(agentId, agentName, agentEmail, agentWhatsapp, agentLanguagesJson) {
+      let languagesStr = '';
+      try {
+        const langs = JSON.parse(agentLanguagesJson);
+        languagesStr = Array.isArray(langs) ? langs.join(', ') : agentLanguagesJson;
+      } catch (e) {
+        languagesStr = agentLanguagesJson;
+      }
+
+      document.getElementById('agentName').value = agentName;
+      document.getElementById('agentEmail').value = agentEmail;
+      document.getElementById('agentWhatsapp').value = agentWhatsapp || '';
+      document.getElementById('agentLanguages').value = languagesStr;
+
+      const submitBtn = document.getElementById('agentSubmitBtn');
+      if (submitBtn) {
+        submitBtn.textContent = '💾 Update Agent';
+        submitBtn.setAttribute('onclick', `updateAgent('${agentId}')`);
+        submitBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+        submitBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+      }
+      
+      document.getElementById('agentName').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // 🚨 NEW: Update Agent Function
+    async function updateAgent(agentId) {
+      const name = document.getElementById('agentName').value.trim();
+      const email = document.getElementById('agentEmail').value.trim();
+      const whatsapp = document.getElementById('agentWhatsapp').value.trim().replace(/\D/g, '');
+      const languagesStr = document.getElementById('agentLanguages').value.trim();
+      
+      if (!name || !email) { alert('Name and Email are required.'); return; }
+      
+      const languages = languagesStr ? languagesStr.split(',').map(l => l.trim()) : ['English'];
+      
+      try {
+        const res = await fetch(`/api/dashboard/agents/${agentId}`, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, whatsappNumber: whatsapp, languages })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          alert('✅ Agent updated successfully!');
+          document.getElementById('agentName').value = '';
+          document.getElementById('agentEmail').value = '';
+          document.getElementById('agentWhatsapp').value = '';
+          document.getElementById('agentLanguages').value = '';
+          
+          const submitBtn = document.getElementById('agentSubmitBtn');
+          if (submitBtn) {
+            submitBtn.textContent = '➕ Add Agent & Send Invite';
+            submitBtn.setAttribute('onclick', 'createAgent()');
+            submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            submitBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+          }
+          loadAgents();
+        } else { alert('❌ ' + data.error); }
+      } catch (error) { alert('❌ Network error'); }
     }
 
     async function toggleAgentAvailability(agentId, isAvailable) {
@@ -1199,7 +1221,6 @@
       try {
         const res = await fetch('/api/dashboard/conversations', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
-        
         if (res.ok && data.conversations) {
           if (data.conversations.length === 0) {
             list.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-4">No conversations yet. They appear when users message your bot.</p>';
@@ -1257,16 +1278,6 @@
       } catch (error) { alert('❌ Network error'); }
     }
 
-    // Load agents and conversations when the page loads
-    document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(() => {
-        if (typeof token !== 'undefined' && token) {
-          loadAgents();
-          loadConversations();
-        }
-      }, 500);
-    });
-
     // ============================================
     // 📥 LIVE INBOX FUNCTIONS
     // ============================================
@@ -1275,26 +1286,29 @@
     async function loadRecentChats() {
       const chatContainer = document.getElementById('recentChats');
       if (!chatContainer) return;
-      
       try {
         const res = await fetch('/api/dashboard/chats', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
-        
         if (res.ok && data.chats && data.chats.length > 0) {
-          chatContainer.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 max-h-80 overflow-y-auto p-1';
+          // 🚨 CHANGED TO SINGLE COLUMN ROWS
+          chatContainer.className = 'flex flex-col gap-3 mb-6 max-h-96 overflow-y-auto p-1';
           chatContainer.innerHTML = data.chats.map(chat => {
-            const truncatedMessage = chat.lastMessage.length > 60 ? chat.lastMessage.substring(0, 60) + '...' : chat.lastMessage;
+            const truncatedMessage = chat.lastMessage.length > 80 ? chat.lastMessage.substring(0, 80) + '...' : chat.lastMessage;
             const date = new Date(chat.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
             return `
-              <div onclick="openReplyBox('${chat.phoneNumber}')" class="p-4 border border-gray-200 rounded-xl hover:border-indigo-300 hover:shadow-md cursor-pointer transition bg-white hover:bg-gray-50 min-h-[140px] flex flex-col justify-between">
-                <div>
-                  <div class="flex items-center justify-between mb-2">
-                    <span class="font-bold text-gray-800 text-sm break-all">+${chat.phoneNumber}</span>
+              <div onclick="openReplyBox('${chat.phoneNumber}')" class="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:border-indigo-300 hover:shadow-md cursor-pointer transition bg-white hover:bg-gray-50">
+                <div class="flex-1 min-w-0 pr-4">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="font-bold text-gray-800 text-sm truncate">+${chat.phoneNumber}</span>
+                    <span class="text-xs text-gray-500 whitespace-nowrap ml-2">${date}</span>
                   </div>
-                  <p class="text-xs text-gray-500 mb-2">${date}</p>
-                  <p class="text-sm text-gray-700 break-words leading-relaxed whitespace-normal">${truncatedMessage}</p>
+                  <p class="text-sm text-gray-600 truncate">${truncatedMessage}</p>
                 </div>
-                <div class="mt-3 pt-3 border-t border-gray-100 text-xs text-indigo-600 font-medium">Click to reply →</div>
+                <div class="flex-shrink-0">
+                  <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition">
+                    Reply →
+                  </span>
+                </div>
               </div>
             `;
           }).join('');
@@ -1302,9 +1316,7 @@
           chatContainer.className = 'mb-6';
           chatContainer.innerHTML = '<div class="text-center text-gray-400 py-12">No recent conversations</div>'; 
         }
-      } catch (error) {
-        console.error('Load recent chats error:', error);
-      }
+      } catch (error) { console.error('Load recent chats error:', error); }
     }
 
     function openReplyBox(number) {
@@ -1313,29 +1325,16 @@
       document.getElementById('replyBox').classList.remove('hidden');
       document.getElementById('manualReplyText').value = '';
       document.getElementById('manualReplyText').focus();
-      
-      // Smooth scroll to reply box
-      setTimeout(() => { 
-        document.getElementById('replyBox').scrollIntoView({ behavior: 'smooth', block: 'center' }); 
-      }, 100);
-    }
-
-    function closeReplyBox() {
-      currentReplyNumber = null;
-      document.getElementById('replyBox').classList.add('hidden');
+      setTimeout(() => { document.getElementById('replyBox').scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
     }
 
     function insertQuickReply() {
       const select = document.getElementById('quickReplies');
       const textarea = document.getElementById('manualReplyText');
       const selectedText = select.value;
-
       if (selectedText) {
-        if (textarea.value.trim().length > 0) {
-          textarea.value = textarea.value + '\n\n' + selectedText;
-        } else {
-          textarea.value = selectedText;
-        }
+        if (textarea.value.trim().length > 0) { textarea.value = textarea.value + '\n\n' + selectedText; } 
+        else { textarea.value = selectedText; }
         select.value = "";
         textarea.focus();
       }
@@ -1344,80 +1343,37 @@
     async function sendManualReply() {
       if (!currentReplyNumber) return;
       const content = document.getElementById('manualReplyText').value.trim();
-      
-      if (!content) {
-        alert('Please type a message first.');
-        return;
-      }
-
+      if (!content) { alert('Please type a message first.'); return; }
       try {
-        // Use the agent send-message endpoint (works for admin too)
         const res = await fetch('/api/dashboard/agent/send-message', {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ 
-            userNumber: currentReplyNumber, 
-            content: content 
-          })
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ userNumber: currentReplyNumber, content: content })
         });
-
         const data = await res.json();
         if (res.ok) {
           alert('✅ Message sent successfully!');
           document.getElementById('manualReplyText').value = '';
           closeReplyBox();
-          loadRecentChats(); // Refresh the list
-          loadConversations(); // Refresh conversation statuses
-        } else {
-          alert('❌ Failed to send: ' + (data.error || 'Unknown error'));
-        }
-      } catch (error) {
-        console.error('Send manual reply error:', error);
-        alert('❌ Network error. Please try again.');
-      }
+          loadRecentChats();
+          loadConversations();
+        } else { alert('❌ Failed to send: ' + (data.error || 'Unknown error')); }
+      } catch (error) { console.error('Send manual reply error:', error); alert('❌ Network error. Please try again.'); }
     }
-
-
-async function editAgent(agentId) {
-  const newName = prompt('Enter new agent name:');
-  if (newName) {
-    await fetch(`/api/dashboard/agents/${agentId}`, {
-      method: 'PUT',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
-      body: JSON.stringify({ name: newName })
-    });
-    loadAgents(); // Refresh the list
-  }
-}
 
     // 🔑 Password Modal Functions
     function openPasswordModal(forceMode = false) {
       document.getElementById('passwordModal').classList.remove('hidden');
-      
-      // If forced, hide the Cancel button
       const cancelBtn = document.querySelector('#passwordModal button[onclick="closePasswordModal()"]');
-      if (cancelBtn && forceMode) {
-        cancelBtn.style.display = 'none';
-      }
+      if (cancelBtn && forceMode) { cancelBtn.style.display = 'none'; }
     }
 
     function closePasswordModal() {
       document.getElementById('passwordModal').classList.add('hidden');
       document.getElementById('passwordChangeForm').reset();
       document.getElementById('passwordChangeMessage').textContent = '';
-      
-      // Re-enable the submit button
       const btn = document.getElementById('updatePasswordBtn');
-      if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = '<span>✅</span> Update Password';
-      }
+      if (btn) { btn.disabled = false; btn.innerHTML = '<span>✅</span> Update Password'; }
     }
 
     function forgotPasswordFromModal() {
@@ -1426,173 +1382,79 @@ async function editAgent(agentId) {
       window.location.href = '/forgot-password.html';
     }
 
-// Handle Password Change Form Submission
-document.getElementById('passwordChangeForm')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  const currentPassword = document.getElementById('currentPassword').value;
-  const newPassword = document.getElementById('newPassword').value;
-  const msg = document.getElementById('passwordChangeMessage');
-  const btn = document.getElementById('updatePasswordBtn');
-  
-  console.log('🔑 Attempting password change...');
-  console.log('Current password:', currentPassword ? '***' : 'empty');
-  console.log('New password:', newPassword ? '***' : 'empty');
-  
-  if (!currentPassword || !newPassword) {
-    msg.textContent = '❌ Please fill in all fields.';
-    msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
-    return;
-  }
-  
-  if (newPassword.length < 6) {
-    msg.textContent = '❌ New password must be at least 6 characters.';
-    msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
-    return;
-  }
-
-  // Disable button and show loading
-  btn.disabled = true;
-  btn.innerHTML = '<span>⏳</span> Updating...';
-  msg.textContent = '';
-
-  try {
-    const token = localStorage.getItem('token');
-    console.log('🔑 Using token:', token ? '***' : 'NO TOKEN!');
-    
-    const res = await fetch('/api/auth/change-password', {
-      method: 'PUT',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ currentPassword, newPassword })
-    });
-    
-    console.log(' Response status:', res.status);
-    const data = await res.json();
-    console.log('📡 Response data:', data);
-    
-    if (res.ok && data.success) {
-      msg.textContent = '✅ Password changed successfully! You will be logged out.';
-      msg.className = 'mt-3 text-center text-sm text-green-600 font-bold';
+    document.getElementById('passwordChangeForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const currentPassword = document.getElementById('currentPassword').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const msg = document.getElementById('passwordChangeMessage');
+      const btn = document.getElementById('updatePasswordBtn');
       
-      // Wait 2 seconds then logout
-      setTimeout(() => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('tenant');
-        window.location.href = '/login';
-      }, 2000);
-    } else {
-      msg.textContent = ' ' + (data.error || 'Failed to change password.');
-      msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
-      btn.disabled = false;
-      btn.innerHTML = '<span>✅</span> Update Password';
-    }
-  } catch (error) {
-    console.error('❌ Password change error:', error);
-    msg.textContent = ' Network error. Please try again.';
-    msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
-    btn.disabled = false;
-    btn.innerHTML = '<span>✅</span> Update Password';
-  }
-});
+      if (!currentPassword || !newPassword) {
+        msg.textContent = '❌ Please fill in all fields.';
+        msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+        return;
+      }
+      if (newPassword.length < 6) {
+        msg.textContent = '❌ New password must be at least 6 characters.';
+        msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+        return;
+      }
 
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳</span> Updating...';
+      msg.textContent = '';
 
-// 🚨 FORCE PASSWORD CHANGE ON LOGIN
-window.addEventListener('DOMContentLoaded', () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('forceChange') === 'true') {
-    // Open modal in "Force" mode (hides the cancel button)
-    openPasswordModal(true); 
-    // Clean the URL so it doesn't trigger again on refresh
-    window.history.replaceState({}, document.title, "/dashboard");
-  }
-});
+      try {
+        const res = await fetch('/api/auth/change-password', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ currentPassword, newPassword })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          msg.textContent = '✅ Password changed successfully! You will be logged out.';
+          msg.className = 'mt-3 text-center text-sm text-green-600 font-bold';
+          setTimeout(() => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('tenant');
+            window.location.href = '/login';
+          }, 2000);
+        } else {
+          msg.textContent = '❌ ' + (data.error || 'Failed to change password.');
+          msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+          btn.disabled = false;
+          btn.innerHTML = '<span>✅</span> Update Password';
+        }
+      } catch (error) {
+        console.error('❌ Password change error:', error);
+        msg.textContent = '❌ Network error. Please try again.';
+        msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+        btn.disabled = false;
+        btn.innerHTML = '<span>✅</span> Update Password';
+      }
+    });
 
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('forceChange') === 'true') {
+        openPasswordModal(true); 
+        window.history.replaceState({}, document.title, "/dashboard");
+      }
+      console.log("🚀 Dashboard loading...");
+      if (typeof loadDashboard === 'function') loadDashboard();
+      if (typeof loadLeads === 'function') loadLeads();
+      if (typeof loadRecentChatHistory === 'function') loadRecentChatHistory();
+      if (typeof loadAgents === 'function') loadAgents();
+      if (typeof loadConversations === 'function') loadConversations();
+      if (typeof loadKnowledgeDocuments === 'function') loadKnowledgeDocuments();
+      console.log("✅ All dashboard functions initialized.");
+    });
 
     function logout() { 
       localStorage.clear(); 
       window.location.href = '/login'; 
     }
   </script>
-
-  <!-- SERVICE ZONE MANAGER MODAL -->
-  <div id="zoneModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
-      <div class="bg-blue-600 text-white p-6 flex justify-between items-center">
-        <h3 class="text-xl font-bold flex items-center gap-2">📍 Service Zone Manager</h3>
-        <button onclick="closeZoneModal()" class="text-white hover:text-gray-200 text-2xl">&times;</button>
-      </div>
-      <div class="p-6 overflow-y-auto flex-1">
-        <div class="mb-6">
-          <label class="block text-sm font-bold text-gray-700 mb-2">Add Location Manually</label>
-          <div class="flex gap-2">
-            <input type="text" id="newZoneInput" placeholder="e.g., Olaya, Riyadh" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-            <button onclick="addZoneManual()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700">Add</button>
-          </div>
-        </div>
-        <div class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <label class="block text-sm font-bold text-gray-700 mb-2">📂 Bulk Upload via CSV</label>
-          <p class="text-xs text-gray-500 mb-2">Upload a .csv or .txt file with one city/area per line.</p>
-          <input type="file" id="csvFileInput" accept=".csv, .txt" onchange="handleFileUpload(this)" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
-        </div>
-        <div>
-          <div class="flex justify-between items-center mb-2">
-            <label class="block text-sm font-bold text-gray-700">Active Zones (<span id="zoneCount">0</span>)</label>
-            <button onclick="clearAllZones()" class="text-xs text-red-600 hover:text-red-800 underline">Clear All</button>
-          </div>
-          <div id="zonesListContainer" class="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 bg-gray-50 rounded-lg border border-gray-200">
-            <p class="text-gray-400 text-sm w-full text-center py-4">No zones added yet.</p>
-          </div>
-        </div>
-      </div>
-      <div class="bg-gray-50 p-4 border-t border-gray-200 flex justify-end gap-3">
-        <button onclick="closeZoneModal()" class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-lg">Cancel</button>
-        <button onclick="saveZones()" class="px-6 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-md">💾 Save All Zones</button>
-      </div>
-    </div>
-  </div>
-<!-- 🔑 Password Change Modal -->
-<div id="passwordModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
-  <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl border border-gray-200">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="text-lg font-bold text-gray-800">🔑 Change Password</h3>
-      <button onclick="closePasswordModal()" class="text-gray-400 hover:text-gray-600 transition">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-      </button>
-    </div>
-    
-    <form id="passwordChangeForm" class="space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
-        <input type="password" id="currentPassword" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition">
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">New Password (min. 6 characters)</label>
-        <input type="password" id="newPassword" required minlength="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition">
-      </div>
-      
-      <div class="text-right">
-        <button type="button" onclick="forgotPasswordFromModal()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium underline">
-          Don't remember your current password?
-        </button>
-      </div>
-      
-      <div class="flex gap-3 pt-2">
-        <button type="submit" id="updatePasswordBtn" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2">
-          <span>✅</span> Update Password
-        </button>
-        <button type="button" onclick="closePasswordModal()" class="flex-1 bg-gray-200 text-gray-700 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-300 transition">
-          Cancel
-        </button>
-      </div>
-    </form>
-    
-    <p id="passwordChangeMessage" class="mt-3 text-center text-sm font-medium"></p>
-  </div>
-</div>
-
 </body>
 </html>
