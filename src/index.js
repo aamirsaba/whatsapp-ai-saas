@@ -601,74 +601,40 @@ app.get('/forgot-password', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'forgot-password.html'));
 });
 
-// 🚀 FORGOT PASSWORD - Send Reset Link
+// 🚀 FORGOT PASSWORD - Generate & Email a Temporary Password (Simple & Secure)
 app.post('/api/auth/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await prisma.user.findUnique({ where: { email } });
     
+    // 1. Check if user exists
+    const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      // Don't reveal if email exists (security)
-      return res.json({ success: true, message: 'If email exists, reset link sent.' });
+      // Security: Always return success message even if email doesn't exist
+      return res.json({ success: true, message: 'If an account with this email exists, a new password has been sent to your inbox.' });
     }
 
-    // Generate reset token
+    // 2. Generate a simple, 8-character temporary password
     const crypto = require('crypto');
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
-
+    const tempPassword = crypto.randomBytes(4).toString('hex'); // e.g., "a1b2c3d4"
+    
+    // 3. Hash it and save to the database immediately
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+    
     await prisma.user.update({
       where: { id: user.id },
-      data: { resetToken, resetTokenExpiry }
+      data: { password: hashedPassword }
     });
 
-    // Send email with reset link
+    // 4. Send the email using your PERFECT email.js function
     const { sendPasswordResetEmail } = require('./email');
-    const resetUrl = `https://bot.aamirsaba.com/reset-password?token=${resetToken}&email=${email}`;
-    await sendPasswordResetEmail(email, resetUrl);
+    await sendPasswordResetEmail(email, tempPassword);
 
-    res.json({ success: true, message: 'If email exists, reset link sent.' });
+    // 5. Return success
+    res.json({ success: true, message: 'If an account with this email exists, a new password has been sent to your inbox.' });
   } catch (error) {
     console.error('Forgot password error:', error);
     res.status(500).json({ error: 'Failed to process request.' });
-  }
-});
-
-// 🚀 RESET PASSWORD - Use Token
-app.post('/api/auth/reset-password', async (req, res) => {
-  try {
-    const { token, email, newPassword } = req.body;
-    
-    const user = await prisma.user.findFirst({
-      where: { 
-        email, 
-        resetToken: token,
-        resetTokenExpiry: { gt: new Date() } // Not expired
-      }
-    });
-
-    if (!user) {
-      return res.status(400).json({ error: 'Invalid or expired reset link.' });
-    }
-
-    // Hash new password
-    const bcrypt = require('bcryptjs');
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    // Update password and clear reset token
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { 
-        password: hashedPassword,
-        resetToken: null,
-        resetTokenExpiry: null
-      }
-    });
-
-    res.json({ success: true, message: 'Password reset successfully! Please login.' });
-  } catch (error) {
-    console.error('Reset password error:', error);
-    res.status(500).json({ error: 'Failed to reset password.' });
   }
 });
 
