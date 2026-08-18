@@ -11,8 +11,9 @@ const { getAIResponse, translateText } = require('./ai'); // 🚨 ADDED translat
 const cron = require('node-cron');
 
 const multer = require('multer');
+const Tesseract = require('tesseract.js');
+const { convert } = require('pdf2pic');// 🚨 NEW: Configure storage to KEEP the original filename (so the AI can find it)
 
-// 🚨 NEW: Configure storage to KEEP the original filename (so the AI can find it)
 const knowledgeStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'uploads/knowledge/');
@@ -1540,7 +1541,7 @@ app.get('/api/agent/info', authenticateToken, async (req, res) => {
 });
 
 
-// 🚀 UPLOAD KNOWLEDGE BASE (Ultra-Bulletproof PDF/TXT Support)
+// 🚀 UPLOAD KNOWLEDGE BASE (Ultra-Bulletproof PDF/TXT Support with OCR)
 app.post('/api/dashboard/upload-knowledge', authenticateToken, knowledgeUpload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Please upload a file.' });
@@ -1562,12 +1563,49 @@ app.post('/api/dashboard/upload-knowledge', authenticateToken, knowledgeUpload.s
     const filePath = req.file.path;
     const fileExtension = req.file.originalname.split('.').pop().toLowerCase();
     
-    // 🚨 2. SAFE FILE PARSING
+    // 🚨 2. SAFE FILE PARSING WITH OCR FALLBACK
     if (fileExtension === 'pdf') {
       try {
         const dataBuffer = fs.readFileSync(filePath);
         const data = await pdf(dataBuffer);
         extractedText = data.text || '';
+        
+        // 🚨 OCR FALLBACK: If standard parse finds almost no text, it's likely a scanned image PDF
+        if (extractedText.trim().length < 50) {
+          console.log('⚠️ PDF appears to be image-based. Initiating OCR fallback (this may take 15-30 seconds)...');
+          
+          const tempDir = path.join(__dirname, '..', 'uploads', 'temp_ocr');
+          if (!fs.existsSync(tempDir)) {
+            fs.mkdirSync(tempDir, { recursive: true });
+          }
+
+          const options = {
+            density: 300,
+            saveFilename: "ocr_temp",
+            savePath: tempDir,
+            format: "png",
+            width: 2000,
+            height: 2000
+          };
+          
+          const storeAsImage = convert(filePath, options);
+          const pages = await storeAsImage.bulk(-1); // Convert all pages
+          
+          let ocrText = '';
+          for (const page of pages) {
+            console.log(`🔍 Running OCR on page ${page.page}...`);
+            const { data: { text } } = await Tesseract.recognize(page.path, 'eng');
+            ocrText += text + '\n';
+            
+            // Clean up temp image immediately to save disk space
+            if (fs.existsSync(page.path)) {
+              fs.unlinkSync(page.path);
+            }
+          }
+          
+          extractedText = ocrText;
+          console.log('✅ OCR completed successfully.');
+        }
       } catch (pdfError) {
         console.error('❌ PDF Parse Error:', pdfError.message);
         if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
