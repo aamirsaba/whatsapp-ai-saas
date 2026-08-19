@@ -1399,22 +1399,6 @@ async function loadConversations() {
   } catch (error) { console.error('Failed to load conversations:', error); }
 }
 
-      <!-- 🚨 WHATSAPP CONNECTION STATUS -->
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">📱 WhatsApp Connection</h3>
-            <p class="text-sm text-gray-500 mt-1">Manage your WhatsApp connection</p>
-          </div>
-          <div id="connectionStatusBadge" class="px-3 py-1.5 rounded-full text-sm font-bold bg-gray-100 text-gray-600">
-            Checking...
-          </div>
-        </div>
-        
-        <div id="connectionStatusContent" class="space-y-4">
-          <!-- Content will be loaded dynamically -->
-        </div>
-      </div>
 
     // ==========================================
     // 🚨 WHATSAPP CONNECTION MANAGEMENT
@@ -1652,94 +1636,6 @@ Notes: ${document.getElementById('contactNotes').value || 'None'}`.trim();
     document.addEventListener('DOMContentLoaded', async () => {
       await loadDashboard();
       showSection('dashboard');
-    });
-
-
-// SAVE SETTINGS (Business Info & Contact Details)
-async function saveSettings() {
-  const msg = document.getElementById('settingsMsg');
-  if (!msg) return;
-  
-  msg.textContent = '💾 Saving...';
-  msg.className = 'mt-3 text-center text-sm text-gray-600 font-medium';
-  
-  try {
-    // Get current tenant data first
-    const res = await fetch('/api/dashboard', { 
-      headers: { 'Authorization': `Bearer ${token}` } 
-    });
-    const data = await res.json();
-    
-    if (!data.success) {
-      msg.textContent = '❌ Failed to load current settings.';
-      msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
-      return;
-    }
-    
-    // Build contact info string
-    const contactInfo = `Contact Person: ${document.getElementById('contactPerson').value || 'Not provided'}
-Email: ${document.getElementById('contactEmail').value || 'Not provided'}
-Phone/WhatsApp: ${document.getElementById('contactPhone').value || 'Not provided'}
-Website: ${document.getElementById('contactWebsite').value || 'Not provided'}
-Notes: ${document.getElementById('contactNotes').value || 'None'}`.trim();
-    
-    // Save settings
-    const saveRes = await fetch('/api/dashboard/settings', { 
-      method: 'PUT', 
-      headers: { 
-        'Content-Type': 'application/json', 
-        'Authorization': `Bearer ${token}` 
-      }, 
-      body: JSON.stringify({ 
-        businessName: document.getElementById('settingsBusinessName').value || data.tenant.businessName,
-        whatsappNumber: (document.getElementById('settingsWhatsappNumber').value || data.tenant.whatsappNumber).replace(/\D/g, ''),
-        contactInfo: contactInfo,
-        // Keep existing AI settings
-        systemPrompt: document.getElementById('systemPrompt').value || data.tenant.systemPrompt,
-        businessContext: document.getElementById('businessContext').value || data.tenant.businessContext,
-        llmApiKey: document.getElementById('llmApiKey').value || data.tenant.llmApiKey,
-        llmModel: document.getElementById('llmModel').value || data.tenant.llmModel,
-        llmProvider: document.getElementById('llmProvider').value || data.tenant.llmProvider,
-        llmBaseUrl: document.getElementById('llmBaseUrl').value || data.tenant.llmBaseUrl,
-        aiAgentName: document.getElementById('aiAgentName').value || data.tenant.aiAgentName,
-        isHumanMode: document.getElementById('humanModeToggle').checked
-      }) 
-    });
-    
-    const saveData = await saveRes.json();
-    if (saveRes.ok) {
-      msg.textContent = '✅ Business settings saved successfully!';
-      msg.className = 'mt-3 text-center text-sm text-green-600 font-bold';
-      
-      // Reload dashboard to update header
-      await loadDashboard();
-      
-      setTimeout(() => {
-        msg.textContent = '';
-      }, 3000);
-    } else {
-      msg.textContent = '❌ ' + (saveData.error || 'Failed to save settings.');
-      msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
-    }
-  } catch (err) {
-    console.error('Save settings error:', err);
-    const msg = document.getElementById('settingsMsg');
-    if (msg) {
-      msg.textContent = '❌ Network error. Please try again.';
-      msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
-    }
-  }
-}
-
-    // ==========================================
-    // INITIALIZATION
-    // ==========================================
-    document.addEventListener('DOMContentLoaded', async () => {
-      console.log("🚀 Dashboard loading...");
-      await loadDashboard();
-      showSection('dashboard');
-      loadWhatsAppStatus(); // 🚨 NEW: Load WhatsApp connection status
-      console.log("✅ All dashboard functions initialized.");
     });
 
   </script>
