@@ -177,6 +177,21 @@ model Agent {
   @@unique([tenantId, email])
 }
 
+
+// Add this model to your schema.prisma
+model AgentStatusLog {
+  id        String   @id @default(cuid())
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  status    String   // "AVAILABLE", "BUSY", "OFFLINE"
+  startTime DateTime @default(now())
+  endTime   DateTime?
+  duration  Int?     // Duration in seconds
+  
+  @@index([agentId])
+  @@index([startTime])
+}
+
 // 💬 PER-USER CONVERSATION CONTROL
 model Conversation {
   id              String   @id @default(cuid())

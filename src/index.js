@@ -1383,7 +1383,7 @@ app.get('/api/dashboard/team', authenticateToken, async (req, res) => {
 });
 
 
-//  ACCEPT INVITATION: Create account + add to team
+//  ACCEPT INVITATION: Create account + add to team + auto-login
 app.post('/api/auth/accept-invitation', async (req, res) => {
   try {
     const { email, token, password } = req.body;
@@ -1403,24 +1403,64 @@ app.post('/api/auth/accept-invitation', async (req, res) => {
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
+    
     if (existingUser) {
-      return res.status(400).json({ error: 'An account with this email already exists. Please log in instead.' });
+      // User exists - just add them to the team if not already
+      const existingMember = await prisma.teamMember.findFirst({
+        where: { tenantId: invitation.tenantId, userId: existingUser.id }
+      });
+
+      if (!existingMember) {
+        await prisma.teamMember.create({
+          data: { tenantId: invitation.tenantId, userId: existingUser.id, role: 'AGENT' }
+        });
+      }
+
+      // Update agent to available
+      await prisma.agent.updateMany({
+        where: { email: existingUser.email, tenantId: invitation.tenantId },
+        data: { isAvailable: true }
+      });
+
+      // Mark invitation as accepted
+      await prisma.teamInvitation.update({
+        where: { id: invitation.id },
+        data: { accepted: true }
+      });
+
+      // Generate JWT token
+      const jwt = require('jsonwebtoken');
+      const authToken = jwt.sign(
+        { userId: existingUser.id, email: existingUser.email, role: existingUser.role },
+        process.env.JWT_SECRET || 'your-secret-key-change-this',
+        { expiresIn: '7d' }
+      );
+
+      return res.json({ 
+        success: true, 
+        message: '✅ Welcome back! You have been added to the team.',
+        token: authToken,
+        user: { email: existingUser.email, role: existingUser.role },
+        redirectUrl: '/agent-dashboard'
+      });
     }
 
-    // Create user with AGENT role
+    // New user - create account
     const bcrypt = require('bcryptjs');
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await prisma.user.create({
-      data: { 
-        email, 
-        password: hashedPassword, 
-        role: 'AGENT' //  CRITICAL: Set role to AGENT, not TENANT
-      }
+      data: { email, password: hashedPassword, role: 'AGENT' }
     });
 
     // Add to team
     await prisma.teamMember.create({
       data: { tenantId: invitation.tenantId, userId: newUser.id, role: 'AGENT' }
+    });
+
+    // Update agent to available
+    await prisma.agent.updateMany({
+      where: { email: newUser.email, tenantId: invitation.tenantId },
+      data: { isAvailable: true }
     });
 
     // Mark invitation as accepted
@@ -1429,7 +1469,7 @@ app.post('/api/auth/accept-invitation', async (req, res) => {
       data: { accepted: true }
     });
 
-    // Generate JWT token for login
+    // Generate JWT token
     const jwt = require('jsonwebtoken');
     const authToken = jwt.sign(
       { userId: newUser.id, email: newUser.email, role: newUser.role },
@@ -1439,9 +1479,10 @@ app.post('/api/auth/accept-invitation', async (req, res) => {
 
     res.json({ 
       success: true, 
-      message: 'Account created and added to team!',
+      message: '✅ Account created and added to team! Redirecting...',
       token: authToken,
-      user: { email: newUser.email, role: newUser.role }
+      user: { email: newUser.email, role: newUser.role },
+      redirectUrl: '/agent-dashboard'
     });
   } catch (error) {
     console.error('❌ Accept invitation error:', error);
@@ -2130,6 +2171,7 @@ app.get('/api/dashboard/agents', authenticateToken, async (req, res) => {
 // ============================================
 // 👨‍💼 CREATE AGENT & SEND INVITATION EMAIL
 // ============================================
+// Create agent & send invitation (handle existing invitations)
 app.post('/api/dashboard/agents', authenticateToken, async (req, res) => {
   try {
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
@@ -2138,24 +2180,55 @@ app.post('/api/dashboard/agents', authenticateToken, async (req, res) => {
     const { name, email, whatsappNumber, languages } = req.body;
     if (!name || !email) return res.status(400).json({ error: 'Name and Email are required.' });
 
-    // 1. Generate a secure invitation token
+    // 1. Delete any existing pending invitations for this email
+    await prisma.teamInvitation.deleteMany({
+      where: {
+        email: email,
+        tenantId: tenant.id,
+        accepted: false
+      }
+    });
+
+    // 2. Check if user already exists
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    
+    if (existingUser) {
+      // User exists - just add them as team member if not already
+      const existingMember = await prisma.teamMember.findFirst({
+        where: { tenantId: tenant.id, userId: existingUser.id }
+      });
+
+      if (!existingMember) {
+        await prisma.teamMember.create({
+          data: { tenantId: tenant.id, userId: existingUser.id, role: 'AGENT' }
+        });
+      }
+
+      // Create agent record
+      const agent = await prisma.agent.create({
+        data: {
+          tenantId: tenant.id,
+          name,
+          email,
+          whatsappNumber: whatsappNumber || null,
+          languages: JSON.stringify(languages || ['English']),
+          isAvailable: false, // Start as unavailable until they login
+          isBusy: false
+        }
+      });
+
+      return res.json({ 
+        success: true, 
+        agent, 
+        message: `✅ ${name} added as agent (existing user)! They can login immediately.` 
+      });
+    }
+
+    // 3. New user - create invitation
     const crypto = require('crypto');
     const inviteToken = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-    // 2. Create the Agent record
-    const agent = await prisma.agent.create({
-      data: {
-        tenantId: tenant.id,
-        name,
-        email,
-        whatsappNumber: whatsappNumber || null,
-        languages: JSON.stringify(languages || ['English']),
-        isAvailable: true
-      }
-    });
-
-    // 3. Create the Invitation record
     await prisma.teamInvitation.create({
       data: {
         email,
@@ -2166,14 +2239,27 @@ app.post('/api/dashboard/agents', authenticateToken, async (req, res) => {
       }
     });
 
-    // 4. 🚨 SEND THE INVITATION EMAIL USING YOUR HOSTINGER SMTP
+    // Create agent record (but mark as pending)
+    const agent = await prisma.agent.create({
+      data: {
+        tenantId: tenant.id,
+        name,
+        email,
+        whatsappNumber: whatsappNumber || null,
+        languages: JSON.stringify(languages || ['English']),
+        isAvailable: false, // Not available until they accept
+        isBusy: false
+      }
+    });
+
+    // 4. Send invitation email with login info
     try {
       const nodemailer = require('nodemailer');
       
       const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST || 'smtp.hostinger.com',
         port: parseInt(process.env.SMTP_PORT || '465'),
-        secure: true, // true for port 465 (SSL)
+        secure: true,
         auth: {
           user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASS
@@ -2181,6 +2267,7 @@ app.post('/api/dashboard/agents', authenticateToken, async (req, res) => {
       });
 
       const inviteLink = `https://bot.aamirsaba.com/accept-invitation.html?email=${encodeURIComponent(email)}&token=${inviteToken}`;
+      const loginLink = `https://bot.aamirsaba.com/login`;
 
       await transporter.sendMail({
         from: `"${tenant.businessName}" <${process.env.SMTP_USER}>`,
@@ -2190,8 +2277,23 @@ app.post('/api/dashboard/agents', authenticateToken, async (req, res) => {
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
             <h2 style="color: #10b981; margin-top: 0;">Welcome to ${tenant.businessName}!</h2>
             <p>You have been invited to join the team as an AI Agent.</p>
-            <p>Please click the button below to accept the invitation and set up your account:</p>
-            <a href="${inviteLink}" style="display: inline-block; background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0;">Accept Invitation</a>
+            
+            <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #374151;">Next Steps:</h3>
+              <ol style="color: #4b5563;">
+                <li>Click the button below to accept the invitation</li>
+                <li>Set up your password</li>
+                <li>Login to your Agent Dashboard</li>
+              </ol>
+            </div>
+            
+            <a href="${inviteLink}" style="display: inline-block; background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 10px 0;">Accept Invitation</a>
+            
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+              <p style="color: #6b7280; font-size: 14px;">After accepting, you can login at:</p>
+              <a href="${loginLink}" style="color: #10b981; font-weight: bold;">${loginLink}</a>
+            </div>
+            
             <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">This link will expire in 7 days. If you did not expect this invitation, please ignore this email.</p>
           </div>
         `
@@ -2199,7 +2301,6 @@ app.post('/api/dashboard/agents', authenticateToken, async (req, res) => {
       console.log(`✅ Invitation email sent to ${email}`);
     } catch (emailError) {
       console.error('❌ Failed to send invitation email:', emailError);
-      // We don't fail the whole request if email fails, but we log it
     }
 
     res.json({ success: true, agent, message: `✅ Agent "${name}" added and invitation sent!` });
@@ -2237,20 +2338,51 @@ app.put('/api/dashboard/agents/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Delete agent
+// Delete agent (with proper cleanup)
 app.delete('/api/dashboard/agents/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
     if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
 
-    await prisma.agent.delete({ where: { id, tenantId: tenant.id } });
-    res.json({ success: true, message: '✅ Agent deleted.' });
+    // Get the agent to find their email
+    const agent = await prisma.agent.findFirst({ where: { id, tenantId: tenant.id } });
+    if (!agent) return res.status(404).json({ error: 'Agent not found.' });
+
+    // 1. Delete all pending invitations for this agent's email
+    await prisma.teamInvitation.deleteMany({
+      where: {
+        email: agent.email,
+        tenantId: tenant.id,
+        accepted: false
+      }
+    });
+
+    // 2. Delete the agent record
+    await prisma.agent.delete({ where: { id } });
+
+    // 3. Delete team member record (but preserve chat history via cascade)
+    // Note: Conversations and messages are preserved via soft delete or cascade
+    await prisma.teamMember.deleteMany({
+      where: {
+        tenantId: tenant.id,
+        userId: {
+          in: await prisma.user.findMany({
+            where: { email: agent.email },
+            select: { id: true }
+          }).then(users => users.map(u => u.id))
+        }
+      }
+    });
+
+    res.json({ success: true, message: '✅ Agent deleted and all related records cleaned up.' });
   } catch (error) {
     console.error('❌ Delete agent error:', error);
     res.status(500).json({ error: 'Failed to delete agent.' });
   }
 });
+
+
 
 // ============================================
 // 💬 CONVERSATION MANAGEMENT ROUTES
