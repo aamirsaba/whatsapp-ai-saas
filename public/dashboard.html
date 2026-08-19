@@ -629,8 +629,12 @@
 
         <!-- Danger Zone -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-red-200">
-          <h4 class="text-sm font-bold text-red-600 mb-3 flex items-center gap-2">️ Danger Zone</h4>
-          <button type="button" onclick="deleteAccount()" class="w-full bg-red-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-red-700 transition shadow-md flex items-center justify-center gap-2">️ Delete My Account Permanently</button>
+          <h4 class="text-sm font-bold text-red-600 mb-3 flex items-center gap-2">⚠️ Danger Zone</h4>
+          <p class="text-sm text-gray-600 mb-4">Once you delete your account, there is no going back. Please be certain.</p>
+          <button type="button" onclick="openDeleteModal()" class="w-full bg-red-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-red-700 transition shadow-md flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            Delete My Account Permanently
+          </button>
         </div>
       </section>
 
@@ -1648,15 +1652,57 @@ async function loadLeads() {
       window.location.href = '/login'; 
     }
 
-    // DELETE ACCOUNT
-    async function deleteAccount() {
-      if (!confirm('⚠️ WARNING: Permanently delete account and all data?')) return;
-      if (!confirm('Are you ABSOLUTELY sure?')) return;
+    // OPEN DELETE MODAL
+    function openDeleteModal() {
+      document.getElementById('deleteAccountModal').classList.remove('hidden');
+      document.getElementById('deleteModalError').classList.add('hidden');
+    }
+
+    // CLOSE DELETE MODAL
+    function closeDeleteModal() {
+      document.getElementById('deleteAccountModal').classList.add('hidden');
+    }
+
+    // CONFIRM DELETE ACCOUNT (With WhatsApp Guard)
+    async function confirmDeleteAccount() {
+      const btn = document.getElementById('confirmDeleteBtn');
+      const originalBtnText = btn.innerHTML;
+      
       try {
-        const res = await fetch('/api/dashboard/account', { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        // 1. CHECK: Is WhatsApp still connected?
+        const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
-        if (data.success) { localStorage.clear(); window.location.href = '/login'; } else { alert('❌ ' + data.error); }
-      } catch (err) { alert('Server error.'); }
+        
+        if (data.success && data.tenant && data.tenant.isActive) {
+          // Show error in modal and stop deletion
+          document.getElementById('deleteModalError').classList.remove('hidden');
+          return; 
+        }
+
+        // 2. Proceed with deletion
+        btn.disabled = true;
+        btn.innerHTML = '<span class="animate-spin mr-2">⏳</span> Deleting...';
+
+        const deleteRes = await fetch('/api/dashboard/account', { 
+          method: 'DELETE', 
+          headers: { 'Authorization': `Bearer ${token}` } 
+        });
+        const deleteData = await deleteRes.json();
+
+        if (deleteData.success) {
+          localStorage.clear();
+          window.location.href = '/login';
+        } else {
+          alert('❌ ' + (deleteData.error || 'Failed to delete account.'));
+          btn.disabled = false;
+          btn.innerHTML = originalBtnText;
+        }
+      } catch (err) {
+        console.error('Delete error:', err);
+        alert('❌ Server error while deleting account.');
+        btn.disabled = false;
+        btn.innerHTML = originalBtnText;
+      }
     }
 
 
@@ -2107,5 +2153,51 @@ Notes: ${getVal('contactNotes') || 'None'}`.trim();
     });
 
   </script>
+
+  <!-- 🚨 DELETE ACCOUNT CUSTOM MODAL -->
+  <div id="deleteAccountModal" class="fixed inset-0 z-[100] hidden">
+    <!-- Dark Backdrop -->
+    <div class="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm transition-opacity" onclick="closeDeleteModal()"></div>
+    
+    <!-- Modal Content -->
+    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-red-100">
+      <div class="text-center">
+        <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+          <svg class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-2">Delete Account Permanently?</h3>
+        <p class="text-sm text-gray-600 mb-4">This action cannot be undone. This will permanently delete your account and remove all data from our servers.</p>
+        
+        <!-- Warning List -->
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-left">
+          <p class="text-xs font-bold text-red-700 uppercase tracking-wide mb-2">You will permanently lose:</p>
+          <ul class="text-sm text-red-600 space-y-1 list-disc list-inside">
+            <li>All WhatsApp connections and chat history</li>
+            <li>All saved Leads and CRM data</li>
+            <li>AI Configuration and Knowledge Base files</li>
+            <li>All Agent accounts and team invitations</li>
+          </ul>
+        </div>
+
+        <!-- Error Message (Shows if WhatsApp is still connected) -->
+        <div id="deleteModalError" class="hidden bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded-lg p-3 mb-4 flex items-start gap-2">
+          <span>⚠️</span>
+          <span>Please <strong>disconnect WhatsApp</strong> in Settings before you can delete your account.</span>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-3">
+          <button onclick="closeDeleteModal()" class="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition">
+            Cancel
+          </button>
+          <button onclick="confirmDeleteAccount()" id="confirmDeleteBtn" class="flex-1 px-4 py-2.5 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition flex items-center justify-center gap-2">
+            <span>Yes, Delete Everything</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

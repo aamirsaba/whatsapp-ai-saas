@@ -498,21 +498,35 @@ app.post('/api/dashboard/disconnect', authenticateToken, async (req, res) => {
   }
 });
 
-// 🚀 DELETE ACCOUNT (With complete cleanup to avoid foreign key errors)
+// 🚀 DELETE ACCOUNT (With complete cleanup, auth folder deletion, and active connection guard)
 app.delete('/api/dashboard/account', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
     const tenant = await prisma.tenant.findFirst({ where: { userId } });
 
     if (tenant) {
-      // 1. Disconnect WhatsApp gracefully
+      // 🚨 1. GUARD: Prevent deletion if WhatsApp is still connected
+      if (tenant.isActive) {
+        return res.status(400).json({ 
+          error: 'Please disconnect your WhatsApp number in Settings before deleting your account.' 
+        });
+      }
+
+      // 2. Disconnect WhatsApp gracefully (just in case)
       const sock = activeSockets.get(tenant.whatsappNumber);
       if (sock) { 
-        await sock.logout(); 
+        try { await sock.logout(); } catch (e) { /* ignore */ }
         activeSockets.delete(tenant.whatsappNumber); 
       }
       
-      // 2. Delete ALL related records explicitly to avoid RESTRICT errors
+      // 3. 🚨 CRITICAL: Delete the auth folder to prevent server reconnection loops
+      const authDir = path.join(process.cwd(), `auth_info_${tenant.whatsappNumber}`);
+      if (fs.existsSync(authDir)) {
+        fs.rmSync(authDir, { recursive: true, force: true });
+        console.log(`🗑️ Deleted auth folder: ${authDir}`);
+      }
+
+      // 4. Delete ALL related records explicitly to avoid RESTRICT errors
       await prisma.knowledgeDocument.deleteMany({ where: { tenantId: tenant.id } });
       await prisma.message.deleteMany({ where: { tenantId: tenant.id } });
       await prisma.lead.deleteMany({ where: { tenantId: tenant.id } });
@@ -521,11 +535,11 @@ app.delete('/api/dashboard/account', authenticateToken, async (req, res) => {
       await prisma.teamMember.deleteMany({ where: { tenantId: tenant.id } });
       await prisma.teamInvitation.deleteMany({ where: { tenantId: tenant.id } });
       
-      // 3. Finally, delete the tenant
+      // 5. Finally, delete the tenant
       await prisma.tenant.delete({ where: { id: tenant.id } });
     }
     
-    // 4. Delete the user
+    // 6. Delete the user
     await prisma.user.delete({ where: { id: userId } });
     
     res.json({ success: true, message: 'Account deleted successfully.' });
