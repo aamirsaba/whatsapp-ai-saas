@@ -468,7 +468,13 @@
                     btn.innerHTML = originalText;
                     btn.disabled = false;
                 }
-
+            } catch (err) {
+                console.error('Registration error:', err);
+                showError('Server Error', 'Server error: ' + err.message);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
     </script>
 </body>
 </html>
