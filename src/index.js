@@ -2539,6 +2539,144 @@ app.post('/api/dashboard/agents', authenticateToken, async (req, res) => {
   }
 });
 
+// ==========================================
+// 🚨 AGENT: LOG STATUS CHANGE
+// ==========================================
+app.post('/api/agent/log-status', authenticateToken, async (req, res) => {
+  try {
+    const { status } = req.body; // "AVAILABLE", "BUSY", "OFFLINE"
+    const agent = await prisma.agent.findFirst({ where: { email: req.user.email } });
+    
+    if (!agent) return res.status(404).json({ error: 'Agent not found.' });
+
+    // Close previous status log
+    await prisma.agentStatusLog.updateMany({
+      where: { 
+        agentId: agent.id, 
+        endTime: null 
+      },
+      data: { 
+        endTime: new Date()
+      }
+    });
+
+    // Create new status log
+    await prisma.agentStatusLog.create({
+      data: {
+        agentId: agent.id,
+        status: status.toUpperCase(),
+        startTime: new Date()
+      }
+    });
+
+    res.json({ success: true, message: 'Status logged' });
+  } catch (error) {
+    console.error('Log status error:', error);
+    res.status(500).json({ error: 'Failed to log status.' });
+  }
+});
+
+// ==========================================
+// 🚨 AGENT: GET KPI REPORT (Admin)
+// ==========================================
+app.get('/api/dashboard/agents/:id/kpi', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    const agent = await prisma.agent.findFirst({ where: { id, tenantId: tenant.id } });
+    if (!agent) return res.status(404).json({ error: 'Agent not found.' });
+
+    // Get last 7 days of status logs
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const statusLogs = await prisma.agentStatusLog.findMany({
+      where: {
+        agentId: agent.id,
+        startTime: { gte: sevenDaysAgo }
+      },
+      orderBy: { startTime: 'desc' }
+    });
+
+    // Calculate KPIs
+    const totalAvailableTime = statusLogs
+      .filter(log => log.status === 'AVAILABLE' && log.duration)
+      .reduce((sum, log) => sum + log.duration, 0);
+
+    const totalBusyTime = statusLogs
+      .filter(log => log.status === 'BUSY' && log.duration)
+      .reduce((sum, log) => sum + log.duration, 0);
+
+    // Get conversation stats
+    const conversations = await prisma.conversation.count({
+      where: { assignedAgentId: agent.id }
+    });
+
+    res.json({
+      success: true,
+      agent: {
+        id: agent.id,
+        name: agent.name,
+        email: agent.email
+      },
+      kpi: {
+        totalAvailableHours: (totalAvailableTime / 3600).toFixed(2),
+        totalBusyHours: (totalBusyTime / 3600).toFixed(2),
+        totalConversations: conversations,
+        statusChanges: statusLogs.length
+      },
+      logs: statusLogs.slice(0, 50)
+    });
+  } catch (error) {
+    console.error('KPI error:', error);
+    res.status(500).json({ error: 'Failed to get KPI data.' });
+  }
+});
+
+// ==========================================
+// 🚨 AGENT: GET MY INFO (for agent dashboard)
+// ==========================================
+app.get('/api/agent/info', authenticateToken, async (req, res) => {
+  try {
+    const agent = await prisma.agent.findFirst({
+      where: { email: req.user.email },
+      include: {
+        tenant: {
+          select: {
+            businessName: true,
+            whatsappNumber: true
+          }
+        }
+      }
+    });
+
+    if (!agent) {
+      return res.status(404).json({ error: 'Agent not found. Please contact your admin.' });
+    }
+
+    res.json({
+      success: true,
+      agent: {
+        id: agent.id,
+        name: agent.name,
+        email: agent.email,
+        isAvailable: agent.isAvailable,
+        isBusy: agent.isBusy,
+        preferredLanguage: agent.preferredLanguage || 'English'
+      },
+      team: agent.tenant ? {
+        businessName: agent.tenant.businessName,
+        whatsappNumber: agent.tenant.whatsappNumber
+      } : null
+    });
+  } catch (error) {
+    console.error('Agent info error:', error);
+    res.status(500).json({ error: 'Failed to load agent info.' });
+  }
+});
+
 // Update agent (toggle availability, edit details)
 app.put('/api/dashboard/agents/:id', authenticateToken, async (req, res) => {
   try {

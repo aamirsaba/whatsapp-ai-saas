@@ -469,104 +469,10 @@
     }
 
 
-//  LOG AGENT STATUS CHANGE
-app.post('/api/agent/log-status', authenticateToken, async (req, res) => {
-  try {
-    const { status } = req.body; // "AVAILABLE", "BUSY", "OFFLINE"
-    const agent = await prisma.agent.findFirst({ where: { email: req.user.email } });
-    
-    if (!agent) return res.status(404).json({ error: 'Agent not found.' });
-
-    // Close previous status log
-    await prisma.agentStatusLog.updateMany({
-      where: { 
-        agentId: agent.id, 
-        endTime: null 
-      },
-      data: { 
-        endTime: new Date(),
-        duration: {
-          // Calculate duration from startTime to now
-        }
-      }
-    });
-
-    // Create new status log
-    await prisma.agentStatusLog.create({
-      data: {
-        agentId: agent.id,
-        status: status.toUpperCase(),
-        startTime: new Date()
-      }
-    });
-
-    res.json({ success: true, message: 'Status logged' });
-  } catch (error) {
-    console.error('Log status error:', error);
-    res.status(500).json({ error: 'Failed to log status.' });
-  }
-});
-
-//  GET AGENT KPI REPORT (Admin)
-app.get('/api/dashboard/agents/:id/kpi', authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
-    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
-
-    const agent = await prisma.agent.findFirst({ where: { id, tenantId: tenant.id } });
-    if (!agent) return res.status(404).json({ error: 'Agent not found.' });
-
-    // Get last 7 days of status logs
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-    const statusLogs = await prisma.agentStatusLog.findMany({
-      where: {
-        agentId: agent.id,
-        startTime: { gte: sevenDaysAgo }
-      },
-      orderBy: { startTime: 'desc' }
-    });
-
-    // Calculate KPIs
-    const totalAvailableTime = statusLogs
-      .filter(log => log.status === 'AVAILABLE' && log.duration)
-      .reduce((sum, log) => sum + log.duration, 0);
-
-    const totalBusyTime = statusLogs
-      .filter(log => log.status === 'BUSY' && log.duration)
-      .reduce((sum, log) => sum + log.duration, 0);
-
-    // Get conversation stats
-    const conversations = await prisma.conversation.count({
-      where: { assignedAgentId: agent.id }
-    });
-
-    res.json({
-      success: true,
-      agent: {
-        id: agent.id,
-        name: agent.name,
-        email: agent.email
-      },
-      kpi: {
-        totalAvailableHours: (totalAvailableTime / 3600).toFixed(2),
-        totalBusyHours: (totalBusyTime / 3600).toFixed(2),
-        totalConversations: conversations,
-        statusChanges: statusLogs.length
-      },
-      logs: statusLogs.slice(0, 50) // Last 50 logs
-    });
-  } catch (error) {
-    console.error('KPI error:', error);
-    res.status(500).json({ error: 'Failed to get KPI data.' });
-  }
-});
 
     // Load on page load
     loadAgentInfo();
-    loadAgentStatus(); // 🚨 NEW: Load status on page load
+    loadAgentStatus();
     loadRecentChats();
     
     // Auto-refresh recent chats every 10 seconds
@@ -576,13 +482,6 @@ app.get('/api/dashboard/agents/:id/kpi', authenticateToken, async (req, res) => 
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
-
-    // Load on page load
-    loadAgentInfo();
-    loadRecentChats();
-    
-    // Auto-refresh recent chats every 10 seconds
-    setInterval(loadRecentChats, 10000);
   </script>
 </body>
 </html>
