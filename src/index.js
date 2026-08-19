@@ -681,20 +681,20 @@ app.delete('/api/dashboard/account', authenticateToken, async (req, res) => {
         activeSockets.delete(tenant.whatsappNumber); 
       }
       
-      // 3. 🚨 CRITICAL: Delete the auth folder with explicit error logging
-      const cleanNumber = tenant.whatsappNumber.replace(/\D/g, ''); // Ensure no + or spaces
+      // 3. 🚨 CRITICAL: Delete the auth folder to prevent server reconnection loops
+      // Force clean the number to match the folder name exactly (removes +, spaces, etc.)
+      const cleanNumber = tenant.whatsappNumber ? tenant.whatsappNumber.replace(/\D/g, '') : '';
       const authDir = path.join(process.cwd(), `auth_info_${cleanNumber}`);
       
-      if (fs.existsSync(authDir)) {
+      if (cleanNumber && fs.existsSync(authDir)) {
         try {
           fs.rmSync(authDir, { recursive: true, force: true });
           console.log(`🗑️ Successfully deleted auth folder: ${authDir}`);
         } catch (err) {
           console.error(`❌ FAILED to delete auth folder ${authDir}:`, err.message);
-          // Don't stop the deletion process, just log the error
         }
       } else {
-        console.log(`ℹ️ Auth folder not found (already deleted or never created): ${authDir}`);
+        console.log(`ℹ️ Auth folder not found or number missing (already clean): ${authDir}`);
       }
 
       // 4. 🚨 NEW: Delete uploaded Knowledge Base files for this tenant
