@@ -1647,15 +1647,14 @@ app.get('/api/dashboard/all-conversations', authenticateToken, async (req, res) 
 
     // Build query
     const query = {
-      tenantId: tenant.id,
-      createdAt: {}
+      tenantId: tenant.id
     };
 
     // Filter by date
     if (days && days !== 'all') {
       const daysAgo = new Date();
       daysAgo.setDate(daysAgo.getDate() - parseInt(days));
-      query.createdAt.gte = daysAgo;
+      query.createdAt = { gte: daysAgo };
     }
 
     // Filter by phone number if provided
@@ -1665,6 +1664,7 @@ app.get('/api/dashboard/all-conversations', authenticateToken, async (req, res) 
         { toNumber: { contains: phone } }
       ];
     } else {
+      // Get all messages for this tenant
       query.OR = [
         { fromNumber: tenant.whatsappNumber },
         { toNumber: tenant.whatsappNumber }
@@ -1675,7 +1675,7 @@ app.get('/api/dashboard/all-conversations', authenticateToken, async (req, res) 
     const messages = await prisma.message.findMany({
       where: query,
       orderBy: { createdAt: 'desc' },
-      take: 200
+      take: 500
     });
 
     res.json({ success: true, messages });

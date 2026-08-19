@@ -1255,11 +1255,18 @@ async function sendManualReply() {
 }
 
     // LOAD ALL CONVERSATIONS (Global Chat History)
-    async function loadAllConversations() {
-      const container = document.getElementById('allConversationsContainer');
-      if (!container) return;
-      
-      try {
+async function loadAllConversations() {
+  const container = document.getElementById('allConversationsContainer');
+  if (!container) return;
+  
+  // Clear any weird cached values
+  const phoneInput = document.getElementById('filterPhone');
+  if (phoneInput && (phoneInput.value.includes(' ') || phoneInput.value.length > 15)) {
+    phoneInput.value = '';
+  }
+  
+  try {
+    // ... rest of function
         const phoneFilter = document.getElementById('filterPhone')?.value || '';
         const dateFilter = document.getElementById('filterDate')?.value || '7';
         
