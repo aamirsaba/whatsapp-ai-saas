@@ -2677,31 +2677,64 @@ app.get('/api/agent/info', authenticateToken, async (req, res) => {
   }
 });
 
-// Update agent (toggle availability, edit details)
+// ==========================================
+// 🚨 AGENT: Update agent status (for agents themselves)
+// ==========================================
 app.put('/api/dashboard/agents/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
-    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+    const { isAvailable, isBusy } = req.body;
 
-    const agent = await prisma.agent.findFirst({ where: { id, tenantId: tenant.id } });
-    if (!agent) return res.status(404).json({ error: 'Agent not found.' });
+    // Find the agent by ID
+    const agent = await prisma.agent.findUnique({
+      where: { id }
+    });
 
-    const updated = await prisma.agent.update({
+    if (!agent) {
+      return res.status(404).json({ error: 'Agent not found.' });
+    }
+
+    // Security check: Only allow agents to update their own status
+    // OR allow tenant admins to update their agents' status
+    if (req.user.role === 'AGENT') {
+      // Agent updating their own status
+      if (agent.email !== req.user.email) {
+        return res.status(403).json({ error: 'You can only update your own status.' });
+      }
+    } else if (req.user.role === 'TENANT' || req.user.role === 'ADMIN') {
+      // Admin updating an agent's status - verify they belong to this tenant
+      const tenant = await prisma.tenant.findFirst({
+        where: { userId: req.user.userId }
+      });
+      
+      if (!tenant) {
+        return res.status(404).json({ error: 'Tenant not found.' });
+      }
+      
+      if (agent.tenantId !== tenant.id) {
+        return res.status(403).json({ error: 'This agent does not belong to your team.' });
+      }
+    } else {
+      return res.status(403).json({ error: 'Unauthorized.' });
+    }
+
+    // Update the agent status
+    const updatedAgent = await prisma.agent.update({
       where: { id },
       data: {
-        name: req.body.name ?? agent.name,
-        email: req.body.email ?? agent.email,
-        languages: req.body.languages ? JSON.stringify(req.body.languages) : agent.languages,
-        isAvailable: req.body.isAvailable ?? agent.isAvailable,
-        isBusy: req.body.isBusy ?? agent.isBusy // 🚨 NEW
+        isAvailable: isAvailable !== undefined ? isAvailable : agent.isAvailable,
+        isBusy: isBusy !== undefined ? isBusy : agent.isBusy
       }
     });
 
-    res.json({ success: true, agent: updated });
+    res.json({ 
+      success: true, 
+      message: 'Agent status updated successfully.',
+      agent: updatedAgent 
+    });
   } catch (error) {
-    console.error('❌ Update agent error:', error);
-    res.status(500).json({ error: 'Failed to update agent.' });
+    console.error('Update agent status error:', error);
+    res.status(500).json({ error: 'Failed to update agent status.' });
   }
 });
 
