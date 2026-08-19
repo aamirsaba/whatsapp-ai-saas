@@ -48,7 +48,7 @@
                     <input type="radio" name="botType" value="business" class="w-5 h-5 text-green-600 mt-1" onchange="selectBotType('business')">
                     <div class="ml-4 flex-1">
                         <div class="flex items-center justify-between">
-                            <span class="block text-lg font-bold text-gray-900">🏢 Business Bot</span>
+                            <span class="block text-lg font-bold text-gray-900"> Business Bot</span>
                             <span class="text-2xl">💼</span>
                         </div>
                         <p class="text-sm text-gray-600 mt-1">For companies - sales, support, automation, marketing, leads.</p>
@@ -67,7 +67,7 @@
         </div>
 
         <!-- FORM CONTAINER (Steps 1-3) -->
-        <form id="wizardForm" class="p-8 hidden" novalidate>
+        <form id="wizardForm" class="p-8 hidden" onsubmit="return false;" novalidate>
             
             <!-- STEP 1: Account (Email Only) -->
             <div id="step1" class="space-y-4 hidden">
@@ -75,14 +75,13 @@
                 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Email Address <span class="text-red-500">*</span></label>
-                    <!-- 🚨 FIX: Added onkeydown to catch Enter key and move to next step safely -->
                     <input type="email" id="email" name="email" required placeholder="you@example.com" 
-                        onkeydown="if(event.key === 'Enter') { event.preventDefault(); goToStep2(); }"
+                        onkeydown="if(event.key === 'Enter') { event.preventDefault(); validateAndGoToStep2(); }"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
-                    <p class="text-xs text-gray-500 mt-1">🔒 We'll auto-generate a secure password and email it to you.</p>
+                    <p class="text-xs text-gray-500 mt-1"> We'll auto-generate a secure password and email it to you.</p>
                 </div>
 
-                <button type="button" onclick="goToStep2()" 
+                <button type="button" onclick="validateAndGoToStep2()" 
                     class="w-full bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition mt-4">
                     Next: Details →
                 </button>
@@ -97,7 +96,7 @@
 
                 <div class="flex gap-3 mt-6">
                     <button type="button" onclick="goBackToStep1()" class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-lg font-semibold hover:bg-gray-200 transition">← Back</button>
-                    <button type="button" onclick="goToStep3()" class="flex-1 bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition">Next: WhatsApp →</button>
+                    <button type="button" onclick="validateAndGoToStep3()" class="flex-1 bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition">Next: WhatsApp →</button>
                 </div>
             </div>
 
@@ -114,8 +113,8 @@
 
                 <div class="flex gap-3 mt-6">
                     <button type="button" onclick="goBackToStep2()" class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-lg font-semibold hover:bg-gray-200 transition">← Back</button>
-                    <button type="submit" id="submitBtn" class="flex-1 bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition">
-                        🚀 <span id="launchBtnText">Launch My AI Bot</span>
+                    <button type="button" onclick="submitForm()" id="submitBtn" class="flex-1 bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition">
+                         <span id="launchBtnText">Launch My AI Bot</span>
                     </button>
                 </div>
             </div>
@@ -226,8 +225,8 @@
             updateProgress();
         }
 
-        // 3. Move from Step 1 to Step 2 (Dynamic Fields)
-        function goToStep2() {
+        // 3. VALIDATE and Move from Step 1 to Step 2
+        function validateAndGoToStep2() {
             const email = document.getElementById('email').value;
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             
@@ -236,6 +235,11 @@
                 return;
             }
 
+            goToStep2();
+        }
+
+        // 3. Move from Step 1 to Step 2 (Dynamic Fields)
+        function goToStep2() {
             const fieldsContainer = document.getElementById('dynamicFields');
             const title = document.getElementById('step2Title');
 
@@ -257,7 +261,7 @@
                             <option value="depression_relief">🌱 Depression Relief Bot</option>
                             <option value="storytelling">📚 Creative Storytelling Bot</option>
                             <option value="content_creation">🎬 Content Creation Bot</option>
-                            <option value="cooking"> Cooking Assistant Bot</option>
+                            <option value="cooking">🍳 Cooking Assistant Bot</option>
                             <option value="faith_spirituality">🙏 Faith & Spirituality Bot</option>
                             <option value="personal_development">📈 Personal Development Bot</option>
                         </select>
@@ -311,7 +315,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Website URL (Optional)</label>
                         <input type="url" id="websiteUrl" name="websiteUrl" placeholder="https://yourbusiness.com" 
-                            onkeydown="if(event.key === 'Enter') { event.preventDefault(); goToStep3(); }"
+                            onkeydown="if(event.key === 'Enter') { event.preventDefault(); validateAndGoToStep3(); }"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
                     </div>
                 `;
@@ -331,18 +335,35 @@
             updateProgress();
         }
 
-        // 4. Move from Step 2 to Step 3
-        function goToStep3() {
-            const name = document.getElementById('businessName').value;
+        // 4. VALIDATE and Move from Step 2 to Step 3
+        function validateAndGoToStep3() {
+            const name = document.getElementById('businessName').value.trim();
             const category = document.getElementById('industry').value;
             
-            if (!name) { showError('Missing Info', 'Please enter your name/business name.'); return; }
-            if (!category) { showError('Missing Info', 'Please select a category/industry.'); return; }
+            if (!name) { 
+                showError('Missing Info', 'Please enter your name/business name.'); 
+                document.getElementById('businessName').focus();
+                return; 
+            }
+            if (!category) { 
+                showError('Missing Info', 'Please select a category/industry.'); 
+                document.getElementById('industry').focus();
+                return; 
+            }
 
+            goToStep3();
+        }
+
+        function goToStep3() {
             document.getElementById('step2').classList.add('hidden');
             document.getElementById('step3').classList.remove('hidden');
             currentStep = 3;
             updateProgress();
+            
+            // Focus on WhatsApp field
+            setTimeout(() => {
+                document.getElementById('whatsappNumber').focus();
+            }, 100);
         }
 
         function updateProgress() {
@@ -352,16 +373,14 @@
         }
 
         // 5. Form Submission
-        document.getElementById('wizardForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        async function submitForm() {
             const btn = document.getElementById('submitBtn');
             const originalText = btn.innerHTML;
             
             const whatsappRaw = document.getElementById('whatsappNumber').value.trim();
             if (!whatsappRaw) {
                 showError('Missing Info', 'Please enter your WhatsApp number.');
-                btn.innerHTML = originalText;
-                btn.disabled = false;
+                document.getElementById('whatsappNumber').focus();
                 return;
             }
 
@@ -404,7 +423,7 @@
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
-        });
+        }
     </script>
 </body>
 </html>
