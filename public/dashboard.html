@@ -23,13 +23,34 @@
       overflow-x: hidden !important;
       width: 100% !important;
       max-width: 100% !important;
+      box-sizing: border-box !important;
     }
     /* Prevent tables/charts/cards from breaking layout */
-    table, canvas, .bg-white, .bg-gradient-to-br {
+    table, canvas, .bg-white, .bg-gradient-to-br, form, .space-y-4 {
       max-width: 100% !important;
       word-wrap: break-word !important;
       box-sizing: border-box !important;
     }
+    input, select, textarea, button {
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+    }
+  }
+  
+  /* Desktop fixes */
+  .section-content {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  
+  main {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  
+  form {
+    max-width: 100%;
+    overflow-x: hidden;
   }
 </style>
 </head>
@@ -203,11 +224,7 @@
   </div>
   <p class="text-xs text-gray-500 mt-1">Automatically extract business context from your website</p>
 </div>
-              <div class="flex flex-col sm:flex-row gap-2">
-                <input type="url" id="websiteUrl" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="https://yourbusiness.com">
-                <button type="button" onclick="autoGenerateContext()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium whitespace-nowrap w-full sm:w-auto">✨ Auto-Generate</button>
-              </div>
-            </div>
+
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Business / Topic Context</label>
               <textarea id="businessContext" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm transition"></textarea>
@@ -719,58 +736,6 @@
       } catch (err) { console.error('Failed to load dashboard', err); }
     }
 
-    function showSection(sectionName) {
-      console.log(' Navigating to:', sectionName);
-      const sidebar = document.getElementById('sidebar');
-      const overlay = document.getElementById('sidebarOverlay');
-      if (sidebar && overlay && window.innerWidth < 1024) {
-        sidebar.classList.add('-translate-x-full');
-        overlay.classList.add('hidden');
-        document.body.classList.remove('overflow-hidden');
-        console.log('📱 Mobile sidebar closed');
-      }
-      if (sidebar && window.innerWidth >= 1024) {
-        sidebar.classList.remove('-translate-x-full', 'hidden');
-        sidebar.style.cssText = 'transform: translateX(0) !important; display: block !important; visibility: visible !important; opacity: 1 !important;';
-      }
-      document.querySelectorAll('.section-content').forEach(section => { section.classList.add('hidden'); });
-      const target = document.getElementById(`section-${sectionName}`);
-      if (target) { target.classList.remove('hidden'); console.log('✅ Section shown:', sectionName); } 
-      else { console.error('❌ Section not found:', sectionName); }
-      document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('bg-green-50', 'text-green-700');
-        item.classList.add('text-gray-700', 'hover:bg-gray-50');
-      });
-      const activeNav = document.getElementById(`nav-${sectionName}`);
-      if (activeNav) {
-        activeNav.classList.remove('text-gray-700', 'hover:bg-gray-50');
-        activeNav.classList.add('bg-green-50', 'text-green-700');
-        console.log('✅ Nav item highlighted:', sectionName);
-      }
-      if (sidebar && window.innerWidth >= 1024) {
-        sidebar.style.cssText = 'transform: translateX(0) !important; display: block !important; visibility: visible !important; opacity: 1 !important;';
-        console.log('✅ Sidebar forced visible AFTER section change');
-      }
-      if (sidebar && overlay && window.innerWidth < 1024) {
-        sidebar.classList.add('-translate-x-full');
-        overlay.classList.add('hidden');
-        document.body.classList.remove('overflow-hidden');
-        console.log('📱 Mobile sidebar auto-closed');
-      }
-      if (sectionName === 'dashboard') loadDashboardData();
-      if (sectionName === 'agents') loadAgents();
-      if (sectionName === 'live-chat') loadRecentChats();
-      if (sectionName === 'leads') loadLeads();
-      if (sectionName === 'knowledge') loadKnowledgeDocuments();
-      if (sectionName === 'all-conversations') { console.log(' Loading all conversations...'); loadAllConversations(); }
-      if (sectionName === 'settings') { if (typeof loadWhatsAppStatus === 'function') loadWhatsAppStatus(); }
-      setTimeout(() => {
-        if (sidebar && window.innerWidth >= 1024) {
-          sidebar.style.cssText = 'transform: translateX(0) !important; display: block !important; visibility: visible !important; opacity: 1 !important;';
-          console.log('✅ Sidebar final check - still visible');
-        }
-      }, 100);
-    }
 
     async function loadDashboardData() {
       try {
