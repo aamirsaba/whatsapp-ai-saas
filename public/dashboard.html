@@ -21,20 +21,30 @@
     }
   }
 
-  /* 🚨 NUCLEAR OPTION: FORCE SIDEBAR VISIBLE ON DESKTOP */
+  /*  FORCE SIDEBAR VISIBLE ON DESKTOP */
   @media (min-width: 1024px) {
     #sidebar {
       transform: translateX(0) !important;
       display: block !important;
       visibility: visible !important;
       opacity: 1 !important;
-      position: static !important;
+      flex-shrink: 0 !important;
     }
   }
   
-  /* Prevent section transitions from hiding sidebar */
+  /* Prevent ANY section from breaking flex layout */
   .section-content {
-    transition: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    flex: 1 !important;
+  }
+  
+  /* Ensure main content area respects flexbox */
+  main {
+    flex: 1 !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
   }
 </style>
 
@@ -416,37 +426,37 @@
 
 
       <!-- ALL CONVERSATIONS SECTION (Global Chat History) -->
-      <section id="section-all-conversations" class="section-content hidden">
-        <div class="mb-8">
-          <h2 class="text-2xl font-bold text-gray-800 mb-2">💬 All Conversations</h2>
-          <p class="text-gray-600">View all messages across all customer conversations.</p>
-        </div>
+<section id="section-all-conversations" class="section-content hidden w-full max-w-full">
+  <div class="mb-8">
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">💬 All Conversations</h2>
+    <p class="text-gray-600">View all messages across all customer conversations.</p>
+  </div>
 
-        <!-- Filter Options -->
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6">
-          <div class="flex flex-col sm:flex-row gap-4">
-            <div class="flex-1">
-              <label class="block text-xs font-medium text-gray-600 mb-1">Filter by Phone Number</label>
-              <input type="text" id="filterPhone" placeholder="e.g., 17708003621" 
-                     class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                     oninput="loadAllConversations()">
-            </div>
-            <div class="flex-1">
-              <label class="block text-xs font-medium text-gray-600 mb-1">Date Range</label>
-              <select id="filterDate" onchange="loadAllConversations()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                <option value="7">Last 7 Days</option>
-                <option value="30">Last 30 Days</option>
-                <option value="all">All Time</option>
-              </select>
-            </div>
-          </div>
-        </div>
+  <!-- Filter Options -->
+  <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 max-w-full">
+    <div class="flex flex-col sm:flex-row gap-4">
+      <div class="flex-1 min-w-0">
+        <label class="block text-xs font-medium text-gray-600 mb-1">Filter by Phone Number</label>
+        <input type="text" id="filterPhone" placeholder="e.g., 17708003621" 
+               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+               oninput="loadAllConversations()">
+      </div>
+      <div class="flex-1 min-w-0">
+        <label class="block text-xs font-medium text-gray-600 mb-1">Date Range</label>
+        <select id="filterDate" onchange="loadAllConversations()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          <option value="7">Last 7 Days</option>
+          <option value="30">Last 30 Days</option>
+          <option value="all">All Time</option>
+        </select>
+      </div>
+    </div>
+  </div>
 
-        <!-- Messages Container -->
-        <div id="allConversationsContainer" class="space-y-4">
-          <div class="text-center text-gray-400 py-12">Loading all conversations...</div>
-        </div>
-      </section>
+  <!-- Messages Container -->
+  <div id="allConversationsContainer" class="space-y-4 max-w-full overflow-hidden">
+    <div class="text-center text-gray-400 py-12">Loading all conversations...</div>
+  </div>
+</section>
 
       <!-- LEADS CRM SECTION -->
 <section id="section-leads" class="section-content hidden">
@@ -1301,7 +1311,7 @@ async function sendManualReply() {
   }
 }
 
-    // 🚨 SAFE LOAD ALL CONVERSATIONS
+    //  SAFE LOAD ALL CONVERSATIONS
     async function loadAllConversations() {
       const container = document.getElementById('allConversationsContainer');
       if (!container) return;
@@ -1338,22 +1348,22 @@ async function sendManualReply() {
           grouped[num].push(msg);
         });
         
-        // Render grouped conversations
+        // Render grouped conversations (with width constraints)
         container.innerHTML = Object.entries(grouped).map(([num, msgs]) => {
           const last = msgs[msgs.length - 1];
           return `
-            <div class="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition">
+            <div class="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition w-full max-w-full">
               <div class="flex items-center justify-between mb-3 pb-3 border-b border-gray-100">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold flex-shrink-0">
                     ${num.slice(-2)}
                   </div>
-                  <div>
-                    <h3 class="font-semibold text-gray-800">+${num}</h3>
+                  <div class="min-w-0 flex-1">
+                    <h3 class="font-semibold text-gray-800 truncate">+${num}</h3>
                     <p class="text-xs text-gray-500">${msgs.length} messages • Last: ${new Date(last.createdAt).toLocaleString()}</p>
                   </div>
                 </div>
-                <button onclick="showChatHistory('${num}')" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-100 transition">
+                <button onclick="showChatHistory('${num}')" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-100 transition flex-shrink-0">
                   View Chat →
                 </button>
               </div>
@@ -1363,7 +1373,7 @@ async function sendManualReply() {
                   return `
                     <div class="${isOut ? 'text-right' : 'text-left'}">
                       <div class="inline-block max-w-[70%] px-3 py-2 rounded-lg ${isOut ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-800'} text-sm">
-                        <p class="text-xs font-semibold mb-1 opacity-75">${isOut ? (msg.isAiReply ? '🤖 AI' : '👤 You') : '👤 Customer'}</p>
+                        <p class="text-xs font-semibold mb-1 opacity-75">${isOut ? (msg.isAiReply ? ' AI' : '👤 You') : '👤 Customer'}</p>
                         <p class="truncate">${msg.content}</p>
                       </div>
                     </div>
