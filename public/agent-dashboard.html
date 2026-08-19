@@ -359,45 +359,60 @@
 
     async function loadAgentStatus() {
       try {
+        console.log('🔍 Loading agent status...');
+        
         // 1. Try the dedicated agent info endpoint first
         const res = await fetch('/api/agent/info', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
         
+        console.log('📊 /api/agent/info response:', data);
+        
         if (res.ok && data.agent) {
           currentAgentId = data.agent.id;
+          console.log('✅ Agent found via /api/agent/info:', currentAgentId);
           updateStatusButtons(data.agent.isAvailable, data.agent.isBusy || false);
           return; // Success!
         }
 
         // 2. FALLBACK: If data.agent is null, find agent by matching email from token
-        console.warn('⚠️ Agent not found in /api/agent/info, trying fallback...');
+        console.warn('️ Agent not found in /api/agent/info, trying fallback...');
         const payload = JSON.parse(atob(token.split('.')[1]));
         const userEmail = payload.email;
+        console.log(' Searching for agent with email:', userEmail);
 
         const agentsRes = await fetch('/api/dashboard/agents', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const agentsData = await agentsRes.json();
         
+        console.log(' /api/dashboard/agents response:', agentsData);
+        
         if (agentsData.success && agentsData.agents) {
           const matchedAgent = agentsData.agents.find(a => a.email.toLowerCase() === userEmail.toLowerCase());
           
           if (matchedAgent) {
             currentAgentId = matchedAgent.id;
-            updateStatusButtons(matchedAgent.isAvailable, matchedAgent.isBusy || false);
             console.log('✅ Fallback successful: Found agent ID', currentAgentId);
+            updateStatusButtons(matchedAgent.isAvailable, matchedAgent.isBusy || false);
             return;
+          } else {
+            console.error('❌ No agent found matching email:', userEmail);
+            console.log('Available agents:', agentsData.agents.map(a => a.email));
           }
+        } else {
+          console.error('❌ /api/dashboard/agents failed or returned no agents');
         }
 
-        // 3. If all else fails
-        console.error('❌ Could not find agent record for email:', userEmail);
-        // Don't alert immediately, just log it, so it doesn't block the UI
+        // 3. If all else fails - show helpful error
+        const errorMsg = `❌ Could not find agent record for email: ${userEmail}\n\nPlease contact your admin to ensure you were added as an agent.`;
+        console.error(errorMsg);
+        alert(errorMsg);
         
       } catch (error) {
-        console.error('Load agent status error:', error);
+        console.error('❌ Load agent status error:', error);
+        alert('❌ Error loading agent status: ' + error.message);
       }
     }
 

@@ -1962,44 +1962,42 @@ app.get('/agent-dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'agent-dashboard.html'));
 });
 
-// AGENT: Get team info
+// 🚨 AGENT: Get my info
 app.get('/api/agent/info', authenticateToken, async (req, res) => {
   try {
-    const user = await prisma.user.findUnique({ 
-      where: { id: req.user.userId },
-      include: { 
-        teamMemberships: { 
-          include: { 
-            tenant: { 
-              select: { 
-                id: true,
-                businessName: true,
-                whatsappNumber: true
-              }
-            }
+    const agent = await prisma.agent.findFirst({
+      where: { email: req.user.email },
+      include: {
+        tenant: {
+          select: {
+            businessName: true,
+            whatsappNumber: true
           }
         }
       }
     });
 
-    if (!user || user.teamMemberships.length === 0) {
-      return res.status(404).json({ error: 'No team access found.' });
+    if (!agent) {
+      return res.status(404).json({ error: 'Agent not found. Please contact your admin.' });
     }
 
-    // Get agent details
-    const agent = await prisma.agent.findFirst({
-      where: { email: user.email }
-    });
-
-    // Return first team (for MVP - can be enhanced for multiple teams)
-    res.json({ 
-      success: true, 
-      team: user.teamMemberships[0].tenant,
-      agent: agent,
-      role: user.teamMemberships[0].role
+    res.json({
+      success: true,
+      agent: {
+        id: agent.id,
+        name: agent.name,
+        email: agent.email,
+        isAvailable: agent.isAvailable,
+        isBusy: agent.isBusy,
+        preferredLanguage: agent.preferredLanguage || 'English'
+      },
+      team: agent.tenant ? {
+        businessName: agent.tenant.businessName,
+        whatsappNumber: agent.tenant.whatsappNumber
+      } : null
     });
   } catch (error) {
-    console.error(' Agent info error:', error);
+    console.error('Agent info error:', error);
     res.status(500).json({ error: 'Failed to load agent info.' });
   }
 });
