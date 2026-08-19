@@ -640,6 +640,7 @@
     const token = localStorage.getItem('token');
     let messageChartInstance = null;
     let leadChartInstance = null;
+    let currentInlineChatNumber = null; //  NEW: Track which chat we're viewing
     
     if (!token) { window.location.href = '/login'; }
 
@@ -1986,6 +1987,7 @@ Notes: ${getVal('contactNotes') || 'None'}`.trim();
 
     // 🚨 SHOW INLINE CHAT HISTORY (In All Conversations section)
     async function showInlineChat(number) {
+      currentInlineChatNumber = number; // 🚨 Store the number
       console.log('📞 Opening inline chat for:', number);
       
       const container = document.getElementById('inlineChatContainer');
@@ -2048,9 +2050,26 @@ Notes: ${getVal('contactNotes') || 'None'}`.trim();
       document.getElementById('inlineChatContainer').classList.add('hidden');
     }
 
-    // GO TO LIVE CHAT TO REPLY
+    // 🚨 GO TO LIVE CHAT AND OPEN SPECIFIC CONVERSATION
     function goToLiveChat() {
+      if (!currentInlineChatNumber) {
+        alert('❌ No conversation selected.');
+        return;
+      }
+      
+      console.log('🚀 Navigating to Live Chat for:', currentInlineChatNumber);
+      
+      // 1. Close inline chat
+      closeInlineChat();
+      
+      // 2. Navigate to Live Chat section
       showSection('live-chat');
+      
+      // 3. Wait a moment for section to load, then open the specific chat
+      setTimeout(() => {
+        showChatHistory(currentInlineChatNumber);
+        console.log('✅ Opened specific chat in Live Chat');
+      }, 300);
     }
 
     // ==========================================
