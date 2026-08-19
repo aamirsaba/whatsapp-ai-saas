@@ -209,8 +209,14 @@
               <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">System Prompt (Personality) <span class="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">Auto-Generated & Locked</span></label>
               <textarea id="systemPrompt" rows="3" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 text-sm font-mono cursor-not-allowed" title="This is automatically managed by the system to ensure safety and quality."></textarea>
             </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Website URL (Optional)</label>
+<div>
+  <label class="block text-sm font-medium text-gray-700 mb-1">Website URL (Optional)</label>
+  <div class="flex flex-col sm:flex-row gap-2">
+    <input type="url" id="websiteUrl" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="https://yourbusiness.com">
+    <button type="button" onclick="autoGenerateContext()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium whitespace-nowrap w-full sm:w-auto">✨ Auto-Generate</button>
+  </div>
+  <p class="text-xs text-gray-500 mt-1">Automatically extract business context from your website</p>
+</div>
               <div class="flex flex-col sm:flex-row gap-2">
                 <input type="url" id="websiteUrl" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="https://yourbusiness.com">
                 <button type="button" onclick="autoGenerateContext()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium whitespace-nowrap w-full sm:w-auto">✨ Auto-Generate</button>
@@ -531,13 +537,27 @@
 
   <!-- JAVASCRIPT -->
   <script>
+    // 🚨 PREVENT BACK BUTTON ACCESS AFTER LOGOUT & CHECK TOKEN
     const token = localStorage.getItem('token');
+    
+    if (!token) { 
+      window.location.replace('/login'); 
+    }
+
+    // Prevent back button after logout
+    window.history.pushState(null, null, window.location.href);
+    window.onpopstate = function() {
+      if (!localStorage.getItem('token')) {
+        window.location.replace('/login');
+      } else {
+        window.history.pushState(null, null, window.location.href);
+      }
+    };
+
     let messageChartInstance = null;
     let leadChartInstance = null;
     let currentInlineChatNumber = null;
     let currentReplyNumber = null;
-    
-    if (!token) { window.location.href = '/login'; }
 
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
@@ -799,25 +819,59 @@
     }
 
     async function loadAvailableModels() {
-      const btn = document.getElementById('loadModelsBtn');
-      const provider = document.getElementById('llmProviderSelect').value;
-      const apiKey = document.getElementById('llmApiKey').value.trim();
-      const msgElement = document.getElementById('llmValidationMsg');
-      if (!apiKey) { msgElement.textContent = '❌ Please enter an API Key first.'; msgElement.className = 'text-red-600 text-xs mt-1'; return; }
-      btn.textContent = '🔄 Loading...'; btn.disabled = true; msgElement.textContent = ' Fetching models...'; msgElement.className = 'text-blue-600 text-xs mt-1';
-      try {
-        const res = await fetch('/api/fetch-models', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ provider, apiKey }) });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          const modelDropdown = document.getElementById('llmModelSelect');
-          modelDropdown.innerHTML = data.models.map(m => `<option value="${m.id}" ${m.isRecommended ? 'selected' : ''}>${m.name} ${m.isRecommended ? '⭐' : ''}</option>`).join('');
-          document.getElementById('llmModel').value = modelDropdown.value;
-          document.getElementById('llmProvider').value = provider.toUpperCase();
-          msgElement.textContent = `✅ Loaded ${data.models.length} models!`; msgElement.className = 'text-green-600 text-xs mt-1 font-semibold';
-        } else { msgElement.textContent = `❌ ${data.error || 'Failed to load models'}`; msgElement.className = 'text-red-600 text-xs mt-1'; }
-      } catch (error) { msgElement.textContent = ' Network error while loading models'; msgElement.className = 'text-red-600 text-xs mt-1'; }
-      finally { btn.textContent = ' Load Models'; btn.disabled = false; }
+  const btn = document.getElementById('loadModelsBtn');
+  const provider = document.getElementById('llmProviderSelect').value;
+  const apiKey = document.getElementById('llmApiKey').value.trim();
+  const msgElement = document.getElementById('llmValidationMsg');
+  
+  if (!apiKey) { 
+    showError('API Key Required', '❌ Please enter an API Key first.');
+    msgElement.textContent = '❌ Please enter an API Key first.'; 
+    msgElement.className = 'text-red-600 text-xs mt-1'; 
+    return; 
+  }
+  
+  btn.textContent = '🔄 Loading...'; 
+  btn.disabled = true; 
+  msgElement.textContent = 'ℹ️ Fetching models...'; 
+  msgElement.className = 'text-blue-600 text-xs mt-1';
+  
+  try {
+    const res = await fetch('/api/fetch-models', { 
+      method: 'POST', 
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Authorization': `Bearer ${token}` 
+      }, 
+      body: JSON.stringify({ provider, apiKey }) 
+    });
+    const data = await res.json();
+    
+    if (res.ok && data.success) {
+      const modelDropdown = document.getElementById('llmModelSelect');
+      modelDropdown.innerHTML = data.models.map(m => 
+        `<option value="${m.id}" ${m.isRecommended ? 'selected' : ''}>${m.name} ${m.isRecommended ? '⭐' : ''}</option>`
+      ).join('');
+      document.getElementById('llmModel').value = modelDropdown.value;
+      document.getElementById('llmProvider').value = provider.toUpperCase();
+      showSuccess('Models Loaded!', `✅ Loaded ${data.models.length} models successfully!`);
+      msgElement.textContent = `✅ Loaded ${data.models.length} models!`; 
+      msgElement.className = 'text-green-600 text-xs mt-1 font-semibold';
+    } else { 
+      showError('Failed to Load Models', `❌ ${data.error || 'Failed to load models'}`);
+      msgElement.textContent = `❌ ${data.error || 'Failed to load models'}`; 
+      msgElement.className = 'text-red-600 text-xs mt-1'; 
     }
+  } catch (error) { 
+    showError('Network Error', '️ Network error while loading models');
+    msgElement.textContent = '⚠️ Network error while loading models'; 
+    msgElement.className = 'text-red-600 text-xs mt-1'; 
+  } finally { 
+    btn.textContent = '🔄 Load Models'; 
+    btn.disabled = false; 
+  }
+}
+
 
     async function createAgent() {
       const name = document.getElementById('agentName').value.trim();
@@ -1164,29 +1218,54 @@
       }
     }
 
-    async function uploadKnowledge() {
-      const fileInput = document.getElementById('knowledgeFile');
-      const statusText = document.getElementById('uploadStatus');
-      const uploadBtn = document.getElementById('uploadBtn');
-      const file = fileInput.files[0];
-      if (!file) { statusText.textContent = '❌ Please select a file first.'; statusText.className = 'text-xs mt-2 font-medium text-red-600'; return; }
-      uploadBtn.disabled = true;
-      uploadBtn.innerHTML = '<span class="animate-spin">⏳</span> Processing...';
-      statusText.textContent = '';
-      const formData = new FormData();
-      formData.append('file', file);
-      try {
-        const res = await fetch('/api/dashboard/upload-knowledge', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData });
-        const data = await res.json();
-        if (res.ok) { 
-          statusText.textContent = `✅ ${data.message}`; 
-          statusText.className = 'text-xs mt-2 font-medium text-green-600'; 
-          fileInput.value = ''; 
-          loadKnowledgeDocuments();
-        } else { statusText.textContent = `❌ ${data.error}`; statusText.className = 'text-xs mt-2 font-medium text-red-600'; }
-      } catch (error) { statusText.textContent = '❌ Network error. Please try again.'; statusText.className = 'text-xs mt-2 font-medium text-red-600'; } 
-      finally { uploadBtn.disabled = false; uploadBtn.innerHTML = '<span>📤</span> Upload & Train'; }
+async function uploadKnowledge() {
+  const fileInput = document.getElementById('knowledgeFile');
+  const statusText = document.getElementById('uploadStatus');
+  const uploadBtn = document.getElementById('uploadBtn');
+  const file = fileInput.files[0];
+  
+  if (!file) { 
+    showError('No File Selected', '❌ Please select a file first.');
+    statusText.textContent = '❌ Please select a file first.'; 
+    statusText.className = 'text-xs mt-2 font-medium text-red-600'; 
+    return; 
+  }
+  
+  uploadBtn.disabled = true;
+  uploadBtn.innerHTML = '<span class="animate-spin">⏳</span> Processing...';
+  statusText.textContent = '';
+  
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  try {
+    const res = await fetch('/api/dashboard/upload-knowledge', { 
+      method: 'POST', 
+      headers: { 'Authorization': `Bearer ${token}` }, 
+      body: formData 
+    });
+    const data = await res.json();
+    
+    if (res.ok) { 
+      showSuccess('Upload Complete!', `✅ ${data.message}`);
+      statusText.textContent = `✅ ${data.message}`; 
+      statusText.className = 'text-xs mt-2 font-medium text-green-600'; 
+      fileInput.value = ''; 
+      loadKnowledgeDocuments();
+    } else { 
+      showError('Upload Failed', `❌ ${data.error}`);
+      statusText.textContent = `❌ ${data.error}`; 
+      statusText.className = 'text-xs mt-2 font-medium text-red-600'; 
     }
+  } catch (error) { 
+    showError('Network Error', '❌ Network error. Please try again.');
+    statusText.textContent = '❌ Network error. Please try again.'; 
+    statusText.className = 'text-xs mt-2 font-medium text-red-600'; 
+  } finally { 
+    uploadBtn.disabled = false; 
+    uploadBtn.innerHTML = '<span>📤</span> Upload & Train'; 
+  }
+}
 
     async function loadKnowledgeDocuments() {
       const listContainer = document.getElementById('documentList');
@@ -1226,7 +1305,12 @@
       });
     }
 
-    function logout() { localStorage.clear(); window.location.href = '/login'; }
+    // LOGOUT
+    function logout() { 
+      localStorage.clear(); 
+      window.history.pushState(null, null, '/login');
+      window.location.replace('/login'); 
+    }
 
     function openDeleteModal() {
       document.getElementById('deleteAccountModal').classList.remove('hidden');
@@ -1354,10 +1438,41 @@
       }
     }
 
-    function updateWhatsAppButton() {
-      const whatsappBtn = document.getElementById('nav-whatsapp');
-      if (whatsappBtn) { /* Visual indicators can be added here */ }
+async function updateWhatsAppButton() {
+  const whatsappBtn = document.getElementById('nav-whatsapp');
+  if (!whatsappBtn) return;
+  
+  try {
+    const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+    const data = await res.json();
+    
+    if (data.success && data.tenant) {
+      if (data.tenant.isActive) {
+        // WhatsApp is connected - show disconnect option
+        whatsappBtn.innerHTML = `
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+          <span class="flex-1">📱 WhatsApp</span>
+          <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+        `;
+        whatsappBtn.className = 'nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg bg-green-50 text-green-700 transition-colors';
+        whatsappBtn.onclick = () => disconnectWhatsApp();
+      } else {
+        // WhatsApp is disconnected - show connect option
+        whatsappBtn.innerHTML = `
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+          <span class="flex-1">📱 WhatsApp</span>
+          <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+        `;
+        whatsappBtn.className = 'nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg bg-red-50 text-red-700 transition-colors';
+        whatsappBtn.onclick = () => {
+          window.location.href = `/connect/${data.tenant.whatsappNumber || 'unknown'}`;
+        };
+      }
     }
+  } catch (error) {
+    console.error('WhatsApp button update error:', error);
+  }
+}
 
     async function saveSettings() {
       showInfo('Saving Settings', '💾 Please wait while we save your settings...');      
@@ -1415,38 +1530,76 @@
     }
 
     document.getElementById('humanModeToggle').addEventListener('change', async function() {
-      const isChecked = this.checked;
-      const statusText = document.getElementById('humanModeStatus');
-      const statusIndicator = document.getElementById('aiStatusIndicator');
-      if (statusText) { statusText.textContent = '⏳ Updating AI status...'; statusText.className = 'text-xs text-yellow-600 mt-1 font-medium'; }
-      try {
-        const res = await fetch('/api/dashboard/toggle-human-mode', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ isHumanMode: isChecked }) });
-        const data = await res.json();
-        if (data.success) {
-          if (isChecked) {
-            if (statusText) { statusText.textContent = 'AI is PAUSED. You are in control.'; statusText.className = 'text-xs text-red-600 mt-1 font-bold'; }
-            if (statusIndicator) {
-              statusIndicator.className = 'mt-4 p-3 rounded-lg border-2 border-red-200 bg-red-50';
-              statusIndicator.innerHTML = `<div class="flex items-center gap-2"><div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div><span class="text-sm font-semibold text-red-700">👨‍💻 Human Mode ACTIVE - AI is paused</span></div>`;
-            }
-          } else {
-            if (statusText) { statusText.textContent = 'AI is ACTIVE and replying automatically.'; statusText.className = 'text-xs text-green-600 mt-1 font-bold'; }
-            if (statusIndicator) {
-              statusIndicator.className = 'mt-4 p-3 rounded-lg border-2 border-green-200 bg-green-50';
-              statusIndicator.innerHTML = `<div class="flex items-center gap-2"><div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div><span class="text-sm font-semibold text-green-700">🤖 AI is ACTIVE and replying automatically</span></div>`;
-            }
-          }
-        } else { 
-          this.checked = !isChecked; 
-          if (statusText) statusText.textContent = 'Failed to update mode.'; 
-          showError('Error', '❌ Failed to update mode.'); 
-        }
-      } catch (err) { 
-        this.checked = !isChecked; 
-        if (statusText) statusText.textContent = 'Server error while toggling.'; 
-        showError('Server Error', '❌ Server error while toggling.'); 
-      }
+  const isChecked = this.checked;
+  const statusText = document.getElementById('humanModeStatus');
+  const statusIndicator = document.getElementById('aiStatusIndicator');
+  
+  // 🚨 CHECK IF API KEY EXISTS
+  const apiKey = document.getElementById('llmApiKey')?.value || '';
+  if (!isChecked && !apiKey) {
+    showError('API Key Required', '️ Please add your LLM API Key in AI Configuration before activating the AI.');
+    this.checked = false;
+    return;
+  }
+  
+  if (statusText) { 
+    statusText.textContent = '⏳ Updating AI status...'; 
+    statusText.className = 'text-xs text-yellow-600 mt-1 font-medium'; 
+  }
+  
+  try {
+    const res = await fetch('/api/dashboard/toggle-human-mode', { 
+      method: 'PATCH', 
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Authorization': `Bearer ${token}` 
+      }, 
+      body: JSON.stringify({ isHumanMode: isChecked }) 
     });
+    
+    const data = await res.json();
+    if (data.success) {
+      if (isChecked) {
+        if (statusText) { 
+          statusText.textContent = 'AI is PAUSED. You are in control.'; 
+          statusText.className = 'text-xs text-red-600 mt-1 font-bold'; 
+        }
+        if (statusIndicator) {
+          statusIndicator.className = 'mt-4 p-3 rounded-lg border-2 border-red-200 bg-red-50';
+          statusIndicator.innerHTML = `
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+              <span class="text-sm font-semibold text-red-700">👨‍💻 Human Mode ACTIVE - AI is paused</span>
+            </div>
+          `;
+        }
+      } else {
+        if (statusText) { 
+          statusText.textContent = 'AI is ACTIVE and replying automatically.'; 
+          statusText.className = 'text-xs text-green-600 mt-1 font-bold'; 
+        }
+        if (statusIndicator) {
+          statusIndicator.className = 'mt-4 p-3 rounded-lg border-2 border-green-200 bg-green-50';
+          statusIndicator.innerHTML = `
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+              <span class="text-sm font-semibold text-green-700">🤖 AI is ACTIVE and replying automatically</span>
+            </div>
+          `;
+        }
+      }
+    } else { 
+      this.checked = !isChecked; 
+      if (statusText) statusText.textContent = 'Failed to update mode.'; 
+      showError('Error', ' Failed to update mode.'); 
+    }
+  } catch (err) { 
+    this.checked = !isChecked; 
+    if (statusText) statusText.textContent = 'Server error while toggling.'; 
+    showError('Server Error', '❌ Server error while toggling.'); 
+  }
+});
+
 
     window.addEventListener('resize', () => {
       const sidebar = document.getElementById('sidebar');
