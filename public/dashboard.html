@@ -1519,40 +1519,49 @@ async function loadConversations() {
     }
 
     // ==========================================
-    // 💾 SAVE SETTINGS FUNCTION (WITH FEEDBACK)
+    // 💾 SAFE SAVE SETTINGS FUNCTION (WITH FEEDBACK)
     // ==========================================
-    
     async function saveSettings() {
       const msg = document.getElementById('settingsMsg');
-      if (!msg) {
-        alert('❌ Save message element not found.');
-        return;
+      if (msg) {
+        msg.textContent = '💾 Saving settings...';
+        msg.className = 'mt-3 text-center text-sm text-blue-600 font-medium';
       }
       
-      msg.textContent = '💾 Saving settings...';
-      msg.className = 'mt-3 text-center text-sm text-blue-600 font-medium';
-      
       try {
-        // Get current tenant data first
+        // 1. Get current tenant data first
         const res = await fetch('/api/dashboard', { 
           headers: { 'Authorization': `Bearer ${token}` } 
         });
         const data = await res.json();
         
         if (!data.success) {
-          msg.textContent = '❌ Failed to load current settings.';
-          msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+          if (msg) {
+            msg.textContent = '❌ Failed to load current settings.';
+            msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+          }
           return;
         }
         
-        // Build contact info string
-        const contactInfo = `Contact Person: ${document.getElementById('contactPerson').value || 'Not provided'}
-Email: ${document.getElementById('contactEmail').value || 'Not provided'}
-Phone/WhatsApp: ${document.getElementById('contactPhone').value || 'Not provided'}
-Website: ${document.getElementById('contactWebsite').value || 'Not provided'}
-Notes: ${document.getElementById('contactNotes').value || 'None'}`.trim();
+        // 2. HELPER: Safely get value (returns empty string if element is missing)
+        const getVal = (id) => {
+          const el = document.getElementById(id);
+          return el ? el.value : '';
+        };
+
+        const getCheck = (id) => {
+          const el = document.getElementById(id);
+          return el ? el.checked : false;
+        };
         
-        // Save settings
+        // 3. Build contact info string safely
+        const contactInfo = `Contact Person: ${getVal('contactPerson') || 'Not provided'}
+Email: ${getVal('contactEmail') || 'Not provided'}
+Phone/WhatsApp: ${getVal('contactPhone') || 'Not provided'}
+Website: ${getVal('contactWebsite') || 'Not provided'}
+Notes: ${getVal('contactNotes') || 'None'}`.trim();
+        
+        // 4. Save settings
         const saveRes = await fetch('/api/dashboard/settings', { 
           method: 'PUT', 
           headers: { 
@@ -1560,36 +1569,40 @@ Notes: ${document.getElementById('contactNotes').value || 'None'}`.trim();
             'Authorization': `Bearer ${token}` 
           }, 
           body: JSON.stringify({ 
-            businessName: document.getElementById('settingsBusinessName').value || data.tenant.businessName,
-            whatsappNumber: (document.getElementById('settingsWhatsappNumber').value || data.tenant.whatsappNumber).replace(/\D/g, ''),
+            businessName: getVal('settingsBusinessName') || data.tenant.businessName,
+            whatsappNumber: (getVal('settingsWhatsappNumber') || data.tenant.whatsappNumber || '').replace(/\D/g, ''),
             contactInfo: contactInfo,
             // Keep existing AI settings
-            systemPrompt: document.getElementById('systemPrompt').value || data.tenant.systemPrompt,
-            businessContext: document.getElementById('businessContext').value || data.tenant.businessContext,
-            llmApiKey: document.getElementById('llmApiKey').value || data.tenant.llmApiKey,
-            llmModel: document.getElementById('llmModel').value || data.tenant.llmModel,
-            llmProvider: document.getElementById('llmProvider').value || data.tenant.llmProvider,
-            llmBaseUrl: document.getElementById('llmBaseUrl').value || data.tenant.llmBaseUrl,
-            aiAgentName: document.getElementById('aiAgentName').value || data.tenant.aiAgentName,
-            isHumanMode: document.getElementById('humanModeToggle').checked
+            systemPrompt: getVal('systemPrompt') || data.tenant.systemPrompt,
+            businessContext: getVal('businessContext') || data.tenant.businessContext,
+            llmApiKey: getVal('llmApiKey') || data.tenant.llmApiKey,
+            llmModel: getVal('llmModel') || data.tenant.llmModel,
+            llmProvider: getVal('llmProvider') || data.tenant.llmProvider,
+            llmBaseUrl: getVal('llmBaseUrl') || data.tenant.llmBaseUrl,
+            aiAgentName: getVal('aiAgentName') || data.tenant.aiAgentName,
+            isHumanMode: getCheck('humanModeToggle')
           }) 
         });
         
         const saveData = await saveRes.json();
         if (saveRes.ok) {
-          msg.textContent = '✅ Business settings saved successfully!';
-          msg.className = 'mt-3 text-center text-sm text-green-600 font-bold';
+          if (msg) {
+            msg.textContent = '✅ Business settings saved successfully!';
+            msg.className = 'mt-3 text-center text-sm text-green-600 font-bold';
+          }
           
           // Reload dashboard to update header
           await loadDashboard();
-          loadWhatsAppStatus(); // Refresh WhatsApp status
+          if (typeof loadWhatsAppStatus === 'function') loadWhatsAppStatus(); // Refresh WhatsApp status
           
           setTimeout(() => {
-            msg.textContent = '';
+            if (msg) msg.textContent = '';
           }, 3000);
         } else {
-          msg.textContent = '❌ ' + (saveData.error || 'Failed to save settings.');
-          msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+          if (msg) {
+            msg.textContent = '❌ ' + (saveData.error || 'Failed to save settings.');
+            msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+          }
         }
       } catch (err) {
         console.error('Save settings error:', err);
