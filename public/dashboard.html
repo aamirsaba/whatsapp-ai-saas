@@ -426,37 +426,67 @@
 
 
       <!-- ALL CONVERSATIONS SECTION (Global Chat History) -->
-<section id="section-all-conversations" class="section-content hidden w-full max-w-full">
-  <div class="mb-8">
-    <h2 class="text-2xl font-bold text-gray-800 mb-2">💬 All Conversations</h2>
-    <p class="text-gray-600">View all messages across all customer conversations.</p>
-  </div>
+      <section id="section-all-conversations" class="section-content hidden w-full max-w-full">
+        <div class="mb-8">
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">💬 All Conversations</h2>
+          <p class="text-gray-600">View all messages across all customer conversations.</p>
+        </div>
 
-  <!-- Filter Options -->
-  <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 max-w-full">
-    <div class="flex flex-col sm:flex-row gap-4">
-      <div class="flex-1 min-w-0">
-        <label class="block text-xs font-medium text-gray-600 mb-1">Filter by Phone Number</label>
-        <input type="text" id="filterPhone" placeholder="e.g., 17708003621" 
-               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-               oninput="loadAllConversations()">
-      </div>
-      <div class="flex-1 min-w-0">
-        <label class="block text-xs font-medium text-gray-600 mb-1">Date Range</label>
-        <select id="filterDate" onchange="loadAllConversations()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-          <option value="7">Last 7 Days</option>
-          <option value="30">Last 30 Days</option>
-          <option value="all">All Time</option>
-        </select>
-      </div>
-    </div>
-  </div>
+        <!-- Filter Options -->
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 max-w-full">
+          <div class="flex flex-col sm:flex-row gap-4">
+            <div class="flex-1 min-w-0">
+              <label class="block text-xs font-medium text-gray-600 mb-1">Filter by Phone Number</label>
+              <input type="text" id="filterPhone" placeholder="e.g., 17708003621" 
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                     oninput="loadAllConversations()">
+            </div>
+            <div class="flex-1 min-w-0">
+              <label class="block text-xs font-medium text-gray-600 mb-1">Date Range</label>
+              <select id="filterDate" onchange="loadAllConversations()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="7">Last 7 Days</option>
+                <option value="30">Last 30 Days</option>
+                <option value="all">All Time</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
-  <!-- Messages Container -->
-  <div id="allConversationsContainer" class="space-y-4 max-w-full overflow-hidden">
-    <div class="text-center text-gray-400 py-12">Loading all conversations...</div>
-  </div>
-</section>
+        <!-- 🚨 INLINE CHAT HISTORY DISPLAY (Shows when clicking View Chat) -->
+        <div id="inlineChatContainer" class="hidden bg-white border-2 border-indigo-200 rounded-xl p-6 mb-6">
+          <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-800">
+                Full Chat with <span id="inlineChatNumber" class="text-indigo-600"></span>
+              </h3>
+              <p class="text-xs text-gray-500">Read-only view • Use Live Chat to reply</p>
+            </div>
+            <button onclick="closeInlineChat()" class="text-gray-400 hover:text-gray-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+          </div>
+          
+          <!-- Messages displayed here -->
+          <div id="inlineChatMessages" class="space-y-3 max-h-[600px] overflow-y-auto p-4 bg-gray-50 rounded-lg mb-4">
+            <div class="text-center text-gray-400 py-8">Loading messages...</div>
+          </div>
+          
+          <!-- Quick action to go to Live Chat -->
+          <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            <button onclick="closeInlineChat()" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">
+              Close
+            </button>
+            <button onclick="goToLiveChat()" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
+              💬 Reply in Live Chat →
+            </button>
+          </div>
+        </div>
+
+        <!-- Messages Container -->
+        <div id="allConversationsContainer" class="space-y-4 max-w-full overflow-hidden">
+          <div class="text-center text-gray-400 py-12">Loading all conversations...</div>
+        </div>
+      </section>
 
       <!-- LEADS CRM SECTION -->
 <section id="section-leads" class="section-content hidden">
@@ -1363,9 +1393,10 @@ async function sendManualReply() {
                     <p class="text-xs text-gray-500">${msgs.length} messages • Last: ${new Date(last.createdAt).toLocaleString()}</p>
                   </div>
                 </div>
-                <button onclick="showChatHistory('${num}')" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-100 transition flex-shrink-0">
-                  View Chat →
-                </button>
+// In loadAllConversations, the button should be:
+<button onclick="showInlineChat('${num}')" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-100 transition flex-shrink-0">
+  View Chat →
+</button>
               </div>
               <div class="space-y-2 max-h-48 overflow-y-auto">
                 ${msgs.slice(-5).map(msg => {
@@ -1952,6 +1983,76 @@ Notes: ${getVal('contactNotes') || 'None'}`.trim();
         sidebar.style.display = 'block';
       }
     });
+
+
+    // 🚨 SHOW INLINE CHAT HISTORY (In All Conversations section)
+    async function showInlineChat(number) {
+      console.log('📞 Opening inline chat for:', number);
+      
+      const container = document.getElementById('inlineChatContainer');
+      const messagesDiv = document.getElementById('inlineChatMessages');
+      
+      if (!container || !messagesDiv) {
+        console.error('❌ Inline chat container not found!');
+        return;
+      }
+      
+      // Show loading
+      container.classList.remove('hidden');
+      messagesDiv.innerHTML = '<div class="text-center text-gray-400 py-8">Loading messages...</div>';
+      document.getElementById('inlineChatNumber').textContent = '+' + number;
+      
+      try {
+        const res = await fetch(`/api/dashboard/chat-history/${number}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        
+        if (res.ok && data.messages) {
+          if (data.messages.length === 0) {
+            messagesDiv.innerHTML = '<div class="text-center text-gray-400 py-8">No messages yet</div>';
+          } else {
+            messagesDiv.innerHTML = data.messages.map(msg => {
+              const isOutbound = msg.direction === 'outbound';
+              const alignClass = isOutbound ? 'justify-end' : 'justify-start';
+              const bubbleClass = isOutbound 
+                ? 'bg-green-500 text-white' 
+                : 'bg-white text-gray-800 border border-gray-200';  
+              const label = isOutbound 
+                ? (msg.isAiReply ? '🤖 AI' : '👤 Admin') 
+                : '👤 Customer';
+              
+              return `
+                <div class="flex ${alignClass}">
+                  <div class="max-w-[75%] px-4 py-3 rounded-lg ${bubbleClass} shadow-sm">
+                    <p class="text-xs font-semibold mb-1 opacity-75">${label}</p>
+                    <p class="text-sm whitespace-pre-wrap">${msg.content}</p>
+                    <p class="text-xs mt-2 opacity-75 text-right">${new Date(msg.createdAt).toLocaleString()}</p>
+                  </div>
+                </div>
+              `;
+            }).join('');
+          }
+          
+          // Scroll to bottom
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+          console.log('✅ Inline chat displayed');
+        }
+      } catch (error) {
+        console.error('❌ Error loading inline chat:', error);
+        messagesDiv.innerHTML = '<div class="text-center text-red-500 py-8">Failed to load chat</div>';
+      }
+    }
+
+    // CLOSE INLINE CHAT
+    function closeInlineChat() {
+      document.getElementById('inlineChatContainer').classList.add('hidden');
+    }
+
+    // GO TO LIVE CHAT TO REPLY
+    function goToLiveChat() {
+      showSection('live-chat');
+    }
 
     // ==========================================
     // INITIALIZATION (Runs when page loads)
