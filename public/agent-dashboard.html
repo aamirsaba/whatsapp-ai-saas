@@ -140,7 +140,7 @@
 
 
 
-    // Load team info and chats
+    // Load team info and agent name
     async function loadAgentInfo() {
       try {
         const res = await fetch('/api/agent/info', {
@@ -148,9 +148,24 @@
         });
         const data = await res.json();
         
-        if (res.ok && data.team) {
-          document.getElementById('teamName').textContent = `Team: ${data.team.businessName}`;
-          document.getElementById('businessName').textContent = data.team.businessName;
+        console.log(' Agent info response:', data);
+        
+        if (res.ok && data.agent) {
+          //  UPDATE AGENT NAME
+          const agentNameDisplay = document.getElementById('agentNameDisplay');
+          if (agentNameDisplay) {
+            agentNameDisplay.textContent = data.agent.name || 'Agent';
+          }
+          
+          // Update team info
+          if (data.team) {
+            document.getElementById('teamName').textContent = `Team: ${data.team.businessName}`;
+            document.getElementById('businessName').textContent = data.team.businessName;
+          }
+          
+          console.log('✅ Agent name loaded:', data.agent.name);
+        } else {
+          console.error(' Agent info not found in response');
         }
       } catch (error) {
         console.error('Load agent info error:', error);
