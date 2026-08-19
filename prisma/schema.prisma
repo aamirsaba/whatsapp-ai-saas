@@ -169,14 +169,15 @@ model Agent {
   languages         String   @default("[]") 
   preferredLanguage String   @default("English")
   isAvailable       Boolean  @default(true)
-  isBusy            Boolean  @default(false) // 🚨 NEW: Manual busy status
+  isBusy            Boolean  @default(false) 
   avatar            String?  
   createdAt         DateTime @default(now())
+  
   conversations     Conversation[]
+  statusLogs        AgentStatusLog[] // 🚨 ADD THIS LINE
   
   @@unique([tenantId, email])
 }
-
 
 // Add this model to your schema.prisma
 model AgentStatusLog {
