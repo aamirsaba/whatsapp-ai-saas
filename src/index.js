@@ -1878,6 +1878,32 @@ app.get('/api/dashboard/chat-history', authenticateToken, async (req, res) => {
   }
 });
 
+// 🚀 DASHBOARD: Get chat history for a SPECIFIC phone number
+app.get('/api/dashboard/chat-history/:number', authenticateToken, async (req, res) => {
+  try {
+    const { number } = req.params;
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    // Fetch messages between the tenant and this specific number
+    const messages = await prisma.message.findMany({
+      where: {
+        tenantId: tenant.id,
+        OR: [
+          { fromNumber: number, toNumber: tenant.whatsappNumber },
+          { fromNumber: tenant.whatsappNumber, toNumber: number }
+        ]
+      },
+      orderBy: { createdAt: 'asc' },
+      take: 50
+    });
+
+    res.json({ success: true, messages });
+  } catch (error) {
+    console.error('Chat history error:', error);
+    res.status(500).json({ error: 'Failed to load chat history.' });
+  }
+});
 
 // 🚀 CONNECT WHATSAPP: Show QR Code page
 app.get('/connect/:number', authenticateToken, async (req, res) => {
