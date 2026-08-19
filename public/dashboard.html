@@ -1053,7 +1053,6 @@ async function updateAgent(agentId) {
     alert('❌ Network error. Please try again.'); 
   }
 }
-
     // DELETE AGENT
     async function deleteAgent(agentId, agentName) {
       if (!confirm(`Delete agent "${agentName}"?`)) return;
@@ -1212,24 +1211,32 @@ async function updateAgent(agentId) {
     }
 
 async function sendManualReply() {
-  if (!currentReplyNumber) return;
+  if (!currentReplyNumber) {
+    alert('❌ No recipient selected.');
+    return;
+  }
+  
   const content = document.getElementById('manualReplyText').value.trim();
-  if (!content) { alert('Please type a message first.'); return; }
+  if (!content) { 
+    alert('Please type a message first.'); 
+    return; 
+  }
   
   try {
-    const res = await fetch('/api/dashboard/agent/send-message', {
+    const res = await fetch('/api/dashboard/send-message', {  // ✅ CORRECT ENDPOINT
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}` 
       },
       body: JSON.stringify({ 
-        userNumber: currentReplyNumber, 
+        toNumber: currentReplyNumber,  // ✅ Backend expects 'toNumber'
         content: content 
       })
     });
 
     const data = await res.json();
+    
     if (res.ok) {
       alert('✅ Message sent successfully!');
       document.getElementById('manualReplyText').value = '';
