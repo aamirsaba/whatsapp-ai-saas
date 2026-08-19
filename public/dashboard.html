@@ -21,14 +21,20 @@
     }
   }
 
-  /*  NUCLEAR OPTION: FORCE SIDEBAR VISIBLE ON DESKTOP */
+  /* 🚨 NUCLEAR OPTION: FORCE SIDEBAR VISIBLE ON DESKTOP */
   @media (min-width: 1024px) {
     #sidebar {
       transform: translateX(0) !important;
       display: block !important;
       visibility: visible !important;
       opacity: 1 !important;
+      position: static !important;
     }
+  }
+  
+  /* Prevent section transitions from hiding sidebar */
+  .section-content {
+    transition: none !important;
   }
 </style>
 
@@ -115,12 +121,11 @@
           <span>⚙️ Settings</span>
         </button>
 
-<!--  NEW: All Conversations (Global Chat History) -->
-        <button onclick="showSection('all-conversations')" id="nav-all-conversations" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-          <span>💬 All Conversations</span>
-        </button>
-
+<!-- All Conversations -->
+<button onclick="showSection('all-conversations'); return false;" id="nav-all-conversations" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+  <span>💬 All Conversations</span>
+</button>
 
 
         <!--  NEW: WhatsApp Connection Button -->
@@ -672,7 +677,18 @@ async function loadDashboard() {
 
     // 🚨 ULTIMATE BULLETPROOF SHOW SECTION FUNCTION
     function showSection(sectionName) {
-      console.log('📍 Navigating to:', sectionName);
+      console.log(' Navigating to:', sectionName);
+      
+      // FORCE SIDEBAR VISIBLE FIRST (before anything else)
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar && window.innerWidth >= 1024) {
+        sidebar.classList.remove('-translate-x-full', 'hidden');
+        sidebar.style.transform = 'translateX(0) !important';
+        sidebar.style.display = 'block !important';
+        sidebar.style.visibility = 'visible !important';
+        sidebar.style.opacity = '1 !important';
+        console.log('✅ Sidebar forced visible BEFORE section change');
+      }
       
       // 1. Hide ALL sections
       document.querySelectorAll('.section-content').forEach(section => {
@@ -683,6 +699,9 @@ async function loadDashboard() {
       const target = document.getElementById(`section-${sectionName}`);
       if (target) {
         target.classList.remove('hidden');
+        console.log('✅ Section shown:', sectionName);
+      } else {
+        console.error('❌ Section not found:', sectionName);
       }
       
       // 3. Update sidebar active state
@@ -694,22 +713,14 @@ async function loadDashboard() {
       if (activeNav) {
         activeNav.classList.remove('text-gray-700', 'hover:bg-gray-50');
         activeNav.classList.add('bg-green-50', 'text-green-700');
+        console.log('✅ Nav item highlighted:', sectionName);
       }
       
-      // 4. 🚨 FORCE SIDEBAR VISIBLE ON DESKTOP (Use inline styles)
-      const sidebar = document.getElementById('sidebar');
-      if (sidebar) {
-        if (window.innerWidth >= 1024) {
-          sidebar.classList.remove('-translate-x-full');
-          sidebar.style.transform = 'translateX(0)';
-          sidebar.style.display = 'block';
-          sidebar.style.visibility = 'visible';
-          sidebar.style.opacity = '1';
-          console.log('✅ Sidebar forced visible via inline styles');
-        } else {
-          sidebar.classList.add('-translate-x-full');
-          sidebar.style.display = 'none';
-        }
+      // 4. FORCE SIDEBAR VISIBLE AGAIN (after section change)
+      if (sidebar && window.innerWidth >= 1024) {
+        sidebar.classList.remove('-translate-x-full', 'hidden');
+        sidebar.style.cssText = 'transform: translateX(0) !important; display: block !important; visibility: visible !important; opacity: 1 !important;';
+        console.log('✅ Sidebar forced visible AFTER section change');
       }
       
       // 5. Load specific data
@@ -718,7 +729,18 @@ async function loadDashboard() {
       if (sectionName === 'live-chat') loadRecentChats();
       if (sectionName === 'leads') loadLeads();
       if (sectionName === 'knowledge') loadKnowledgeDocuments();
-      if (sectionName === 'all-conversations') loadAllConversations();
+      if (sectionName === 'all-conversations') {
+        console.log(' Loading all conversations...');
+        loadAllConversations();
+      }
+      
+      // 6. Final check after 100ms
+      setTimeout(() => {
+        if (sidebar && window.innerWidth >= 1024) {
+          sidebar.style.cssText = 'transform: translateX(0) !important; display: block !important; visibility: visible !important; opacity: 1 !important;';
+          console.log('✅ Sidebar final check - still visible');
+        }
+      }, 100);
     }
 
 // LOAD DASHBOARD DATA (With REAL stats)
