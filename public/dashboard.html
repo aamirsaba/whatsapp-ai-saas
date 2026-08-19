@@ -104,13 +104,20 @@
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
           <span>⚙️ Settings</span>
         </button>
-<!-- At the bottom of sidebar nav -->
-<div class="mt-8 pt-6 border-t border-gray-200">
-  <button onclick="saveAllSettings()" class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition font-semibold flex items-center justify-center gap-2 shadow-md">
-    <span>💾</span>
-    <span>Save All Settings</span>
-  </button>
-</div>
+
+        <!--  NEW: WhatsApp Connection Button -->
+        <button onclick="toggleWhatsAppConnection()" id="nav-whatsapp" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+          <span>📱 WhatsApp</span>
+        </button>
+
+        <!-- At the bottom of sidebar nav -->
+        <div class="mt-8 pt-6 border-t border-gray-200">
+          <button onclick="saveAllSettings()" class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition font-semibold flex items-center justify-center gap-2 shadow-md">
+            <span>💾</span>
+            <span>Save All Settings</span>
+          </button>
+        </div>
       </nav>
     </aside>
 
@@ -1455,7 +1462,7 @@ async function loadConversations() {
     }
 
     async function disconnectWhatsApp() {
-      if (!confirm('️ Are you sure you want to disconnect WhatsApp? You will need to scan the QR code again to reconnect.')) {
+      if (!confirm('⚠️ Are you sure you want to disconnect WhatsApp? You will need to scan the QR code again to reconnect.')) {
         return;
       }
 
@@ -1469,12 +1476,45 @@ async function loadConversations() {
         if (data.success) {
           alert('✅ WhatsApp disconnected successfully!');
           loadWhatsAppStatus(); // Refresh the status
+          updateWhatsAppButton(); // Update sidebar button
         } else {
-          alert(' Failed to disconnect: ' + (data.error || 'Unknown error'));
+          alert('❌ Failed to disconnect: ' + (data.error || 'Unknown error'));
         }
       } catch (error) {
         console.error('Disconnect error:', error);
         alert('❌ Network error. Please try again.');
+      }
+    }
+
+    //  NEW: Toggle WhatsApp Connection (Open connect page or disconnect)
+    async function toggleWhatsAppConnection() {
+      try {
+        const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        
+        if (data.success && data.tenant) {
+          if (data.tenant.isActive) {
+            // WhatsApp is connected - ask if they want to disconnect
+            if (confirm('✅ WhatsApp is currently connected.\n\nDo you want to disconnect it?')) {
+              await disconnectWhatsApp();
+            }
+          } else {
+            // WhatsApp is disconnected - redirect to connect page
+            window.location.href = `/connect/${data.tenant.whatsappNumber || 'unknown'}`;
+          }
+        }
+      } catch (error) {
+        console.error('WhatsApp toggle error:', error);
+        alert('❌ Failed to check WhatsApp status.');
+      }
+    }
+
+    // 🚨 NEW: Update WhatsApp button in sidebar
+    function updateWhatsAppButton() {
+      const whatsappBtn = document.getElementById('nav-whatsapp');
+      if (whatsappBtn) {
+        // You can add visual indicators here if needed
+        // For now, it just shows the icon and text
       }
     }
 
