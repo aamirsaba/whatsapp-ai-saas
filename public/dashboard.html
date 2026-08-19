@@ -80,7 +80,7 @@
 
   <div class="flex max-w-7xl mx-auto">
     <!-- SIDEBAR NAVIGATION -->
-    <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white shadow-lg lg:shadow-none lg:border-r border-gray-200 -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-in-out mt-[73px] lg:mt-0 h-[calc(100vh-73px)] overflow-y-auto" style="transform: translateX(0); display: block;">
+    <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white shadow-lg lg:shadow-none lg:border-r border-gray-200 transform -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-in-out mt-[73px] lg:mt-0 h-[calc(100vh-73px)] overflow-y-auto" style="transform: translateX(-100%);">
       <nav class="p-4 space-y-1">
         <button onclick="showSection('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg bg-green-50 text-green-700 transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
@@ -127,7 +127,8 @@
       </nav>
     </aside>
 
-    <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden lg:hidden"></div>
+    <!-- OVERLAY FOR MOBILE -->
+    <div id="sidebarOverlay" onclick="forceCloseSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden lg:hidden"></div>
 
     <main class="flex-1 p-4 lg:p-8 w-full">
       <!-- DASHBOARD SECTION -->
@@ -559,12 +560,86 @@
     let currentInlineChatNumber = null;
     let currentReplyNumber = null;
 
+    // SIDEBAR TOGGLE FOR MOBILE
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
       const overlay = document.getElementById('sidebarOverlay');
-      sidebar.classList.toggle('-translate-x-full');
-      overlay.classList.toggle('hidden');
+      
+      if (!sidebar || !overlay) return;
+      
+      const isHidden = sidebar.classList.contains('-translate-x-full');
+      
+      if (isHidden) {
+        // Open sidebar
+        sidebar.classList.remove('-translate-x-full');
+        sidebar.style.transform = 'translateX(0)';
+        overlay.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      } else {
+        // Close sidebar
+        sidebar.classList.add('-translate-x-full');
+        sidebar.style.transform = 'translateX(-100%)';
+        overlay.classList.add('hidden');
+        document.body.style.overflow = '';
+      }
     }
+
+    // FORCE CLOSE SIDEBAR (Used when clicking menu items)
+    function forceCloseSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      
+      if (sidebar) {
+        sidebar.classList.add('-translate-x-full');
+        sidebar.style.transform = 'translateX(-100%)';
+      }
+      if (overlay) {
+        overlay.classList.add('hidden');
+      }
+      document.body.style.overflow = '';
+    }
+
+    // SHOW SECTION
+    function showSection(sectionName) {
+      // Hide all sections
+      document.querySelectorAll('.section-content').forEach(section => {
+        section.classList.add('hidden');
+      });
+      
+      // Show selected section
+      const targetSection = document.getElementById(`section-${sectionName}`);
+      if (targetSection) {
+        targetSection.classList.remove('hidden');
+      }
+      
+      // Update nav items
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('bg-green-50', 'text-green-700');
+        item.classList.add('text-gray-700', 'hover:bg-gray-50');
+      });
+      
+      // Highlight active nav item
+      const activeNav = document.getElementById(`nav-${sectionName}`);
+      if (activeNav) {
+        activeNav.classList.remove('text-gray-700', 'hover:bg-gray-50');
+        activeNav.classList.add('bg-green-50', 'text-green-700');
+      }
+      
+      // 🚨 FORCE CLOSE MOBILE SIDEBAR
+      forceCloseSidebar();
+      
+      // Scroll to top
+      window.scrollTo(0, 0);
+      
+      // Load section-specific data
+      if (sectionName === 'dashboard') loadDashboardData();
+      if (sectionName === 'agents') loadAgents();
+      if (sectionName === 'live-chat') loadRecentChats();
+      if (sectionName === 'leads') loadLeads();
+      if (sectionName === 'knowledge') loadKnowledgeDocuments();
+      if (sectionName === 'settings') loadWhatsAppStatus();
+    }
+
 
     // ==========================================
     // 🎨 UNIVERSAL MODAL SYSTEM
