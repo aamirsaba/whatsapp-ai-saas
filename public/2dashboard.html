@@ -47,6 +47,7 @@
     max-width: 100% !important;
   }
 </style>
+
 </head>
 <body class="bg-gray-50 min-h-screen">
   
@@ -62,14 +63,19 @@
     
     <!-- All 3 Buttons with Clear Icons -->
     <div class="flex items-center gap-1 sm:gap-2">
+      <!-- Change Password -->
       <a href="/update-password.html" class="flex items-center justify-center bg-gray-100 text-gray-700 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg hover:bg-gray-200 transition font-medium text-xs sm:text-sm" title="Change Password">
         <span class="hidden sm:inline">🔑 Change</span>
         <span class="sm:hidden text-lg">🔑</span>
       </a>
+      
+      <!-- Forgot Password - NOW WITH CLEAR ICON -->
       <a href="/forgot-password.html" class="flex items-center justify-center bg-indigo-50 text-indigo-700 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg hover:bg-indigo-100 transition font-medium text-xs sm:text-sm" title="Forgot Password">
         <span class="hidden sm:inline">❓ Forgot</span>
         <span class="sm:hidden text-lg">❓</span>
       </a>
+      
+      <!-- Logout -->
       <button onclick="logout()" class="flex items-center justify-center bg-red-50 text-red-600 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg hover:bg-red-100 transition font-medium text-xs sm:text-sm" title="Logout">
         <span class="hidden sm:inline">Logout</span>
         <span class="sm:hidden text-lg">🚪</span>
@@ -77,47 +83,68 @@
     </div>
   </div>
 </nav>
-
   <div class="flex max-w-7xl mx-auto">
+    
     <!-- SIDEBAR NAVIGATION -->
     <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white shadow-lg lg:shadow-none lg:border-r border-gray-200 -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-in-out mt-[73px] lg:mt-0 h-[calc(100vh-73px)] overflow-y-auto" style="transform: translateX(0); display: block;">
       <nav class="p-4 space-y-1">
+        
+        <!-- Dashboard -->
         <button onclick="showSection('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg bg-green-50 text-green-700 transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
           <span> Dashboard</span>
         </button>
+
+        <!-- AI Configuration -->
         <button onclick="showSection('ai-config')" id="nav-ai-config" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
           <span>🤖 AI Configuration</span>
         </button>
+
+        <!-- Agents -->
         <button onclick="showSection('agents')" id="nav-agents" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-          <span>👨‍💼 Agents</span>
+          <span>‍💼 Agents</span>
         </button>
+
+        <!-- Live Chat -->
         <button onclick="showSection('live-chat')" id="nav-live-chat" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
           <span>💬 Live Chat</span>
         </button>
+
+        <!-- Leads CRM -->
         <button onclick="showSection('leads')" id="nav-leads" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
           <span>📊 Leads CRM</span>
         </button>
+
+        <!-- Knowledge Base -->
         <button onclick="showSection('knowledge')" id="nav-knowledge" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
           <span>📚 Knowledge Base</span>
         </button>
+
+        <!-- Settings -->
         <button onclick="showSection('settings')" id="nav-settings" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
           <span>⚙️ Settings</span>
         </button>
-        <button onclick="showSection('all-conversations'); return false;" id="nav-all-conversations" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-          <span>💬 All Conversations</span>
-        </button>
+
+<!-- All Conversations -->
+<button onclick="showSection('all-conversations'); return false;" id="nav-all-conversations" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+  <span>💬 All Conversations</span>
+</button>
+
+
+        <!--  NEW: WhatsApp Connection Button -->
         <button onclick="toggleWhatsAppConnection()" id="nav-whatsapp" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
           <span>📱 WhatsApp</span>
         </button>
+
+        <!-- At the bottom of sidebar nav -->
         <div class="mt-8 pt-6 border-t border-gray-200">
           <button onclick="saveSettings()" class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition font-semibold flex items-center justify-center gap-2 shadow-md">
             <span>💾</span>
@@ -127,15 +154,20 @@
       </nav>
     </aside>
 
+    <!-- OVERLAY FOR MOBILE -->
     <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden lg:hidden"></div>
 
+    <!-- MAIN CONTENT AREA -->
     <main class="flex-1 p-4 lg:p-8 w-full">
+      
       <!-- DASHBOARD SECTION -->
       <section id="section-dashboard" class="section-content">
         <div class="mb-8">
           <h2 class="text-2xl font-bold text-gray-800 mb-2"> Dashboard Overview</h2>
           <p class="text-gray-600">Welcome back! Here's what's happening with your AI agent today.</p>
         </div>
+
+        <!-- Analytics Charts -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">📈 Messages (Last 7 Days)</h3>
@@ -146,6 +178,8 @@
             <div class="h-64"><canvas id="leadChart"></canvas></div>
           </div>
         </div>
+
+        <!-- Quick Stats -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
             <div class="flex items-center justify-between">
@@ -189,37 +223,52 @@
           <h2 class="text-2xl font-bold text-gray-800 mb-2">🤖 AI Configuration</h2>
           <p class="text-gray-600">Customize your AI agent's personality, API settings, and behavior.</p>
         </div>
+
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <form id="settingsForm" class="space-y-4">
+            
+            <!-- Business Name -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
               <input type="text" id="settingsBusinessName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition" placeholder="e.g., Knowledge Grid Academy">
             </div>
+
+            <!-- WhatsApp Number -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number (with country code, no + or spaces)</label>
               <input type="text" id="settingsWhatsappNumber" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition" placeholder="e.g., 96891293119">
             </div>
+
+            <!-- Persona Template -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Choose a Persona Template</label>
               <select id="personaTemplate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white transition">
                 <option value="custom">✨ Custom / Keep Current</option>
               </select>
             </div>
+
+            <!-- System Prompt -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">System Prompt (Personality) <span class="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">Auto-Generated & Locked</span></label>
               <textarea id="systemPrompt" rows="3" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 text-sm font-mono cursor-not-allowed" title="This is automatically managed by the system to ensure safety and quality."></textarea>
             </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Website URL (Optional)</label>
-              <div class="flex flex-col sm:flex-row gap-2">
-                <input type="url" id="websiteUrl" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="https://yourbusiness.com">
-                <button type="button" onclick="autoGenerateContext()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium whitespace-nowrap w-full sm:w-auto">✨ Auto-Generate</button>
-              </div>
-            </div>
+
+            <!-- Website URL -->
+<div>
+  <label class="block text-sm font-medium text-gray-700 mb-1">Website URL (Optional)</label>
+  <div class="flex flex-col sm:flex-row gap-2">
+    <input type="url" id="websiteUrl" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="https://yourbusiness.com">
+    <button type="button" onclick="autoGenerateContext()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium whitespace-nowrap w-full sm:w-auto">✨ Auto-Generate</button>
+  </div>
+</div>
+
+            <!-- Business Context -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Business / Topic Context</label>
               <textarea id="businessContext" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm transition"></textarea>
             </div>
+
+            <!-- AI Provider -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">AI Provider</label>
               <select id="llmProviderSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white transition">
@@ -232,14 +281,18 @@
                 <option value="custom">Custom / Local Server</option>
               </select>
             </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">LLM API Key <span class="text-red-500">*</span></label>
-              <div class="flex flex-col sm:flex-row gap-2">
-                <input type="password" id="llmApiKey" required class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="sk-...">
-                <button type="button" id="loadModelsBtn" onclick="loadAvailableModels()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium whitespace-nowrap w-full sm:w-auto">🔄 Load Models</button>
-              </div>
-              <p id="llmValidationMsg" class="text-xs mt-1"></p>
-            </div>
+
+<!-- API Key -->
+<div>
+  <label class="block text-sm font-medium text-gray-700 mb-1">LLM API Key <span class="text-red-500">*</span></label>
+  <div class="flex flex-col sm:flex-row gap-2">
+    <input type="password" id="llmApiKey" required class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="sk-...">
+    <button type="button" id="loadModelsBtn" onclick="loadAvailableModels()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium whitespace-nowrap w-full sm:w-auto">🔄 Load Models</button>
+  </div>
+  <p id="llmValidationMsg" class="text-xs mt-1"></p>
+</div>
+
+            <!-- Model Selection -->
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Detected Provider</label>
@@ -253,6 +306,8 @@
                 <input type="text" id="llmModel" readonly class="hidden w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-lg text-sm text-gray-600" placeholder="Auto-selected">
               </div>
             </div>
+
+            <!-- AI Agent Name -->
             <div class="mt-6">
               <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
                 🤖 AI Agent Name <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Optional</span>
@@ -260,9 +315,10 @@
               <p class="text-xs text-gray-500 mb-2">Give your AI a human name (e.g., Noor, Haya, Ammar). It will introduce itself with this name.</p>
               <input type="text" id="aiAgentName" placeholder="e.g., Noor" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
             </div>
+
             <button type="button" onclick="saveSettings()" class="w-full bg-green-600 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-green-700 transition shadow-md flex items-center justify-center gap-2">
-              💾 Save AI Settings
-            </button>
+  💾 Save AI Settings
+</button>
           </form>
           <p id="settingsMsg" class="mt-3 text-center text-sm font-medium min-h-[20px]"></p>
         </div>
@@ -271,9 +327,11 @@
       <!-- AGENTS SECTION -->
       <section id="section-agents" class="section-content hidden">
         <div class="mb-8">
-          <h2 class="text-2xl font-bold text-gray-800 mb-2">👨‍💼 Agent Management</h2>
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">👨‍ Agent Management</h2>
           <p class="text-gray-600">Add and manage your team members who can handle customer conversations.</p>
         </div>
+
+        <!-- Add Agent Form -->
         <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-6 mb-6 border border-indigo-100">
           <h4 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
             <span class="text-2xl">➕</span> Add New Agent
@@ -301,6 +359,8 @@
             </button>
           </div>
         </div>
+
+        <!-- Agents List -->
         <div id="agentsList" class="space-y-3">
           <p class="text-gray-400 text-sm italic text-center py-8 bg-gray-50 rounded-lg">No agents yet. Add your first agent above!</p>
         </div>
@@ -312,23 +372,35 @@
           <h2 class="text-2xl font-bold text-gray-800 mb-2"> Live Chat Inbox</h2>
           <p class="text-gray-600">Manually reply to customer messages when AI needs human assistance.</p>
         </div>
+
+        <!-- Recent Chats List -->
         <div id="recentChats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           <div class="text-center text-gray-400 py-12 col-span-full">Loading recent chats...</div>
         </div>
+
+        <!-- 🚨 CHAT HISTORY DISPLAY (Shows full conversation bubbles) -->
         <div id="chatHistoryContainer" class="hidden bg-white border-2 border-gray-200 rounded-xl p-4 mb-6">
           <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
             <div>
-              <h3 class="text-lg font-semibold text-gray-800">Chat with <span id="chatHistoryNumber" class="text-indigo-600"></span></h3>
+              <h3 class="text-lg font-semibold text-gray-800">
+                Chat with <span id="chatHistoryNumber" class="text-indigo-600"></span>
+              </h3>
               <p class="text-xs text-gray-500">Full conversation history</p>
             </div>
             <button onclick="closeChatHistory()" class="text-gray-400 hover:text-gray-600">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
           </div>
+          
+          <!-- Messages displayed here -->
           <div id="chatMessages" class="space-y-3 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-lg mb-4">
             <div class="text-center text-gray-400 py-8">Loading messages...</div>
           </div>
         </div>
+
+
+
+        <!-- Reply Box -->
         <div id="replyBox" class="hidden bg-white border-2 border-indigo-100 rounded-xl p-5 shadow-sm">
           <div class="flex items-center justify-between mb-3">
             <p class="text-sm font-bold text-gray-800">Replying to: <span id="replyToNumber" class="text-indigo-600"></span></p>
@@ -354,17 +426,22 @@
         </div>
       </section>
 
-      <!-- ALL CONVERSATIONS SECTION -->
+
+      <!-- ALL CONVERSATIONS SECTION (Global Chat History) -->
       <section id="section-all-conversations" class="section-content hidden w-full max-w-full">
         <div class="mb-8">
           <h2 class="text-2xl font-bold text-gray-800 mb-2">💬 All Conversations</h2>
           <p class="text-gray-600">View all messages across all customer conversations.</p>
         </div>
+
+        <!-- Filter Options -->
         <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 max-w-full">
           <div class="flex flex-col sm:flex-row gap-4">
             <div class="flex-1 min-w-0">
               <label class="block text-xs font-medium text-gray-600 mb-1">Filter by Phone Number</label>
-              <input type="text" id="filterPhone" placeholder="e.g., 17708003621" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none" oninput="loadAllConversations()">
+              <input type="text" id="filterPhone" placeholder="e.g., 17708003621" 
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                     oninput="loadAllConversations()">
             </div>
             <div class="flex-1 min-w-0">
               <label class="block text-xs font-medium text-gray-600 mb-1">Date Range</label>
@@ -376,64 +453,84 @@
             </div>
           </div>
         </div>
+
+        <!-- 🚨 INLINE CHAT HISTORY DISPLAY (Shows when clicking View Chat) -->
         <div id="inlineChatContainer" class="hidden bg-white border-2 border-indigo-200 rounded-xl p-6 mb-6">
           <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
             <div>
-              <h3 class="text-lg font-semibold text-gray-800">Full Chat with <span id="inlineChatNumber" class="text-indigo-600"></span></h3>
+              <h3 class="text-lg font-semibold text-gray-800">
+                Full Chat with <span id="inlineChatNumber" class="text-indigo-600"></span>
+              </h3>
               <p class="text-xs text-gray-500">Read-only view • Use Live Chat to reply</p>
             </div>
             <button onclick="closeInlineChat()" class="text-gray-400 hover:text-gray-600">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
           </div>
+          
+          <!-- Messages displayed here -->
           <div id="inlineChatMessages" class="space-y-3 max-h-[600px] overflow-y-auto p-4 bg-gray-50 rounded-lg mb-4">
             <div class="text-center text-gray-400 py-8">Loading messages...</div>
           </div>
+          
+          <!-- Quick action to go to Live Chat -->
           <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
-            <button onclick="closeInlineChat()" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">Close</button>
-            <button onclick="goToLiveChat()" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">💬 Reply in Live Chat →</button>
+            <button onclick="closeInlineChat()" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">
+              Close
+            </button>
+            <button onclick="goToLiveChat()" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
+              💬 Reply in Live Chat →
+            </button>
           </div>
         </div>
+
+        <!-- Messages Container -->
         <div id="allConversationsContainer" class="space-y-4 max-w-full overflow-hidden">
           <div class="text-center text-gray-400 py-12">Loading all conversations...</div>
         </div>
       </section>
 
       <!-- LEADS CRM SECTION -->
-      <section id="section-leads" class="section-content hidden">
-        <div class="mb-8">
-          <h2 class="text-2xl font-bold text-gray-800 mb-2">📊 Lead Manager CRM</h2>
-          <p class="text-gray-600">Track and manage all customer leads captured by your AI agent.</p>
-        </div>
-        <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-800">All Leads</h3>
-            <button onclick="loadLeads()" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
-              <span>🔄</span> Refresh
-            </button>
-          </div>
-          <div id="leadsMobileView" class="space-y-3 sm:hidden">
-            <p class="text-gray-400 text-sm italic text-center py-8">Loading leads...</p>
-          </div>
-          <div class="hidden sm:block overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead class="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th class="px-4 py-3 text-left font-semibold text-gray-700">DATE</th>
-                  <th class="px-4 py-3 text-left font-semibold text-gray-700">PHONE NUMBER</th>
-                  <th class="px-4 py-3 text-left font-semibold text-gray-700">FIRST MESSAGE</th>
-                  <th class="px-4 py-3 text-left font-semibold text-gray-700">STATUS</th>
-                  <th class="px-4 py-3 text-left font-semibold text-gray-700">NOTES</th>
-                  <th class="px-4 py-3 text-left font-semibold text-gray-700">ACTION</th>
-                </tr>
-              </thead>
-              <tbody id="leadsTableBody" class="divide-y divide-gray-100">
-                <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Loading leads...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
+<section id="section-leads" class="section-content hidden">
+  <div class="mb-8">
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">📊 Lead Manager CRM</h2>
+    <p class="text-gray-600">Track and manage all customer leads captured by your AI agent.</p>
+  </div>
+
+  <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-gray-800">All Leads</h3>
+      <button onclick="loadLeads()" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
+        <span>🔄</span> Refresh
+      </button>
+    </div>
+    
+    <!-- Mobile Card View (visible on mobile only) -->
+    <div id="leadsMobileView" class="space-y-3 sm:hidden">
+      <p class="text-gray-400 text-sm italic text-center py-8">Loading leads...</p>
+    </div>
+    
+    <!-- Desktop Table View (visible on desktop only) -->
+    <div class="hidden sm:block overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th class="px-4 py-3 text-left font-semibold text-gray-700">DATE</th>
+            <th class="px-4 py-3 text-left font-semibold text-gray-700">PHONE NUMBER</th>
+            <th class="px-4 py-3 text-left font-semibold text-gray-700">FIRST MESSAGE</th>
+            <th class="px-4 py-3 text-left font-semibold text-gray-700">STATUS</th>
+            <th class="px-4 py-3 text-left font-semibold text-gray-700">NOTES</th>
+            <th class="px-4 py-3 text-left font-semibold text-gray-700">ACTION</th>
+          </tr>
+        </thead>
+        <tbody id="leadsTableBody" class="divide-y divide-gray-100">
+          <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Loading leads...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
 
       <!-- KNOWLEDGE BASE SECTION -->
       <section id="section-knowledge" class="section-content hidden">
@@ -441,6 +538,7 @@
           <h2 class="text-2xl font-bold text-gray-800 mb-2"> Knowledge Base</h2>
           <p class="text-gray-600">Upload PDF or TXT files. The AI will read and use this information to answer questions.</p>
         </div>
+
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
           <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">📄 Upload Document <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Premium</span></label>
           <p class="text-xs text-gray-500 mb-2">Supported formats: PDF, TXT (max 50MB)</p>
@@ -450,6 +548,8 @@
           </div>
           <p id="uploadStatus" class="text-xs mt-2 font-medium"></p>
         </div>
+
+        <!-- Uploaded Documents -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-semibold text-gray-800">📚 Uploaded Documents</h3>
@@ -467,6 +567,7 @@
           <h2 class="text-2xl font-bold text-gray-800 mb-2">⚙️ Business Settings</h2>
           <p class="text-gray-600">Manage your business information, contact details, and preferences.</p>
         </div>
+
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
           <h3 class="text-lg font-semibold text-gray-800 mb-4">📞 Official Contact Information</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -492,31 +593,41 @@
             <textarea id="contactNotes" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm"></textarea>
           </div>
         </div>
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
-          <button type="button" onclick="saveSettings()" class="w-full bg-green-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-green-700 transition shadow-md flex items-center justify-center gap-2">
-            <span>💾</span>
-            <span>Save Business Settings</span>
-          </button>
-          <p id="settingsMsg" class="mt-3 text-center text-sm font-medium min-h-[20px]"></p>
-        </div>
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
-          <div class="flex items-center justify-between mb-4">
-            <div>
-              <h4 class="text-sm font-bold text-gray-800 flex items-center gap-2">👤 Human Takeover Mode</h4>
-              <p id="humanModeStatus" class="text-xs text-gray-600 mt-1">Pause the AI and reply manually from your phone.</p>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" id="humanModeToggle" class="sr-only peer">
-              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
-            </label>
-          </div>
-          <div id="aiStatusIndicator" class="mt-4 p-3 rounded-lg border-2 border-green-200 bg-green-50">
-            <div class="flex items-center gap-2">
-              <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-              <span class="text-sm font-semibold text-green-700">🤖 AI is ACTIVE and replying automatically</span>
-            </div>
-          </div>
-        </div>
+
+  <!-- SAVE BUTTON -->
+  <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+    <button type="button" onclick="saveSettings()" class="w-full bg-green-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-green-700 transition shadow-md flex items-center justify-center gap-2">
+      <span>💾</span>
+      <span>Save Business Settings</span>
+    </button>
+    <p id="settingsMsg" class="mt-3 text-center text-sm font-medium min-h-[20px]"></p>
+  </div>
+
+
+        <!-- Human Takeover Mode -->
+<div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <h4 class="text-sm font-bold text-gray-800 flex items-center gap-2">👤 Human Takeover Mode</h4>
+      <p id="humanModeStatus" class="text-xs text-gray-600 mt-1">Pause the AI and reply manually from your phone.</p>
+    </div>
+    <label class="relative inline-flex items-center cursor-pointer">
+      <input type="checkbox" id="humanModeToggle" class="sr-only peer">
+      <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
+    </label>
+  </div>
+  
+  <!-- Status Indicator -->
+  <div id="aiStatusIndicator" class="mt-4 p-3 rounded-lg border-2 border-green-200 bg-green-50">
+    <div class="flex items-center gap-2">
+      <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+      <span class="text-sm font-semibold text-green-700">🤖 AI is ACTIVE and replying automatically</span>
+    </div>
+  </div>
+</div>
+
+
+        <!-- Danger Zone -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-red-200">
           <h4 class="text-sm font-bold text-red-600 mb-3 flex items-center gap-2">⚠️ Danger Zone</h4>
           <p class="text-sm text-gray-600 mb-4">Once you delete your account, there is no going back. Please be certain.</p>
@@ -526,6 +637,7 @@
           </button>
         </div>
       </section>
+
     </main>
   </div>
 
@@ -534,11 +646,11 @@
     const token = localStorage.getItem('token');
     let messageChartInstance = null;
     let leadChartInstance = null;
-    let currentInlineChatNumber = null;
-    let currentReplyNumber = null;
+    let currentInlineChatNumber = null; //  NEW: Track which chat we're viewing
     
     if (!token) { window.location.href = '/login'; }
 
+    // SIDEBAR TOGGLE FOR MOBILE
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
       const overlay = document.getElementById('sidebarOverlay');
@@ -546,120 +658,107 @@
       overlay.classList.toggle('hidden');
     }
 
-    // ==========================================
-    // 🎨 UNIVERSAL MODAL SYSTEM
-    // ==========================================
-    function showModal(type, title, message, actions = []) {
-      const modal = document.getElementById('customModal');
-      const modalHeader = document.getElementById('modalHeader');
-      const modalIcon = document.getElementById('modalIcon');
-      const modalTitle = document.getElementById('modalTitle');
-      const modalMessage = document.getElementById('modalMessage');
-      const modalActions = document.getElementById('modalActions');
-      
-      modalTitle.textContent = title;
-      modalMessage.innerHTML = message.replace(/\n/g, '<br>');
-      
-      const icons = {
-        success: { bg: 'bg-green-100', icon: '✅', text: 'text-green-700' },
-        error: { bg: 'bg-red-100', icon: '❌', text: 'text-red-700' },
-        warning: { bg: 'bg-yellow-100', icon: '⚠️', text: 'text-yellow-700' },
-        info: { bg: 'bg-blue-100', icon: 'ℹ️', text: 'text-blue-700' },
-        confirm: { bg: 'bg-indigo-100', icon: '❓', text: 'text-indigo-700' }
-      };
-      
-      const style = icons[type] || icons.info;
-      modalHeader.className = `px-6 py-4 border-b border-gray-100 flex items-center gap-3`;
-      modalIcon.className = `w-10 h-10 rounded-full flex items-center justify-center ${style.bg}`;
-      modalIcon.innerHTML = `<span class="text-2xl">${style.icon}</span>`;
-      modalTitle.className = `text-lg font-bold ${style.text}`;
-      
-      modalActions.innerHTML = '';
-      if (actions.length === 0) {
-        modalActions.innerHTML = `<button onclick="closeCustomModal()" class="flex-1 px-4 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition">OK</button>`;
-      } else {
-        actions.forEach(action => {
-          const btn = document.createElement('button');
-          btn.className = `flex-1 px-4 py-2.5 font-semibold rounded-lg transition ${action.primary ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`;
-          btn.textContent = action.text;
-          btn.onclick = () => { closeCustomModal(); if (action.onClick) action.onClick(); };
-          modalActions.appendChild(btn);
-        });
-      }
-      modal.classList.remove('hidden');
-    }
+// LOAD DASHBOARD (Populates business name, WhatsApp, settings, etc.)
+async function loadDashboard() {
+  try {
+    const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+    const data = await res.json();
     
-    function closeCustomModal() { document.getElementById('customModal').classList.add('hidden'); }
-    function showSuccess(title, message) { showModal('success', title, message); }
-    function showError(title, message) { showModal('error', title, message); }
-    function showWarning(title, message) { showModal('warning', title, message); }
-    function showInfo(title, message) { showModal('info', title, message); }
-    function showConfirm(title, message, onConfirm, onCancel) {
-      showModal('confirm', title, message, [
-        { text: 'Cancel', primary: false, onClick: onCancel },
-        { text: 'Confirm', primary: true, onClick: onConfirm }
-      ]);
+    if (data.success && data.tenant) {
+      // Update top header
+      const topNameEl = document.getElementById('topBusinessName');
+      const topWaEl = document.getElementById('topWhatsappNumber');
+      
+      if (topNameEl) topNameEl.textContent = data.tenant.businessName || 'My Business';
+      if (topWaEl) topWaEl.textContent = data.tenant.whatsappNumber ? ` +${data.tenant.whatsappNumber}` : 'Loading...';
+      
+      // Update welcome banner
+      const welcomeNameEl = document.getElementById('businessName');
+      if (welcomeNameEl) welcomeNameEl.textContent = data.tenant.businessName || 'User';
+      
+      // Populate settings form
+      const settingsNameEl = document.getElementById('settingsBusinessName');
+      const settingsWaEl = document.getElementById('settingsWhatsappNumber');
+      
+      if (settingsNameEl) settingsNameEl.value = data.tenant.businessName || '';
+      if (settingsWaEl) settingsWaEl.value = data.tenant.whatsappNumber || '';
+      
+      document.getElementById('llmApiKey').value = data.tenant.llmApiKey || '';
+      document.getElementById('systemPrompt').value = data.tenant.systemPrompt || '';
+      
+      // Safely decode HTML entities for Business Context
+      const contextEl = document.getElementById('businessContext');
+      if (contextEl && data.tenant.businessContext) {
+        const txt = document.createElement("textarea");
+        txt.innerHTML = data.tenant.businessContext;
+        contextEl.value = txt.value;
+      } else if (contextEl) {
+        contextEl.value = '';
+      }
+      
+      document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
+      document.getElementById('llmModel').value = data.tenant.llmModel || '';
+      document.getElementById('aiAgentName').value = data.tenant.aiAgentName || '';
+      
+      // Populate contact info
+      if (data.tenant.contactInfo) {
+        const lines = data.tenant.contactInfo.split('\n');
+        const getValue = (prefix) => lines.find(l => l.startsWith(prefix))?.split(': ')[1]?.trim() || '';
+        document.getElementById('contactPerson').value = getValue('Contact Person');
+        document.getElementById('contactEmail').value = getValue('Email');
+        document.getElementById('contactPhone').value = getValue('Phone/WhatsApp');
+        document.getElementById('contactWebsite').value = getValue('Website');
+        document.getElementById('contactNotes').value = getValue('Notes');
+      }
+      
+      // Update stats
+      document.getElementById('totalMessages').textContent = data.messages?.length || 0;
+      
+      // Load charts
+      loadAnalytics();
     }
+  } catch (err) { 
+    console.error('Failed to load dashboard', err); 
+  }
+}
 
-    async function loadDashboard() {
-      try {
-        const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
-        const data = await res.json();
-        if (data.success && data.tenant) {
-          const topNameEl = document.getElementById('topBusinessName');
-          const topWaEl = document.getElementById('topWhatsappNumber');
-          if (topNameEl) topNameEl.textContent = data.tenant.businessName || 'My Business';
-          if (topWaEl) topWaEl.textContent = data.tenant.whatsappNumber ? ` +${data.tenant.whatsappNumber}` : 'Loading...';
-          const welcomeNameEl = document.getElementById('businessName');
-          if (welcomeNameEl) welcomeNameEl.textContent = data.tenant.businessName || 'User';
-          const settingsNameEl = document.getElementById('settingsBusinessName');
-          const settingsWaEl = document.getElementById('settingsWhatsappNumber');
-          if (settingsNameEl) settingsNameEl.value = data.tenant.businessName || '';
-          if (settingsWaEl) settingsWaEl.value = data.tenant.whatsappNumber || '';
-          document.getElementById('llmApiKey').value = data.tenant.llmApiKey || '';
-          document.getElementById('systemPrompt').value = data.tenant.systemPrompt || '';
-          const contextEl = document.getElementById('businessContext');
-          if (contextEl && data.tenant.businessContext) {
-            const txt = document.createElement("textarea");
-            txt.innerHTML = data.tenant.businessContext;
-            contextEl.value = txt.value;
-          } else if (contextEl) { contextEl.value = ''; }
-          document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
-          document.getElementById('llmModel').value = data.tenant.llmModel || '';
-          document.getElementById('aiAgentName').value = data.tenant.aiAgentName || '';
-          if (data.tenant.contactInfo) {
-            const lines = data.tenant.contactInfo.split('\n');
-            const getValue = (prefix) => lines.find(l => l.startsWith(prefix))?.split(': ')[1]?.trim() || '';
-            document.getElementById('contactPerson').value = getValue('Contact Person');
-            document.getElementById('contactEmail').value = getValue('Email');
-            document.getElementById('contactPhone').value = getValue('Phone/WhatsApp');
-            document.getElementById('contactWebsite').value = getValue('Website');
-            document.getElementById('contactNotes').value = getValue('Notes');
-          }
-          document.getElementById('totalMessages').textContent = data.messages?.length || 0;
-          loadAnalytics();
-        }
-      } catch (err) { console.error('Failed to load dashboard', err); }
-    }
-
+    // 🚨 ULTIMATE BULLETPROOF SHOW SECTION FUNCTION
     function showSection(sectionName) {
       console.log(' Navigating to:', sectionName);
+      
+      // 🚨 MOBILE: Close sidebar immediately
       const sidebar = document.getElementById('sidebar');
       const overlay = document.getElementById('sidebarOverlay');
+      
       if (sidebar && overlay && window.innerWidth < 1024) {
         sidebar.classList.add('-translate-x-full');
         overlay.classList.add('hidden');
         document.body.classList.remove('overflow-hidden');
         console.log('📱 Mobile sidebar closed');
       }
+      
+      // DESKTOP: Force sidebar visible
       if (sidebar && window.innerWidth >= 1024) {
         sidebar.classList.remove('-translate-x-full', 'hidden');
         sidebar.style.cssText = 'transform: translateX(0) !important; display: block !important; visibility: visible !important; opacity: 1 !important;';
       }
-      document.querySelectorAll('.section-content').forEach(section => { section.classList.add('hidden'); });
+      
+      
+      // 1. Hide ALL sections
+      document.querySelectorAll('.section-content').forEach(section => {
+        section.classList.add('hidden');
+      });
+      
+      // 2. Show the target section
       const target = document.getElementById(`section-${sectionName}`);
-      if (target) { target.classList.remove('hidden'); console.log('✅ Section shown:', sectionName); } 
-      else { console.error('❌ Section not found:', sectionName); }
+      if (target) {
+        target.classList.remove('hidden');
+        console.log('✅ Section shown:', sectionName);
+      } else {
+        console.error('❌ Section not found:', sectionName);
+      }
+      
+      // 3. Update sidebar active state
       document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('bg-green-50', 'text-green-700');
         item.classList.add('text-gray-700', 'hover:bg-gray-50');
@@ -670,23 +769,36 @@
         activeNav.classList.add('bg-green-50', 'text-green-700');
         console.log('✅ Nav item highlighted:', sectionName);
       }
+      
+      // 4. FORCE SIDEBAR VISIBLE AGAIN (after section change) - DESKTOP ONLY
       if (sidebar && window.innerWidth >= 1024) {
         sidebar.style.cssText = 'transform: translateX(0) !important; display: block !important; visibility: visible !important; opacity: 1 !important;';
         console.log('✅ Sidebar forced visible AFTER section change');
       }
+      
+      //  5. AUTO-CLOSE SIDEBAR ON MOBILE
       if (sidebar && overlay && window.innerWidth < 1024) {
         sidebar.classList.add('-translate-x-full');
         overlay.classList.add('hidden');
         document.body.classList.remove('overflow-hidden');
         console.log('📱 Mobile sidebar auto-closed');
       }
+      
+      // 6. Load specific data
       if (sectionName === 'dashboard') loadDashboardData();
       if (sectionName === 'agents') loadAgents();
       if (sectionName === 'live-chat') loadRecentChats();
       if (sectionName === 'leads') loadLeads();
       if (sectionName === 'knowledge') loadKnowledgeDocuments();
-      if (sectionName === 'all-conversations') { console.log(' Loading all conversations...'); loadAllConversations(); }
-      if (sectionName === 'settings') { if (typeof loadWhatsAppStatus === 'function') loadWhatsAppStatus(); }
+      if (sectionName === 'all-conversations') {
+        console.log(' Loading all conversations...');
+        loadAllConversations();
+      }
+      if (sectionName === 'settings') {
+        if (typeof loadWhatsAppStatus === 'function') loadWhatsAppStatus();
+      }
+      
+      // 7. Final check after 100ms - DESKTOP ONLY
       setTimeout(() => {
         if (sidebar && window.innerWidth >= 1024) {
           sidebar.style.cssText = 'transform: translateX(0) !important; display: block !important; visibility: visible !important; opacity: 1 !important;';
@@ -695,69 +807,107 @@
       }, 100);
     }
 
-    async function loadDashboardData() {
-      try {
-        const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
-        const data = await res.json();
-        if (data.success && data.tenant) {
-          const topNameEl = document.getElementById('topBusinessName');
-          const topWaEl = document.getElementById('topWhatsappNumber');
-          if (topNameEl) topNameEl.textContent = data.tenant.businessName || 'My Business';
-          if (topWaEl) topWaEl.textContent = data.tenant.whatsappNumber ? ` +${data.tenant.whatsappNumber}` : 'Loading...';
-          const welcomeNameEl = document.getElementById('businessName');
-          if (welcomeNameEl) welcomeNameEl.textContent = data.tenant.businessName || 'User';
-          const settingsNameEl = document.getElementById('settingsBusinessName');
-          const settingsWaEl = document.getElementById('settingsWhatsappNumber');
-          if (settingsNameEl) settingsNameEl.value = data.tenant.businessName || '';
-          if (settingsWaEl) settingsWaEl.value = data.tenant.whatsappNumber || '';
-          document.getElementById('llmApiKey').value = data.tenant.llmApiKey || '';
-          document.getElementById('systemPrompt').value = data.tenant.systemPrompt || '';
-          const contextEl = document.getElementById('businessContext');
-          if (contextEl && data.tenant.businessContext) {
-            const txt = document.createElement("textarea");
-            txt.innerHTML = data.tenant.businessContext;
-            contextEl.value = txt.value;
-          } else if (contextEl) { contextEl.value = ''; }
-          document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
-          document.getElementById('llmModel').value = data.tenant.llmModel || '';
-          document.getElementById('aiAgentName').value = data.tenant.aiAgentName || '';
-          if (data.tenant.contactInfo) {
-            const lines = data.tenant.contactInfo.split('\n');
-            const getValue = (prefix) => lines.find(l => l.startsWith(prefix))?.split(': ')[1]?.trim() || '';
-            document.getElementById('contactPerson').value = getValue('Contact Person');
-            document.getElementById('contactEmail').value = getValue('Email');
-            document.getElementById('contactPhone').value = getValue('Phone/WhatsApp');
-            document.getElementById('contactWebsite').value = getValue('Website');
-            document.getElementById('contactNotes').value = getValue('Notes');
-          }
-          document.getElementById('humanModeToggle').checked = data.tenant.isHumanMode || false;
-          await loadRealStats();
-          loadAnalytics();
-        }
-      } catch (err) { console.error('Failed to load dashboard', err); }
+// LOAD DASHBOARD DATA (With REAL stats)
+async function loadDashboardData() {
+  try {
+    // 1. Fetch tenant data
+    const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+    const data = await res.json();
+    
+    if (data.success && data.tenant) {
+      // Update top header
+      const topNameEl = document.getElementById('topBusinessName');
+      const topWaEl = document.getElementById('topWhatsappNumber');
+      
+      if (topNameEl) topNameEl.textContent = data.tenant.businessName || 'My Business';
+      if (topWaEl) topWaEl.textContent = data.tenant.whatsappNumber ? ` +${data.tenant.whatsappNumber}` : 'Loading...';
+      
+      // Update welcome banner
+      const welcomeNameEl = document.getElementById('businessName');
+      if (welcomeNameEl) welcomeNameEl.textContent = data.tenant.businessName || 'User';
+      
+      // Populate settings form
+      const settingsNameEl = document.getElementById('settingsBusinessName');
+      const settingsWaEl = document.getElementById('settingsWhatsappNumber');
+      
+      if (settingsNameEl) settingsNameEl.value = data.tenant.businessName || '';
+      if (settingsWaEl) settingsWaEl.value = data.tenant.whatsappNumber || '';
+      
+      document.getElementById('llmApiKey').value = data.tenant.llmApiKey || '';
+      document.getElementById('systemPrompt').value = data.tenant.systemPrompt || '';
+      
+      // Safely decode HTML entities for Business Context
+      const contextEl = document.getElementById('businessContext');
+      if (contextEl && data.tenant.businessContext) {
+        const txt = document.createElement("textarea");
+        txt.innerHTML = data.tenant.businessContext;
+        contextEl.value = txt.value;
+      } else if (contextEl) {
+        contextEl.value = '';
+      }
+      
+      document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
+      document.getElementById('llmModel').value = data.tenant.llmModel || '';
+      document.getElementById('aiAgentName').value = data.tenant.aiAgentName || '';
+      
+      // Populate contact info
+      if (data.tenant.contactInfo) {
+        const lines = data.tenant.contactInfo.split('\n');
+        const getValue = (prefix) => lines.find(l => l.startsWith(prefix))?.split(': ')[1]?.trim() || '';
+        document.getElementById('contactPerson').value = getValue('Contact Person');
+        document.getElementById('contactEmail').value = getValue('Email');
+        document.getElementById('contactPhone').value = getValue('Phone/WhatsApp');
+        document.getElementById('contactWebsite').value = getValue('Website');
+        document.getElementById('contactNotes').value = getValue('Notes');
+      }
+      
+      // Update Human Mode Toggle
+      document.getElementById('humanModeToggle').checked = data.tenant.isHumanMode || false;
+      
+      // 2. Fetch REAL stats from multiple endpoints
+      await loadRealStats();
+      
+      // 3. Load charts
+      loadAnalytics();
     }
+  } catch (err) { 
+    console.error('Failed to load dashboard', err); 
+  }
+}
 
-    async function loadRealStats() {
-      try {
-        const messagesRes = await fetch('/api/dashboard/chat-history', { headers: { 'Authorization': `Bearer ${token}` } });
-        const messagesData = await messagesRes.json();
-        const totalMessages = messagesData.success ? messagesData.messages.length : 0;
-        const leadsRes = await fetch('/api/dashboard/leads', { headers: { 'Authorization': `Bearer ${token}` } });
-        const leadsData = await leadsRes.json();
-        const activeLeads = leadsData.success ? leadsData.leads.length : 0;
-        const agentsRes = await fetch('/api/dashboard/agents', { headers: { 'Authorization': `Bearer ${token}` } });
-        const agentsData = await agentsRes.json();
-        const activeAgents = agentsData.success ? agentsData.agents.length : 0;
-        const totalMsgEl = document.getElementById('totalMessages');
-        const activeLeadsEl = document.getElementById('activeLeads');
-        const activeAgentsEl = document.getElementById('activeAgents');
-        if (totalMsgEl) totalMsgEl.textContent = totalMessages;
-        if (activeLeadsEl) activeLeadsEl.textContent = activeLeads;
-        if (activeAgentsEl) activeAgentsEl.textContent = activeAgents;
-        console.log(`✅ Real stats loaded: ${totalMessages} messages, ${activeLeads} leads, ${activeAgents} agents`);
-      } catch (err) { console.error('Failed to load real stats:', err); }
-    }
-
+// LOAD REAL STATS (Messages, Leads, Agents)
+async function loadRealStats() {
+  try {
+    // Fetch messages count
+    const messagesRes = await fetch('/api/dashboard/chat-history', { headers: { 'Authorization': `Bearer ${token}` } });
+    const messagesData = await messagesRes.json();
+    const totalMessages = messagesData.success ? messagesData.messages.length : 0;
+    
+    // Fetch leads count
+    const leadsRes = await fetch('/api/dashboard/leads', { headers: { 'Authorization': `Bearer ${token}` } });
+    const leadsData = await leadsRes.json();
+    const activeLeads = leadsData.success ? leadsData.leads.length : 0;
+    
+    // Fetch agents count
+    const agentsRes = await fetch('/api/dashboard/agents', { headers: { 'Authorization': `Bearer ${token}` } });
+    const agentsData = await agentsRes.json();
+    const activeAgents = agentsData.success ? agentsData.agents.length : 0;
+    
+    // Update the stat cards with REAL numbers
+    const totalMsgEl = document.getElementById('totalMessages');
+    const activeLeadsEl = document.getElementById('activeLeads');
+    const activeAgentsEl = document.getElementById('activeAgents');
+    
+    if (totalMsgEl) totalMsgEl.textContent = totalMessages;
+    if (activeLeadsEl) activeLeadsEl.textContent = activeLeads;
+    if (activeAgentsEl) activeAgentsEl.textContent = activeAgents;
+    
+    console.log(`✅ Real stats loaded: ${totalMessages} messages, ${activeLeads} leads, ${activeAgents} agents`);
+  } catch (err) {
+    console.error('Failed to load real stats:', err);
+  }
+}
+    // LOAD ANALYTICS
     async function loadAnalytics() {
       try {
         const res = await fetch('/api/dashboard/analytics', { headers: { 'Authorization': `Bearer ${token}` } });
@@ -765,19 +915,34 @@
         if (data.success) {
           if (messageChartInstance) messageChartInstance.destroy();
           if (leadChartInstance) leadChartInstance.destroy();
+          
           messageChartInstance = new Chart(document.getElementById('messageChart'), {
             type: 'bar',
             data: {
               labels: data.chartData.labels,
-              datasets: [{ label: 'Messages', data: data.chartData.messageCounts, backgroundColor: 'rgba(59, 130, 246, 0.5)', borderColor: 'rgb(59, 130, 246)', borderWidth: 1 }]
+              datasets: [{
+                label: 'Messages',
+                data: data.chartData.messageCounts,
+                backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                borderColor: 'rgb(59, 130, 246)',
+                borderWidth: 1
+              }]
             },
             options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
           });
+          
           leadChartInstance = new Chart(document.getElementById('leadChart'), {
             type: 'line',
             data: {
               labels: data.chartData.labels,
-              datasets: [{ label: 'New Leads', data: data.chartData.leadCounts, borderColor: 'rgb(16, 185, 129)', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.3 }]
+              datasets: [{
+                label: 'New Leads',
+                data: data.chartData.leadCounts,
+                borderColor: 'rgb(16, 185, 129)',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                fill: true,
+                tension: 0.3
+              }]
             },
             options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
           });
@@ -785,6 +950,7 @@
       } catch (err) { console.error('Failed to load analytics', err); }
     }
 
+    // AUTO-GENERATE CONTEXT
     async function autoGenerateContext() {
       const url = document.getElementById('websiteUrl').value;
       const msg = document.getElementById('settingsMsg');
@@ -798,6 +964,7 @@
       } catch (err) { msg.textContent = '❌ Server error.'; msg.className = 'mt-3 text-center text-sm text-red-600 font-bold'; }
     }
 
+    // LOAD AVAILABLE MODELS
     async function loadAvailableModels() {
       const btn = document.getElementById('loadModelsBtn');
       const provider = document.getElementById('llmProviderSelect').value;
@@ -819,183 +986,313 @@
       finally { btn.textContent = ' Load Models'; btn.disabled = false; }
     }
 
+    // CREATE AGENT
     async function createAgent() {
       const name = document.getElementById('agentName').value.trim();
       const email = document.getElementById('agentEmail').value.trim();
       const whatsapp = document.getElementById('agentWhatsapp').value.trim().replace(/\D/g, '');
       const languagesStr = document.getElementById('agentLanguages').value.trim();
-      if (!name) { showError('Validation Error', 'Please enter agent name'); return; }
-      if (!email || !email.includes('@')) { showError('Invalid Email', 'Please enter a valid agent email for login.'); return; }
-      if (!whatsapp || whatsapp.length < 10) { showError('Invalid Phone', 'Please enter a valid WhatsApp number (min 10 digits).'); return; }
-      if (!languagesStr) { showError('Languages Required', 'Please enter at least one language.'); return; }
+      
+      if (!name) { alert('Please enter agent name'); return; }
+      if (!email || !email.includes('@')) { alert('Please enter a valid agent email for login.'); return; }
+      if (!whatsapp || whatsapp.length < 10) { alert('Please enter a valid WhatsApp number (min 10 digits).'); return; }
+      if (!languagesStr) { alert('Please enter at least one language.'); return; }
+      
       const languages = languagesStr.split(',').map(l => l.trim());
+      
       try {
-        const res = await fetch('/api/dashboard/agents', { method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, whatsappNumber: whatsapp, languages }) });
+        const res = await fetch('/api/dashboard/agents', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, whatsappNumber: whatsapp, languages })
+        });
         const data = await res.json();
         if (res.ok) {
-          showSuccess('Agent Added!', data.message);
+          alert(data.message);
           document.getElementById('agentName').value = '';
           document.getElementById('agentEmail').value = '';
           document.getElementById('agentWhatsapp').value = '';
           document.getElementById('agentLanguages').value = '';
           loadAgents();
-        } else { showError('Error', '❌ ' + data.error); }
-      } catch (error) { showError('Network Error', '❌ Network error'); }
+        } else { alert('❌ ' + data.error); }
+      } catch (error) { alert('❌ Network error'); }
     }
 
-    async function loadAgents() {
-      const list = document.getElementById('agentsList');
-      if (!list) return;
-      try {
-        const res = await fetch('/api/dashboard/agents', { headers: { 'Authorization': `Bearer ${token}` } });
-        const data = await res.json();
-        if (res.ok && data.agents) {
-          if (data.agents.length === 0) { list.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-4">No agents yet. Add your first agent above!</p>'; return; }
-          list.innerHTML = data.agents.map(agent => {
-            const languages = JSON.parse(agent.languages || '[]').join(', ');
-            const whatsappDisplay = agent.whatsappNumber ? `• 📱 +${agent.whatsappNumber}` : '•  No WhatsApp';
-            const safeName = agent.name.replace(/'/g, "\\'");
-            let statusBadge = '';
-            let borderColor = 'border-gray-200';
-            if (!agent.isAvailable) { statusBadge = `<span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full">🔴 Offline</span>`; borderColor = 'border-gray-300'; } 
-            else if (agent.isBusy) { statusBadge = `<span class="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-full">🟡 Busy</span>`; borderColor = 'border-yellow-300'; } 
-            else { statusBadge = `<span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full"> Available</span>`; borderColor = 'border-green-300'; }
-            return `
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 rounded-lg border ${borderColor} shadow-sm gap-3">
-                <div class="flex items-center space-x-3 flex-1 min-w-0">
-                  <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold flex-shrink-0">${agent.name.charAt(0).toUpperCase()}</div>
-                  <div class="min-w-0 flex-1">
-                    <p class="font-semibold text-gray-800 truncate">${agent.name}</p>
-                    <p class="text-xs text-gray-500 truncate">${languages || 'English'} ${agent.email ? '• ' + agent.email : ''} ${whatsappDisplay}</p>
-                  </div>
-                </div>
-                <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
-                  ${statusBadge}
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" ${agent.isAvailable ? 'checked' : ''} onchange="toggleAgentAvailability('${agent.id}', this.checked)" class="sr-only peer">
-                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
-                  </label>
-                  <button onclick="editAgent('${agent.id}')" class="px-3 py-1.5 bg-blue-50 text-blue-600 text-xs rounded-lg hover:bg-blue-100">✏️ Edit</button>
-                  <button onclick="deleteAgent('${agent.id}', '${safeName}')" class="px-3 py-1.5 bg-red-50 text-red-600 text-xs rounded-lg hover:bg-red-100">🗑️</button>
-                </div>
-              </div>`;
-          }).join('');
+async function loadAgents() {
+  const list = document.getElementById('agentsList');
+  if (!list) return;
+  try {
+    const res = await fetch('/api/dashboard/agents', { headers: { 'Authorization': `Bearer ${token}` } });
+    const data = await res.json();
+    if (res.ok && data.agents) {
+      if (data.agents.length === 0) {
+        list.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-4">No agents yet. Add your first agent above!</p>';
+        return;
+      }
+      list.innerHTML = data.agents.map(agent => {
+        const languages = JSON.parse(agent.languages || '[]').join(', ');
+        const whatsappDisplay = agent.whatsappNumber ? `• 📱 +${agent.whatsappNumber}` : '•  No WhatsApp';
+        const safeName = agent.name.replace(/'/g, "\\'");
+        
+        // 🚨 3-STATE STATUS LOGIC
+        let statusBadge = '';
+        let borderColor = 'border-gray-200';
+        
+        if (!agent.isAvailable) {
+          // Offline
+          statusBadge = `<span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full">🔴 Offline</span>`;
+          borderColor = 'border-gray-300';
+        } else if (agent.isBusy) {
+          // Busy
+          statusBadge = `<span class="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-full">🟡 Busy</span>`;
+          borderColor = 'border-yellow-300';
+        } else {
+          // Available
+          statusBadge = `<span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full"> Available</span>`;
+          borderColor = 'border-green-300';
         }
-      } catch (error) { console.error('Failed to load agents:', error); }
-    }
 
+        return `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 rounded-lg border ${borderColor} shadow-sm gap-3">
+            <div class="flex items-center space-x-3 flex-1 min-w-0">
+              <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                ${agent.name.charAt(0).toUpperCase()}
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="font-semibold text-gray-800 truncate">${agent.name}</p>
+                <p class="text-xs text-gray-500 truncate">${languages || 'English'} ${agent.email ? '• ' + agent.email : ''} ${whatsappDisplay}</p>
+              </div>
+            </div>
+            <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+              ${statusBadge}
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" ${agent.isAvailable ? 'checked' : ''} onchange="toggleAgentAvailability('${agent.id}', this.checked)" class="sr-only peer">
+                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
+              </label>
+              <button onclick="editAgent('${agent.id}')" class="px-3 py-1.5 bg-blue-50 text-blue-600 text-xs rounded-lg hover:bg-blue-100">✏️ Edit</button>
+              <button onclick="deleteAgent('${agent.id}', '${safeName}')" class="px-3 py-1.5 bg-red-50 text-red-600 text-xs rounded-lg hover:bg-red-100">️</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  } catch (error) { 
+    console.error('Failed to load agents:', error); 
+  }
+}
+
+    // TOGGLE AGENT AVAILABILITY
     async function toggleAgentAvailability(agentId, isAvailable) {
       try {
-        await fetch(`/api/dashboard/agents/${agentId}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ isAvailable }) });
+        await fetch(`/api/dashboard/agents/${agentId}`, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isAvailable })
+        });
         loadAgents();
       } catch (error) { console.error('Failed to toggle agent:', error); }
     }
 
-    async function editAgent(agentId) {
-      try {
-        const res = await fetch('/api/dashboard/agents', { headers: { 'Authorization': `Bearer ${token}` } });
-        const data = await res.json();
-        if (!res.ok || !data.agents) { showError('Error', '❌ Failed to load agent data.'); return; }
-        const agent = data.agents.find(a => a.id === agentId);
-        if (!agent) { showError('Not Found', '❌ Agent not found.'); return; }
-        let languagesStr = '';
-        try {
-          const languagesArray = JSON.parse(agent.languages || '[]');
-          languagesStr = Array.isArray(languagesArray) ? languagesArray.join(', ') : (agent.languages || '');
-        } catch (e) { languagesStr = agent.languages || ''; }
-        document.getElementById('agentName').value = agent.name || '';
-        document.getElementById('agentEmail').value = agent.email || '';
-        document.getElementById('agentWhatsapp').value = agent.whatsappNumber || '';
-        document.getElementById('agentLanguages').value = languagesStr;
-        const submitBtn = document.getElementById('agentSubmitBtn');
-        if (submitBtn) {
-          submitBtn.innerHTML = '<span>💾</span><span>Update Agent</span>';
-          submitBtn.setAttribute('onclick', `updateAgent('${agentId}')`);
-          submitBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
-          submitBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
-        }
-        document.getElementById('agentName').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        window.editingAgentId = agentId;
-      } catch (error) { console.error('Edit agent error:', error); showError('Network Error', '❌ Network error. Please try again.'); }
+// EDIT AGENT - Fetches fresh data from API
+async function editAgent(agentId) {
+  try {
+    // Fetch fresh agent data from API
+    const res = await fetch('/api/dashboard/agents', { 
+      headers: { 'Authorization': `Bearer ${token}` } 
+    });
+    const data = await res.json();
+    
+    if (!res.ok || !data.agents) {
+      alert('❌ Failed to load agent data.');
+      return;
     }
-
-    async function updateAgent(agentId) {
-      const name = document.getElementById('agentName').value.trim();
-      const email = document.getElementById('agentEmail').value.trim();
-      const whatsapp = document.getElementById('agentWhatsapp').value.trim().replace(/\D/g, '');
-      const languagesStr = document.getElementById('agentLanguages').value.trim();
-      if (!name || !email) { showError('Validation', '❌ Name and Email are required.'); return; }
-      const languages = languagesStr ? languagesStr.split(',').map(l => l.trim()) : ['English'];
-      try {
-        const res = await fetch(`/api/dashboard/agents/${agentId}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, whatsappNumber: whatsapp, languages }) });
-        const data = await res.json();
-        if (res.ok) {
-          showSuccess('Success!', '✅ Agent updated successfully!');
-          document.getElementById('agentName').value = '';
-          document.getElementById('agentEmail').value = '';
-          document.getElementById('agentWhatsapp').value = '';
-          document.getElementById('agentLanguages').value = '';
-          const submitBtn = document.getElementById('agentSubmitBtn');
-          if (submitBtn) {
-            submitBtn.innerHTML = '<span>➕</span><span>Add Agent & Send Invite</span>';
-            submitBtn.setAttribute('onclick', 'createAgent()');
-            submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-            submitBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
-          }
-          window.editingAgentId = null;
-          loadAgents();
-        } else { showError('Update Failed', '❌ ' + (data.error || 'Failed to update agent.')); }
-      } catch (error) { showError('Network Error', '❌ Network error. Please try again.'); }
+    
+    // Find the specific agent
+    const agent = data.agents.find(a => a.id === agentId);
+    if (!agent) {
+      alert('❌ Agent not found.');
+      return;
     }
+    
+    // Parse languages properly
+    let languagesStr = '';
+    try {
+      const languagesArray = JSON.parse(agent.languages || '[]');
+      if (Array.isArray(languagesArray)) {
+        languagesStr = languagesArray.join(', ');
+      } else {
+        languagesStr = agent.languages || '';
+      }
+    } catch (e) {
+      languagesStr = agent.languages || '';
+    }
+    
+    // Populate form
+    document.getElementById('agentName').value = agent.name || '';
+    document.getElementById('agentEmail').value = agent.email || '';
+    document.getElementById('agentWhatsapp').value = agent.whatsappNumber || '';
+    document.getElementById('agentLanguages').value = languagesStr;
+    
+    // Change button to Update mode
+    const submitBtn = document.getElementById('agentSubmitBtn');
+    if (submitBtn) {
+      submitBtn.innerHTML = '<span>💾</span><span>Update Agent</span>';
+      submitBtn.setAttribute('onclick', `updateAgent('${agentId}')`);
+      submitBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+      submitBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+    }
+    
+    // Scroll to form
+    document.getElementById('agentName').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    window.editingAgentId = agentId;
+    
+  } catch (error) {
+    console.error('Edit agent error:', error);
+    alert('❌ Network error. Please try again.');
+  }
+}
 
+// UPDATE AGENT - Saves the edited agent
+async function updateAgent(agentId) {
+  const name = document.getElementById('agentName').value.trim();
+  const email = document.getElementById('agentEmail').value.trim();
+  const whatsapp = document.getElementById('agentWhatsapp').value.trim().replace(/\D/g, '');
+  const languagesStr = document.getElementById('agentLanguages').value.trim();
+  
+  if (!name || !email) { 
+    alert('❌ Name and Email are required.'); 
+    return; 
+  }
+  
+  const languages = languagesStr ? languagesStr.split(',').map(l => l.trim()) : ['English'];
+  
+  try {
+    const res = await fetch(`/api/dashboard/agents/${agentId}`, {
+      method: 'PUT',
+      headers: { 
+        'Authorization': `Bearer ${token}`, 
+        'Content-Type': 'application/json' 
+      },
+      body: JSON.stringify({ 
+        name, 
+        email, 
+        whatsappNumber: whatsapp, 
+        languages 
+      })
+    });
+    
+    const data = await res.json();
+    if (res.ok) {
+      alert('✅ Agent updated successfully!');
+      
+      // Clear form
+      document.getElementById('agentName').value = '';
+      document.getElementById('agentEmail').value = '';
+      document.getElementById('agentWhatsapp').value = '';
+      document.getElementById('agentLanguages').value = '';
+      
+      // Reset button
+      const submitBtn = document.getElementById('agentSubmitBtn');
+      if (submitBtn) {
+        submitBtn.innerHTML = '<span>➕</span><span>Add Agent & Send Invite</span>';
+        submitBtn.setAttribute('onclick', 'createAgent()');
+        submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+        submitBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+      }
+      
+      window.editingAgentId = null;
+      loadAgents();
+    } else { 
+      alert('❌ ' + (data.error || 'Failed to update agent.')); 
+    }
+  } catch (error) { 
+    alert('❌ Network error. Please try again.'); 
+  }
+}
+    // DELETE AGENT
     async function deleteAgent(agentId, agentName) {
-      showConfirm('Delete Agent?', `Are you sure you want to delete agent "${agentName}"?\n\nThis action cannot be undone.`, async () => {
-        try {
-          const res = await fetch(`/api/dashboard/agents/${agentId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-          if (res.ok) { showSuccess('Deleted!', '✅ Agent deleted'); loadAgents(); }
-        } catch (error) { showError('Network Error', '❌ Network error'); }
-      });
+      if (!confirm(`Delete agent "${agentName}"?`)) return;
+      try {
+        const res = await fetch(`/api/dashboard/agents/${agentId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        if (res.ok) { alert('✅ Agent deleted'); loadAgents(); }
+      } catch (error) { alert('❌ Network error'); }
     }
 
+    // 🚨 SHOW FULL CHAT HISTORY
     async function showChatHistory(number) {
       try {
-        const res = await fetch(`/api/dashboard/chat-history/${number}`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const res = await fetch(`/api/dashboard/chat-history/${number}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         const data = await res.json();
+        
         if (res.ok && data.messages) {
           const container = document.getElementById('chatHistoryContainer');
           const messagesDiv = document.getElementById('chatMessages');
+          
           document.getElementById('chatHistoryNumber').textContent = '+' + number;
-          if (data.messages.length === 0) { messagesDiv.innerHTML = '<div class="text-center text-gray-400 py-8">No messages yet</div>'; } 
-          else {
+          
+          if (data.messages.length === 0) {
+            messagesDiv.innerHTML = '<div class="text-center text-gray-400 py-8">No messages yet</div>';
+          } else {
             messagesDiv.innerHTML = data.messages.map(msg => {
               const isOutbound = msg.direction === 'outbound';
               const alignClass = isOutbound ? 'justify-end' : 'justify-start';
-              const bubbleClass = isOutbound ? 'bg-green-500 text-white' : 'bg-white text-gray-800 border border-gray-200';  
+              // Green for Admin/AI, White for Customer
+              const bubbleClass = isOutbound 
+                ? 'bg-green-500 text-white' 
+                : 'bg-white text-gray-800 border border-gray-200';  
               const label = isOutbound ? (msg.isAiReply ? ' AI' : '👤 Admin (You)') : '👤 Customer';
-              return `<div class="flex ${alignClass}"><div class="max-w-[75%] px-4 py-3 rounded-lg ${bubbleClass} shadow-sm"><p class="text-xs font-semibold mb-1 opacity-75">${label}</p><p class="text-sm whitespace-pre-wrap">${msg.content}</p><p class="text-xs mt-2 opacity-75 text-right">${new Date(msg.createdAt).toLocaleString()}</p></div></div>`;
+              
+              return `
+                <div class="flex ${alignClass}">
+                  <div class="max-w-[75%] px-4 py-3 rounded-lg ${bubbleClass} shadow-sm">
+                    <p class="text-xs font-semibold mb-1 opacity-75">${label}</p>
+                    <p class="text-sm whitespace-pre-wrap">${msg.content}</p>
+                    <p class="text-xs mt-2 opacity-75 text-right">${new Date(msg.createdAt).toLocaleString()}</p>
+                  </div>
+                </div>
+              `;
             }).join('');
           }
+          
           container.classList.remove('hidden');
           messagesDiv.scrollTop = messagesDiv.scrollHeight;
           openReplyBox(number);
         }
-      } catch (error) { console.error('Load chat history error:', error); }
+      } catch (error) {
+        console.error('Load chat history error:', error);
+      }
     }
 
-    function closeChatHistory() { document.getElementById('chatHistoryContainer').classList.add('hidden'); }
+    function closeChatHistory() {
+      document.getElementById('chatHistoryContainer').classList.add('hidden');
+    }
 
+    // UPDATE loadRecentChats to use showChatHistory
     async function loadRecentChats() {
       const chatContainer = document.getElementById('recentChats');
       if (!chatContainer) return;
+      
       try {
         const res = await fetch('/api/dashboard/chats', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
+        
         if (res.ok && data.chats && data.chats.length > 0) {
           chatContainer.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6';
           chatContainer.innerHTML = data.chats.map(chat => {
             const truncatedMessage = chat.lastMessage.length > 60 ? chat.lastMessage.substring(0, 60) + '...' : chat.lastMessage;
             const date = new Date(chat.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-            return `<div onclick="showChatHistory('${chat.phoneNumber}')" class="p-4 border border-gray-200 rounded-xl hover:border-indigo-300 hover:shadow-md cursor-pointer transition bg-white hover:bg-gray-50"><div class="flex items-center justify-between mb-2"><span class="font-bold text-gray-800 text-sm">+${chat.phoneNumber}</span><span class="text-xs text-gray-500">${date}</span></div><p class="text-sm text-gray-600 truncate">${truncatedMessage}</p><div class="mt-3 pt-3 border-t border-gray-100 text-xs text-indigo-600 font-medium text-right">View Full Chat →</div></div>`;
+            return `
+              <div onclick="showChatHistory('${chat.phoneNumber}')" class="p-4 border border-gray-200 rounded-xl hover:border-indigo-300 hover:shadow-md cursor-pointer transition bg-white hover:bg-gray-50">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="font-bold text-gray-800 text-sm">+${chat.phoneNumber}</span>
+                  <span class="text-xs text-gray-500">${date}</span>
+                </div>
+                <p class="text-sm text-gray-600 truncate">${truncatedMessage}</p>
+                <div class="mt-3 pt-3 border-t border-gray-100 text-xs text-indigo-600 font-medium text-right">View Full Chat →</div>
+              </div>
+            `;
           }).join('');
         } else { 
           chatContainer.className = 'mb-6';
@@ -1027,143 +1324,263 @@
       }
     }
 
-    async function sendManualReply() {
-      if (!currentReplyNumber) { showError('Error', '❌ No recipient selected.'); return; }
-      const content = document.getElementById('manualReplyText').value.trim();
-      if (!content) { showError('Empty Message', 'Please type a message first.'); return; }
-      try {
-        const res = await fetch('/api/dashboard/send-message', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ toNumber: currentReplyNumber, content: content }) });
-        const data = await res.json();
-        if (res.ok) {
-          showSuccess('Sent!', '✅ Message sent successfully!');
-          document.getElementById('manualReplyText').value = '';
-          closeReplyBox();
-          loadRecentChats();
-        } else { showError('Send Failed', '❌ Failed to send: ' + (data.error || 'Unknown error')); }
-      } catch (error) {
-        console.error('Send manual reply error:', error);
-        showError('Network Error', '❌ Network error. Please try again.');
-      }
-    }
+async function sendManualReply() {
+  if (!currentReplyNumber) {
+    alert('❌ No recipient selected.');
+    return;
+  }
+  
+  const content = document.getElementById('manualReplyText').value.trim();
+  if (!content) { 
+    alert('Please type a message first.'); 
+    return; 
+  }
+  
+  try {
+    const res = await fetch('/api/dashboard/send-message', {  // ✅ CORRECT ENDPOINT
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      },
+      body: JSON.stringify({ 
+        toNumber: currentReplyNumber,  // ✅ Backend expects 'toNumber'
+        content: content 
+      })
+    });
 
+    const data = await res.json();
+    
+    if (res.ok) {
+      alert('✅ Message sent successfully!');
+      document.getElementById('manualReplyText').value = '';
+      closeReplyBox();
+      loadRecentChats();
+    } else {
+      alert('❌ Failed to send: ' + (data.error || 'Unknown error'));
+    }
+  } catch (error) {
+    console.error('Send manual reply error:', error);
+    alert('❌ Network error. Please try again.');
+  }
+}
+
+    //  SAFE LOAD ALL CONVERSATIONS
     async function loadAllConversations() {
       const container = document.getElementById('allConversationsContainer');
       if (!container) return;
+      
+      // Show loading state
       container.innerHTML = '<div class="text-center text-gray-400 py-12">Loading conversations...</div>';
+      
       try {
         const phoneFilter = document.getElementById('filterPhone')?.value.trim() || '';
         const dateFilter = document.getElementById('filterDate')?.value || '7';
+        
         console.log('🔍 Fetching with filters:', { phone: phoneFilter, days: dateFilter });
+        
         const url = `/api/dashboard/all-conversations?phone=${encodeURIComponent(phoneFilter)}&days=${dateFilter}`;
-        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+        const res = await fetch(url, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
         if (!res.ok) throw new Error('Failed to fetch data');
         const data = await res.json();
+        
         console.log('📊 Messages received:', data.messages?.length || 0);
+        
         if (!data.messages || data.messages.length === 0) {
           container.innerHTML = '<div class="text-center text-gray-400 py-12">No conversations found for this filter.</div>';
           return;
         }
+        
+        // Group by phone number
         const grouped = {};
         data.messages.forEach(msg => {
           const num = msg.direction === 'inbound' ? msg.fromNumber : msg.toNumber;
           if (!grouped[num]) grouped[num] = [];
           grouped[num].push(msg);
         });
+        
+        // Render grouped conversations (with width constraints)
         container.innerHTML = Object.entries(grouped).map(([num, msgs]) => {
           const last = msgs[msgs.length - 1];
-          return `<div class="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition w-full max-w-full">
-            <div class="flex items-center justify-between mb-3 pb-3 border-b border-gray-100">
-              <div class="flex items-center gap-3 min-w-0">
-                <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold flex-shrink-0">${num.slice(-2)}</div>
-                <div class="min-w-0 flex-1">
-                  <h3 class="font-semibold text-gray-800 truncate">+${num}</h3>
-                  <p class="text-xs text-gray-500">${msgs.length} messages • Last: ${new Date(last.createdAt).toLocaleString()}</p>
+          return `
+            <div class="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition w-full max-w-full">
+              <div class="flex items-center justify-between mb-3 pb-3 border-b border-gray-100">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                    ${num.slice(-2)}
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <h3 class="font-semibold text-gray-800 truncate">+${num}</h3>
+                    <p class="text-xs text-gray-500">${msgs.length} messages • Last: ${new Date(last.createdAt).toLocaleString()}</p>
+                  </div>
                 </div>
+<button onclick="showInlineChat('${num}')" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-100 transition flex-shrink-0">
+  View Chat →
+</button>
               </div>
-              <button onclick="showInlineChat('${num}')" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-100 transition flex-shrink-0">View Chat →</button>
+              <div class="space-y-2 max-h-48 overflow-y-auto">
+                ${msgs.slice(-5).map(msg => {
+                  const isOut = msg.direction === 'outbound';
+                  return `
+                    <div class="${isOut ? 'text-right' : 'text-left'}">
+                      <div class="inline-block max-w-[70%] px-3 py-2 rounded-lg ${isOut ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-800'} text-sm">
+                        <p class="text-xs font-semibold mb-1 opacity-75">${isOut ? (msg.isAiReply ? ' AI' : '👤 You') : '👤 Customer'}</p>
+                        <p class="truncate">${msg.content}</p>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
             </div>
-            <div class="space-y-2 max-h-48 overflow-y-auto">
-              ${msgs.slice(-5).map(msg => {
-                const isOut = msg.direction === 'outbound';
-                return `<div class="${isOut ? 'text-right' : 'text-left'}"><div class="inline-block max-w-[70%] px-3 py-2 rounded-lg ${isOut ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-800'} text-sm"><p class="text-xs font-semibold mb-1 opacity-75">${isOut ? (msg.isAiReply ? ' AI' : '👤 You') : '👤 Customer'}</p><p class="truncate">${msg.content}</p></div></div>`;
-              }).join('')}
-            </div>
-          </div>`;
+          `;
         }).join('');
+        
       } catch (err) {
         console.error('❌ Error loading conversations:', err);
         container.innerHTML = '<div class="text-center text-red-500 py-12">Error loading conversations. Please refresh the page.</div>';
       }
     }
 
-    async function loadLeads() {
-      const tableBody = document.getElementById('leadsTableBody');
-      const mobileView = document.getElementById('leadsMobileView');
-      if (tableBody) { tableBody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Loading leads...</td></tr>'; }
-      if (mobileView) { mobileView.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-8">Loading leads...</p>'; }
-      try {
-        const res = await fetch('/api/dashboard/leads', { headers: { 'Authorization': `Bearer ${token}` } });
-        const data = await res.json();
-        if (data.success && data.leads.length > 0) {
-          const statusColors = { 'NEW': 'bg-yellow-100 text-yellow-800 border-yellow-200', 'CONTACTED': 'bg-blue-100 text-blue-800 border-blue-200', 'CONVERTED': 'bg-green-100 text-green-800 border-green-200', 'LOST': 'bg-red-100 text-red-800 border-red-200' };
-          if (mobileView) {
-            mobileView.innerHTML = data.leads.map(lead => {
-              const date = new Date(lead.createdAt).toLocaleDateString();
-              const shortMessage = lead.firstMessage.length > 80 ? lead.firstMessage.substring(0, 80) + '...' : lead.firstMessage;
-              return `<div class="bg-white border-2 border-gray-200 rounded-xl p-4 shadow-sm space-y-3">
-                <div class="flex justify-between items-start"><div class="font-bold text-gray-900 text-base">${lead.phoneNumber}</div><span class="text-xs font-bold px-3 py-1 rounded-full border ${statusColors[lead.status]}">${lead.status}</span></div>
-                <div class="text-xs text-gray-500 flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>${date}</div>
-                <div class="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100">${shortMessage}</div>
-                <div><input type="text" id="note-mobile-${lead.id}" value="${lead.notes || ''}" placeholder="Add note..." class="w-full px-3 py-2.5 text-sm border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"></div>
-                <div class="flex flex-col gap-2 pt-2 border-t border-gray-100">
-                  <button onclick="updateLead('${lead.id}', 'notes', document.getElementById('note-mobile-${lead.id}').value)" class="w-full bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 font-semibold text-sm transition shadow-sm">💾 Save Note</button>
-                  <select onchange="updateLead('${lead.id}', 'status', this.value)" class="w-full text-sm font-bold px-3 py-2.5 rounded-lg border-2 ${statusColors[lead.status]} cursor-pointer">
-                    <option value="NEW" ${lead.status === 'NEW' ? 'selected' : ''}>🟡 New</option>
-                    <option value="CONTACTED" ${lead.status === 'CONTACTED' ? 'selected' : ''}>🔵 Contacted</option>
-                    <option value="CONVERTED" ${lead.status === 'CONVERTED' ? 'selected' : ''}> Converted</option>
-                    <option value="LOST" ${lead.status === 'LOST' ? 'selected' : ''}>🔴 Lost</option>
-                  </select>
-                </div>
-              </div>`;
-            }).join('');
-          }
-          if (tableBody) {
-            tableBody.innerHTML = data.leads.map(lead => {
-              const date = new Date(lead.createdAt).toLocaleDateString();
-              return `<tr class="bg-white border-b hover:bg-gray-50 transition">
-                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${date}</td>
-                <td class="px-4 py-3 font-semibold text-gray-900">${lead.phoneNumber}</td>
-                <td class="px-4 py-3 text-sm text-gray-700 max-w-xs truncate" title="${lead.firstMessage}">${lead.firstMessage}</td>
-                <td class="px-4 py-3"><select onchange="updateLead('${lead.id}', 'status', this.value)" class="text-xs font-bold px-3 py-1.5 rounded-full border-0 ${statusColors[lead.status]} cursor-pointer"><option value="NEW" ${lead.status === 'NEW' ? 'selected' : ''}>🟡 New</option><option value="CONTACTED" ${lead.status === 'CONTACTED' ? 'selected' : ''}> Contacted</option><option value="CONVERTED" ${lead.status === 'CONVERTED' ? 'selected' : ''}>🟢 Converted</option><option value="LOST" ${lead.status === 'LOST' ? 'selected' : ''}>🔴 Lost</option></select></td>
-                <td class="px-4 py-3"><input type="text" id="note-${lead.id}" value="${lead.notes || ''}" placeholder="Add note..." class="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none"></td>
-                <td class="px-4 py-3"><button onclick="updateLead('${lead.id}', 'notes', document.getElementById('note-${lead.id}').value)" class="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 font-medium transition">Save</button></td>
-              </tr>`;
-            }).join('');
-          }
-        } else { 
-          const emptyMsg = '<p class="text-gray-400 text-sm italic text-center py-8">No leads captured yet. When a new customer messages, they will appear here!</p>';
-          if (mobileView) mobileView.innerHTML = emptyMsg;
-          if (tableBody) tableBody.innerHTML = `<tr><td colspan="6" class="px-4 py-12 text-center text-gray-400">${emptyMsg}</td></tr>`;
-        }
-      } catch (err) { 
-        console.error('Failed to load leads', err); 
-        const errorMsg = '<p class="text-red-500 text-sm italic text-center py-8">❌ Failed to load leads.</p>';
-        if (mobileView) mobileView.innerHTML = errorMsg;
-        if (tableBody) tableBody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-red-500">${errorMsg}</td></tr>`;
+async function loadLeads() {
+  const tableBody = document.getElementById('leadsTableBody');
+  const mobileView = document.getElementById('leadsMobileView');
+  
+  if (tableBody) {
+    tableBody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Loading leads...</td></tr>';
+  }
+  if (mobileView) {
+    mobileView.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-8">Loading leads...</p>';
+  }
+  
+  try {
+    const res = await fetch('/api/dashboard/leads', { headers: { 'Authorization': `Bearer ${token}` } });
+    const data = await res.json();
+    
+    if (data.success && data.leads.length > 0) {
+      const statusColors = { 
+        'NEW': 'bg-yellow-100 text-yellow-800 border-yellow-200', 
+        'CONTACTED': 'bg-blue-100 text-blue-800 border-blue-200', 
+        'CONVERTED': 'bg-green-100 text-green-800 border-green-200', 
+        'LOST': 'bg-red-100 text-red-800 border-red-200' 
+      };
+      
+      // Mobile Cards
+      if (mobileView) {
+        mobileView.innerHTML = data.leads.map(lead => {
+          const date = new Date(lead.createdAt).toLocaleDateString();
+          const shortMessage = lead.firstMessage.length > 80 ? 
+            lead.firstMessage.substring(0, 80) + '...' : lead.firstMessage;
+          
+          return `
+            <div class="bg-white border-2 border-gray-200 rounded-xl p-4 shadow-sm space-y-3">
+              <div class="flex justify-between items-start">
+                <div class="font-bold text-gray-900 text-base">${lead.phoneNumber}</div>
+                <span class="text-xs font-bold px-3 py-1 rounded-full border ${statusColors[lead.status]}">
+                  ${lead.status}
+                </span>
+              </div>
+              <div class="text-xs text-gray-500 flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                ${date}
+              </div>
+              <div class="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                ${shortMessage}
+              </div>
+              <div>
+                <input type="text" id="note-mobile-${lead.id}" value="${lead.notes || ''}" 
+                       placeholder="Add note..." 
+                       class="w-full px-3 py-2.5 text-sm border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+              </div>
+              <div class="flex flex-col gap-2 pt-2 border-t border-gray-100">
+                <button onclick="updateLead('${lead.id}', 'notes', document.getElementById('note-mobile-${lead.id}').value)" 
+                        class="w-full bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 font-semibold text-sm transition shadow-sm">
+                  💾 Save Note
+                </button>
+                <select onchange="updateLead('${lead.id}', 'status', this.value)" 
+                        class="w-full text-sm font-bold px-3 py-2.5 rounded-lg border-2 ${statusColors[lead.status]} cursor-pointer">
+                  <option value="NEW" ${lead.status === 'NEW' ? 'selected' : ''}>🟡 New</option>
+                  <option value="CONTACTED" ${lead.status === 'CONTACTED' ? 'selected' : ''}>🔵 Contacted</option>
+                  <option value="CONVERTED" ${lead.status === 'CONVERTED' ? 'selected' : ''}> Converted</option>
+                  <option value="LOST" ${lead.status === 'LOST' ? 'selected' : ''}>🔴 Lost</option>
+                </select>
+              </div>
+            </div>
+          `;
+        }).join('');
       }
+      
+      // Desktop Table
+      if (tableBody) {
+        tableBody.innerHTML = data.leads.map(lead => {
+          const date = new Date(lead.createdAt).toLocaleDateString();
+          
+          return `<tr class="bg-white border-b hover:bg-gray-50 transition">
+            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${date}</td>
+            <td class="px-4 py-3 font-semibold text-gray-900">${lead.phoneNumber}</td>
+            <td class="px-4 py-3 text-sm text-gray-700 max-w-xs truncate" title="${lead.firstMessage}">${lead.firstMessage}</td>
+            <td class="px-4 py-3">
+              <select onchange="updateLead('${lead.id}', 'status', this.value)" 
+                      class="text-xs font-bold px-3 py-1.5 rounded-full border-0 ${statusColors[lead.status]} cursor-pointer">
+                <option value="NEW" ${lead.status === 'NEW' ? 'selected' : ''}>🟡 New</option>
+                <option value="CONTACTED" ${lead.status === 'CONTACTED' ? 'selected' : ''}> Contacted</option>
+                <option value="CONVERTED" ${lead.status === 'CONVERTED' ? 'selected' : ''}>🟢 Converted</option>
+                <option value="LOST" ${lead.status === 'LOST' ? 'selected' : ''}>🔴 Lost</option>
+              </select>
+            </td>
+            <td class="px-4 py-3">
+              <input type="text" id="note-${lead.id}" value="${lead.notes || ''}" 
+                     placeholder="Add note..." 
+                     class="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none">
+            </td>
+            <td class="px-4 py-3">
+              <button onclick="updateLead('${lead.id}', 'notes', document.getElementById('note-${lead.id}').value)" 
+                      class="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 font-medium transition">
+                Save
+              </button>
+            </td>
+          </tr>`;
+        }).join('');
+      }
+    } else { 
+      const emptyMsg = '<p class="text-gray-400 text-sm italic text-center py-8">No leads captured yet. When a new customer messages, they will appear here!</p>';
+      if (mobileView) mobileView.innerHTML = emptyMsg;
+      if (tableBody) tableBody.innerHTML = `<tr><td colspan="6" class="px-4 py-12 text-center text-gray-400">${emptyMsg}</td></tr>`;
     }
+  } catch (err) { 
+    console.error('Failed to load leads', err); 
+    const errorMsg = '<p class="text-red-500 text-sm italic text-center py-8">❌ Failed to load leads.</p>';
+    if (mobileView) mobileView.innerHTML = errorMsg;
+    if (tableBody) tableBody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-red-500">${errorMsg}</td></tr>`;
+  }
+}
 
+    // UPDATE LEAD
     async function updateLead(leadId, field, value) {
       try {
-        const res = await fetch(`/api/dashboard/leads/${leadId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ [field]: value }) });
+        const res = await fetch(`/api/dashboard/leads/${leadId}`, { 
+          method: 'PATCH', 
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, 
+          body: JSON.stringify({ [field]: value }) 
+        });
         const data = await res.json();
-        if (!data.success) { showError('Error', 'Failed to save changes: ' + (data.error || 'Unknown error')); }
+        if (data.success) {
+          console.log('Lead updated successfully');
+          // Optional: Show a quick success toast or message
+        } else {
+          alert('Failed to save changes: ' + (data.error || 'Unknown error'));
+        }
       } catch (err) { 
         console.error('Failed to update lead', err); 
-        showError('Network Error', '❌ Network error. Failed to save changes.'); 
+        alert('❌ Network error. Failed to save changes.'); 
       }
     }
 
+    // UPLOAD KNOWLEDGE
     async function uploadKnowledge() {
       const fileInput = document.getElementById('knowledgeFile');
       const statusText = document.getElementById('uploadStatus');
@@ -1188,27 +1605,31 @@
       finally { uploadBtn.disabled = false; uploadBtn.innerHTML = '<span>📤</span> Upload & Train'; }
     }
 
+    // LOAD KNOWLEDGE DOCUMENTS
     async function loadKnowledgeDocuments() {
       const listContainer = document.getElementById('documentList');
       try {
         const res = await fetch('/api/dashboard/knowledge', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
         if (res.ok && data.documents) {
-          if (data.documents.length === 0) { listContainer.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-8">No documents uploaded yet.</p>'; } 
-          else {
+          if (data.documents.length === 0) {
+            listContainer.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-8">No documents uploaded yet.</p>';
+          } else {
             listContainer.innerHTML = data.documents.map(doc => {
               const sizeMB = (doc.fileSize / (1024 * 1024)).toFixed(2);
               const date = new Date(doc.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-              return `<div class="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-gray-100 transition">
-                <div class="flex items-center space-x-3 overflow-hidden">
-                  <div class="text-2xl">${doc.fileName.endsWith('.pdf') ? '📄' : '📝'}</div>
-                  <div class="truncate">
-                    <p class="font-medium text-gray-800 truncate">${doc.fileName}</p>
-                    <p class="text-xs text-gray-500">${sizeMB} MB • Uploaded on ${date}</p>
+              return `
+                <div class="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-gray-100 transition">
+                  <div class="flex items-center space-x-3 overflow-hidden">
+                    <div class="text-2xl">${doc.fileName.endsWith('.pdf') ? '📄' : '📝'}</div>
+                    <div class="truncate">
+                      <p class="font-medium text-gray-800 truncate">${doc.fileName}</p>
+                      <p class="text-xs text-gray-500">${sizeMB} MB • Uploaded on ${date}</p>
+                    </div>
                   </div>
+                  <button onclick="deleteKnowledgeDocument('${doc.id}', '${doc.fileName.replace(/'/g, "\\'")}')" class="ml-4 px-3 py-1.5 bg-red-50 text-red-600 text-sm font-medium rounded-md hover:bg-red-100 transition flex-shrink-0">🗑️ Delete</button>
                 </div>
-                <button onclick="deleteKnowledgeDocument('${doc.id}', '${doc.fileName.replace(/'/g, "\\'")}')" class="ml-4 px-3 py-1.5 bg-red-50 text-red-600 text-sm font-medium rounded-md hover:bg-red-100 transition flex-shrink-0">🗑️ Delete</button>
-              </div>`;
+              `;
             }).join('');
           }
         }
@@ -1216,160 +1637,287 @@
     }
 
     async function deleteKnowledgeDocument(docId, fileName) {
-      showConfirm('Delete Document?', `Are you sure you want to delete "${fileName}"?\n\nThis will remove it from the AI's knowledge base.`, async () => {
-        try {
-          const res = await fetch(`/api/dashboard/knowledge/${docId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-          const data = await res.json();
-          if (res.ok) { showSuccess('Deleted!', '✅ Document deleted successfully!'); loadKnowledgeDocuments(); } 
-          else { showError('Error', '❌ ' + (data.error || 'Failed to delete.')); }
-        } catch (error) { showError('Network Error', '❌ Network error while deleting.'); }
-      });
+      if (!confirm(`Are you sure you want to delete "${fileName}"?`)) return;
+      try {
+        const res = await fetch(`/api/dashboard/knowledge/${docId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (res.ok) { alert('✅ Document deleted successfully!'); loadKnowledgeDocuments(); } 
+        else { alert('❌ ' + (data.error || 'Failed to delete.')); }
+      } catch (error) { alert('❌ Network error while deleting.'); }
     }
 
-    function logout() { localStorage.clear(); window.location.href = '/login'; }
+    // LOGOUT
+    function logout() { 
+      localStorage.clear(); 
+      window.location.href = '/login'; 
+    }
 
+    // OPEN DELETE MODAL
     function openDeleteModal() {
       document.getElementById('deleteAccountModal').classList.remove('hidden');
       document.getElementById('deleteModalError').classList.add('hidden');
     }
 
-    function closeDeleteModal() { document.getElementById('deleteAccountModal').classList.add('hidden'); }
+    // CLOSE DELETE MODAL
+    function closeDeleteModal() {
+      document.getElementById('deleteAccountModal').classList.add('hidden');
+    }
 
+    // CONFIRM DELETE ACCOUNT (With WhatsApp Guard)
     async function confirmDeleteAccount() {
       const btn = document.getElementById('confirmDeleteBtn');
       const originalBtnText = btn.innerHTML;
+      
       try {
+        // 1. CHECK: Is WhatsApp still connected?
         const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
+        
         if (data.success && data.tenant && data.tenant.isActive) {
+          // Show error in modal and stop deletion
           document.getElementById('deleteModalError').classList.remove('hidden');
           return; 
         }
+
+        // 2. Proceed with deletion
         btn.disabled = true;
         btn.innerHTML = '<span class="animate-spin mr-2">⏳</span> Deleting...';
-        const deleteRes = await fetch('/api/dashboard/account', { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+
+        const deleteRes = await fetch('/api/dashboard/account', { 
+          method: 'DELETE', 
+          headers: { 'Authorization': `Bearer ${token}` } 
+        });
         const deleteData = await deleteRes.json();
+
         if (deleteData.success) {
           localStorage.clear();
           window.location.href = '/login';
         } else {
-          showError('Delete Failed', '❌ ' + (deleteData.error || 'Failed to delete account.'));
+          alert('❌ ' + (deleteData.error || 'Failed to delete account.'));
           btn.disabled = false;
           btn.innerHTML = originalBtnText;
         }
       } catch (err) {
         console.error('Delete error:', err);
-        showError('Server Error', '❌ Server error while deleting account.');
+        alert('❌ Server error while deleting account.');
         btn.disabled = false;
         btn.innerHTML = originalBtnText;
       }
     }
 
-    async function loadConversations() {
-      const list = document.getElementById('conversationsList');
-      if (!list) return;
-      try {
-        const res = await fetch('/api/dashboard/conversations', { headers: { 'Authorization': `Bearer ${token}` } });
-        const data = await res.json();
-        if (res.ok && data.conversations) {
-          if (data.conversations.length === 0) { list.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-4">No conversations yet. They appear when users message your bot.</p>'; return; }
-          list.innerHTML = data.conversations.map(conv => {
-            const isAI = conv.mode === 'AI';
-            const agentName = conv.assignedAgent?.name || 'Unassigned';
-            const time = new Date(conv.lastMessageAt).toLocaleString();
-            return `<div class="flex flex-col sm:flex-row sm:items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200 gap-3">
-              <div class="flex items-center space-x-3 flex-1 min-w-0">
-                <div class="w-10 h-10 ${isAI ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-600'} rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">${isAI ? '🤖' : '👨‍💼'}</div>
-                <div class="min-w-0 flex-1">
-                  <p class="font-semibold text-gray-800 text-sm truncate">+${conv.userNumber}</p>
-                  <p class="text-xs text-gray-500">${isAI ? '🤖 AI Mode' : `👨‍💻 Human: ${agentName}`} <span class="hidden sm:inline">•</span><span class="block sm:inline sm:ml-1">Last: ${time}</span></p>
-                </div>
-              </div>
-              <div class="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" ${isAI ? 'checked' : ''} onchange="toggleConversationMode('${conv.id}', this.checked)" class="sr-only peer">
-                  <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-500"></div>
-                  <span class="ml-2 text-xs font-medium ${isAI ? 'text-purple-600' : 'text-orange-600'}">${isAI ? '🤖 AI' : '👨‍💻 Human'}</span>
-                </label>
-                <button onclick="deleteConversation('${conv.id}', '+${conv.userNumber}')" class="px-2 py-1.5 bg-red-50 text-red-600 text-xs rounded-lg hover:bg-red-100 transition">🗑️</button>
-              </div>
-            </div>`;
-          }).join('');
-        }
-      } catch (error) { console.error('Failed to load conversations:', error); }
-    }
 
+async function loadConversations() {
+  const list = document.getElementById('conversationsList');
+  if (!list) return;
+  try {
+    const res = await fetch('/api/dashboard/conversations', { headers: { 'Authorization': `Bearer ${token}` } });
+    const data = await res.json();
+    
+    if (res.ok && data.conversations) {
+      if (data.conversations.length === 0) {
+        list.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-4">No conversations yet. They appear when users message your bot.</p>';
+        return;
+      }
+      list.innerHTML = data.conversations.map(conv => {
+        const isAI = conv.mode === 'AI';
+        const agentName = conv.assignedAgent?.name || 'Unassigned';
+        const time = new Date(conv.lastMessageAt).toLocaleString();
+        
+        return `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200 gap-3">
+            <div class="flex items-center space-x-3 flex-1 min-w-0">
+              <div class="w-10 h-10 ${isAI ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-600'} rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
+                ${isAI ? '🤖' : '👨‍💼'}
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="font-semibold text-gray-800 text-sm truncate">+${conv.userNumber}</p>
+                <p class="text-xs text-gray-500">
+                  ${isAI ? '🤖 AI Mode' : `👨‍💻 Human: ${agentName}`} 
+                  <span class="hidden sm:inline">•</span>
+                  <span class="block sm:inline sm:ml-1">Last: ${time}</span>
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" ${isAI ? 'checked' : ''} 
+                       onchange="toggleConversationMode('${conv.id}', this.checked)" class="sr-only peer">
+                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-500"></div>
+                <span class="ml-2 text-xs font-medium ${isAI ? 'text-purple-600' : 'text-orange-600'}">
+                  ${isAI ? '🤖 AI' : '👨‍💻 Human'}
+                </span>
+              </label>
+              <button onclick="deleteConversation('${conv.id}', '+${conv.userNumber}')" class="px-2 py-1.5 bg-red-50 text-red-600 text-xs rounded-lg hover:bg-red-100 transition">🗑️</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  } catch (error) { console.error('Failed to load conversations:', error); }
+}
+
+
+    // ==========================================
+    // 🚨 WHATSAPP CONNECTION MANAGEMENT
+    // ==========================================
+    
     async function loadWhatsAppStatus() {
       try {
         const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
+        
         if (data.success && data.tenant) {
           const statusBadge = document.getElementById('connectionStatusBadge');
           const statusContent = document.getElementById('connectionStatusContent');
-          if (!statusBadge || !statusContent) { console.log('️ WhatsApp status elements not found (this is normal if not on Settings page)'); return; }
+          
+          // 🚨 SAFETY CHECK: Only proceed if elements exist
+          if (!statusBadge || !statusContent) {
+            console.log('️ WhatsApp status elements not found (this is normal if not on Settings page)');
+            return;
+          }
+          
           if (data.tenant.isActive) {
+            // WhatsApp is connected
             statusBadge.className = 'px-3 py-1.5 rounded-full text-sm font-bold bg-green-100 text-green-700';
             statusBadge.innerHTML = '✅ Connected';
-            statusContent.innerHTML = `<div class="flex items-center gap-3 p-4 bg-green-50 rounded-lg border border-green-200"><div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div><div class="flex-1"><p class="text-sm font-semibold text-green-800">WhatsApp is connected and active</p><p class="text-xs text-green-600 mt-1">Number: +${data.tenant.whatsappNumber}</p></div></div><button onclick="disconnectWhatsApp()" class="w-full bg-yellow-500 text-white py-2.5 rounded-lg font-semibold hover:bg-yellow-600 transition flex items-center justify-center gap-2"><span>🚫</span> Disconnect WhatsApp</button>`;
+            
+            statusContent.innerHTML = `
+              <div class="flex items-center gap-3 p-4 bg-green-50 rounded-lg border border-green-200">
+                <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <div class="flex-1">
+                  <p class="text-sm font-semibold text-green-800">WhatsApp is connected and active</p>
+                  <p class="text-xs text-green-600 mt-1">Number: +${data.tenant.whatsappNumber}</p>
+                </div>
+              </div>
+              <button onclick="disconnectWhatsApp()" class="w-full bg-yellow-500 text-white py-2.5 rounded-lg font-semibold hover:bg-yellow-600 transition flex items-center justify-center gap-2">
+                <span>🚫</span> Disconnect WhatsApp
+              </button>
+            `;
           } else {
+            // WhatsApp is disconnected
             statusBadge.className = 'px-3 py-1.5 rounded-full text-sm font-bold bg-red-100 text-red-700';
             statusBadge.innerHTML = '❌ Disconnected';
-            statusContent.innerHTML = `<div class="flex items-center gap-3 p-4 bg-red-50 rounded-lg border border-red-200"><div class="w-3 h-3 bg-red-500 rounded-full"></div><div class="flex-1"><p class="text-sm font-semibold text-red-800">WhatsApp is disconnected</p><p class="text-xs text-red-600 mt-1">Number: +${data.tenant.whatsappNumber || 'Not set'}</p></div></div><a href="/connect/${data.tenant.whatsappNumber || 'unknown'}" class="block w-full bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition flex items-center justify-center gap-2 text-center"><span>📱</span> Reconnect & Scan QR Code</a>`;
+            
+            statusContent.innerHTML = `
+              <div class="flex items-center gap-3 p-4 bg-red-50 rounded-lg border border-red-200">
+                <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                <div class="flex-1">
+                  <p class="text-sm font-semibold text-red-800">WhatsApp is disconnected</p>
+                  <p class="text-xs text-red-600 mt-1">Number: +${data.tenant.whatsappNumber || 'Not set'}</p>
+                </div>
+              </div>
+              <a href="/connect/${data.tenant.whatsappNumber || 'unknown'}" class="block w-full bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition flex items-center justify-center gap-2 text-center">
+                <span>📱</span> Reconnect & Scan QR Code
+              </a>
+            `;
           }
         }
-      } catch (error) { console.error('Failed to load WhatsApp status:', error); }
+      } catch (error) {
+        console.error('Failed to load WhatsApp status:', error);
+        // Don't throw error, just log it
+      }
     }
 
     async function disconnectWhatsApp() {
-      showConfirm('Disconnect WhatsApp?', '⚠️ Are you sure you want to disconnect WhatsApp?\n\nYou will need to scan the QR code again to reconnect.', async () => {
-        try {
-          const res = await fetch('/api/dashboard/disconnect', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
-          const data = await res.json();
-          if (data.success) {
-            showSuccess('Disconnected!', '✅ WhatsApp has been disconnected successfully.\n\nYou can reconnect anytime by scanning the QR code.');
-            loadWhatsAppStatus();
-            updateWhatsAppButton();
-          } else { showError('Error', '❌ Failed to disconnect: ' + (data.error || 'Unknown error')); }
-        } catch (error) {
-          console.error('Disconnect error:', error);
-          showError('Network Error', '❌ Network error. Please try again.');
+      if (!confirm('⚠️ Are you sure you want to disconnect WhatsApp? You will need to scan the QR code again to reconnect.')) {
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/dashboard/disconnect', { 
+          method: 'POST', 
+          headers: { 'Authorization': `Bearer ${token}` } 
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          alert('✅ WhatsApp disconnected successfully!');
+          loadWhatsAppStatus(); // Refresh the status
+          updateWhatsAppButton(); // Update sidebar button
+        } else {
+          alert('❌ Failed to disconnect: ' + (data.error || 'Unknown error'));
         }
-      });
+      } catch (error) {
+        console.error('Disconnect error:', error);
+        alert('❌ Network error. Please try again.');
+      }
     }
 
+    //  NEW: Toggle WhatsApp Connection (Open connect page or disconnect)
     async function toggleWhatsAppConnection() {
       try {
         const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
+        
         if (data.success && data.tenant) {
           if (data.tenant.isActive) {
-            showConfirm('Disconnect WhatsApp?', '✅ WhatsApp is currently connected.\n\nDo you want to disconnect it?', async () => { await disconnectWhatsApp(); });
+            // WhatsApp is connected - ask if they want to disconnect
+            if (confirm('✅ WhatsApp is currently connected.\n\nDo you want to disconnect it?')) {
+              await disconnectWhatsApp();
+            }
           } else {
+            // WhatsApp is disconnected - redirect to connect page
             window.location.href = `/connect/${data.tenant.whatsappNumber || 'unknown'}`;
           }
         }
       } catch (error) {
         console.error('WhatsApp toggle error:', error);
-        showError('Error', '❌ Failed to check WhatsApp status.');
+        alert('❌ Failed to check WhatsApp status.');
       }
     }
 
+    // 🚨 NEW: Update WhatsApp button in sidebar
     function updateWhatsAppButton() {
       const whatsappBtn = document.getElementById('nav-whatsapp');
-      if (whatsappBtn) { /* Visual indicators can be added here */ }
+      if (whatsappBtn) {
+        // You can add visual indicators here if needed
+        // For now, it just shows the icon and text
+      }
     }
 
+    // ==========================================
+    // 💾 SAVE SETTINGS FUNCTION (WITH VISIBLE CONFIRMATION)
+    // ==========================================
     async function saveSettings() {
-      showInfo('Saving Settings', '💾 Please wait while we save your settings...');      
+      // Show immediate visual feedback
+showInfo('Saving Settings', '💾 Please wait while we save your settings...');      
       try {
-        const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+        // 1. Get current tenant data first
+        const res = await fetch('/api/dashboard', { 
+          headers: { 'Authorization': `Bearer ${token}` } 
+        });
         const data = await res.json();
-        if (!data.success) { showError('Error', '❌ Failed to load current settings.'); return; }
-        const getVal = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
-        const getCheck = (id) => { const el = document.getElementById(id); return el ? el.checked : false; };
-        const contactInfo = `Contact Person: ${getVal('contactPerson') || 'Not provided'}\nEmail: ${getVal('contactEmail') || 'Not provided'}\nPhone/WhatsApp: ${getVal('contactPhone') || 'Not provided'}\nWebsite: ${getVal('contactWebsite') || 'Not provided'}\nNotes: ${getVal('contactNotes') || 'None'}`.trim();
+        
+        if (!data.success) {
+showError('Error', '❌ Failed to load current settings.');
+          return;
+        }
+        
+        // 2. HELPER: Safely get value
+        const getVal = (id) => {
+          const el = document.getElementById(id);
+          return el ? el.value : '';
+        };
+
+        const getCheck = (id) => {
+          const el = document.getElementById(id);
+          return el ? el.checked : false;
+        };
+        
+        // 3. Build contact info string
+        const contactInfo = `Contact Person: ${getVal('contactPerson') || 'Not provided'}
+Email: ${getVal('contactEmail') || 'Not provided'}
+Phone/WhatsApp: ${getVal('contactPhone') || 'Not provided'}
+Website: ${getVal('contactWebsite') || 'Not provided'}
+Notes: ${getVal('contactNotes') || 'None'}`.trim();
+        
+        // 4. Save settings
         const saveRes = await fetch('/api/dashboard/settings', { 
-          method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, 
+          method: 'PUT', 
+          headers: { 
+            'Content-Type': 'application/json', 
+            'Authorization': `Bearer ${token}` 
+          }, 
           body: JSON.stringify({ 
             businessName: getVal('settingsBusinessName') || data.tenant.businessName,
             whatsappNumber: (getVal('settingsWhatsappNumber') || data.tenant.whatsappNumber || '').replace(/\D/g, ''),
@@ -1384,28 +1932,40 @@
             isHumanMode: getCheck('humanModeToggle')
           }) 
         });
+        
         const saveData = await saveRes.json();
+        
+        // 5. SHOW SUCCESS MESSAGE (Both alert AND on-screen)
         if (saveRes.ok) {
+          // Reload dashboard to update header
           await loadDashboard();
           if (typeof loadWhatsAppStatus === 'function') loadWhatsAppStatus();
-          showSuccess('Settings Saved!', '✅ Your settings have been saved successfully.\n\nAll changes have been applied to your account.');          
+          
+          // Show success alert
+showSuccess('Settings Saved!', '✅ Your settings have been saved successfully.\n\nAll changes have been applied to your account.');          
+          // Also show on-screen message (stays for 10 seconds)
           const msg = document.getElementById('settingsMsg');
           if (msg) {
             msg.textContent = '✅ Business settings saved successfully!';
             msg.className = 'mt-3 text-center text-sm text-green-600 font-bold bg-green-50 p-3 rounded-lg border border-green-200';
-            setTimeout(() => { msg.textContent = ''; msg.className = 'mt-3 text-center text-sm font-medium min-h-[20px]'; }, 10000);
+            
+            // Keep message visible longer
+            setTimeout(() => {
+              msg.textContent = '';
+              msg.className = 'mt-3 text-center text-sm font-medium min-h-[20px]';
+            }, 10000); // 10 seconds instead of 3
           }
         } else {
-          showError('Save Failed', '❌ Failed to save settings.\n\n' + (saveData.error || 'Please try again.'));
+showError('Save Failed', '❌ Failed to save settings.\n\n' + (saveData.error || 'Please try again.'));
           const msg = document.getElementById('settingsMsg');
           if (msg) {
-            msg.textContent = '❌ ' + (saveData.error || 'Failed to save settings.');
+            msg.textContent = ' ' + (saveData.error || 'Failed to save settings.');
             msg.className = 'mt-3 text-center text-sm text-red-600 font-bold bg-red-50 p-3 rounded-lg border border-red-200';
           }
         }
       } catch (err) {
         console.error('Save settings error:', err);
-        showError('Network Error', '❌ Unable to connect to the server.\n\nPlease check your internet connection and try again.');
+showError('Network Error', '❌ Unable to connect to the server.\n\nPlease check your internet connection and try again.');
         const msg = document.getElementById('settingsMsg');
         if (msg) {
           msg.textContent = '❌ Network error. Please try again.';
@@ -1414,40 +1974,77 @@
       }
     }
 
+
+    // ==========================================
+    // HUMAN TAKEOVER MODE TOGGLE (NEW & IMPROVED)
+    // ==========================================
     document.getElementById('humanModeToggle').addEventListener('change', async function() {
       const isChecked = this.checked;
       const statusText = document.getElementById('humanModeStatus');
       const statusIndicator = document.getElementById('aiStatusIndicator');
-      if (statusText) { statusText.textContent = '⏳ Updating AI status...'; statusText.className = 'text-xs text-yellow-600 mt-1 font-medium'; }
+      
+      if (statusText) { 
+        statusText.textContent = '⏳ Updating AI status...'; 
+        statusText.className = 'text-xs text-yellow-600 mt-1 font-medium'; 
+      }
+      
       try {
-        const res = await fetch('/api/dashboard/toggle-human-mode', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ isHumanMode: isChecked }) });
+        const res = await fetch('/api/dashboard/toggle-human-mode', { 
+          method: 'PATCH', 
+          headers: { 
+            'Content-Type': 'application/json', 
+            'Authorization': `Bearer ${token}` 
+          }, 
+          body: JSON.stringify({ isHumanMode: isChecked }) 
+        });
+        
         const data = await res.json();
         if (data.success) {
           if (isChecked) {
-            if (statusText) { statusText.textContent = 'AI is PAUSED. You are in control.'; statusText.className = 'text-xs text-red-600 mt-1 font-bold'; }
+            // Human mode active
+            if (statusText) { 
+              statusText.textContent = 'AI is PAUSED. You are in control.'; 
+              statusText.className = 'text-xs text-red-600 mt-1 font-bold'; 
+            }
             if (statusIndicator) {
               statusIndicator.className = 'mt-4 p-3 rounded-lg border-2 border-red-200 bg-red-50';
-              statusIndicator.innerHTML = `<div class="flex items-center gap-2"><div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div><span class="text-sm font-semibold text-red-700">👨‍💻 Human Mode ACTIVE - AI is paused</span></div>`;
+              statusIndicator.innerHTML = `
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                  <span class="text-sm font-semibold text-red-700">👨‍💻 Human Mode ACTIVE - AI is paused</span>
+                </div>
+              `;
             }
           } else {
-            if (statusText) { statusText.textContent = 'AI is ACTIVE and replying automatically.'; statusText.className = 'text-xs text-green-600 mt-1 font-bold'; }
+            // AI mode active
+            if (statusText) { 
+              statusText.textContent = 'AI is ACTIVE and replying automatically.'; 
+              statusText.className = 'text-xs text-green-600 mt-1 font-bold'; 
+            }
             if (statusIndicator) {
               statusIndicator.className = 'mt-4 p-3 rounded-lg border-2 border-green-200 bg-green-50';
-              statusIndicator.innerHTML = `<div class="flex items-center gap-2"><div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div><span class="text-sm font-semibold text-green-700">🤖 AI is ACTIVE and replying automatically</span></div>`;
+              statusIndicator.innerHTML = `
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <span class="text-sm font-semibold text-green-700">🤖 AI is ACTIVE and replying automatically</span>
+                </div>
+              `;
             }
           }
         } else { 
           this.checked = !isChecked; 
           if (statusText) statusText.textContent = 'Failed to update mode.'; 
-          showError('Error', '❌ Failed to update mode.'); 
+          alert('❌ Failed to update mode.'); 
         }
       } catch (err) { 
         this.checked = !isChecked; 
         if (statusText) statusText.textContent = 'Server error while toggling.'; 
-        showError('Server Error', '❌ Server error while toggling.'); 
+        alert('❌ Server error while toggling.'); 
       }
     });
 
+
+    // 🚨 ENSURE SIDEBAR STAYS VISIBLE IF WINDOW IS RESIZED
     window.addEventListener('resize', () => {
       const sidebar = document.getElementById('sidebar');
       if (sidebar && window.innerWidth >= 1024) {
@@ -1457,29 +2054,58 @@
       }
     });
 
+
+    // 🚨 SHOW INLINE CHAT HISTORY (In All Conversations section)
     async function showInlineChat(number) {
-      currentInlineChatNumber = number;
+      currentInlineChatNumber = number; // 🚨 Store the number
       console.log('📞 Opening inline chat for:', number);
+      
       const container = document.getElementById('inlineChatContainer');
       const messagesDiv = document.getElementById('inlineChatMessages');
-      if (!container || !messagesDiv) { console.error('❌ Inline chat container not found!'); return; }
+      
+      if (!container || !messagesDiv) {
+        console.error('❌ Inline chat container not found!');
+        return;
+      }
+      
+      // Show loading
       container.classList.remove('hidden');
       messagesDiv.innerHTML = '<div class="text-center text-gray-400 py-8">Loading messages...</div>';
       document.getElementById('inlineChatNumber').textContent = '+' + number;
+      
       try {
-        const res = await fetch(`/api/dashboard/chat-history/${number}`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const res = await fetch(`/api/dashboard/chat-history/${number}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         const data = await res.json();
+        
         if (res.ok && data.messages) {
-          if (data.messages.length === 0) { messagesDiv.innerHTML = '<div class="text-center text-gray-400 py-8">No messages yet</div>'; } 
-          else {
+          if (data.messages.length === 0) {
+            messagesDiv.innerHTML = '<div class="text-center text-gray-400 py-8">No messages yet</div>';
+          } else {
             messagesDiv.innerHTML = data.messages.map(msg => {
               const isOutbound = msg.direction === 'outbound';
               const alignClass = isOutbound ? 'justify-end' : 'justify-start';
-              const bubbleClass = isOutbound ? 'bg-green-500 text-white' : 'bg-white text-gray-800 border border-gray-200';  
-              const label = isOutbound ? (msg.isAiReply ? '🤖 AI' : '👤 Admin') : '👤 Customer';
-              return `<div class="flex ${alignClass}"><div class="max-w-[75%] px-4 py-3 rounded-lg ${bubbleClass} shadow-sm"><p class="text-xs font-semibold mb-1 opacity-75">${label}</p><p class="text-sm whitespace-pre-wrap">${msg.content}</p><p class="text-xs mt-2 opacity-75 text-right">${new Date(msg.createdAt).toLocaleString()}</p></div></div>`;
+              const bubbleClass = isOutbound 
+                ? 'bg-green-500 text-white' 
+                : 'bg-white text-gray-800 border border-gray-200';  
+              const label = isOutbound 
+                ? (msg.isAiReply ? '🤖 AI' : '👤 Admin') 
+                : '👤 Customer';
+              
+              return `
+                <div class="flex ${alignClass}">
+                  <div class="max-w-[75%] px-4 py-3 rounded-lg ${bubbleClass} shadow-sm">
+                    <p class="text-xs font-semibold mb-1 opacity-75">${label}</p>
+                    <p class="text-sm whitespace-pre-wrap">${msg.content}</p>
+                    <p class="text-xs mt-2 opacity-75 text-right">${new Date(msg.createdAt).toLocaleString()}</p>
+                  </div>
+                </div>
+              `;
             }).join('');
           }
+          
+          // Scroll to bottom
           messagesDiv.scrollTop = messagesDiv.scrollHeight;
           console.log('✅ Inline chat displayed');
         }
@@ -1489,28 +2115,51 @@
       }
     }
 
-    function closeInlineChat() { document.getElementById('inlineChatContainer').classList.add('hidden'); }
+    // CLOSE INLINE CHAT
+    function closeInlineChat() {
+      document.getElementById('inlineChatContainer').classList.add('hidden');
+    }
 
+    // 🚨 GO TO LIVE CHAT AND OPEN SPECIFIC CONVERSATION
     function goToLiveChat() {
-      if (!currentInlineChatNumber) { showError('Error', '❌ No conversation selected.'); return; }
+      if (!currentInlineChatNumber) {
+        alert('❌ No conversation selected.');
+        return;
+      }
+      
       console.log('🚀 Navigating to Live Chat for:', currentInlineChatNumber);
+      
+      // 1. Close inline chat
       closeInlineChat();
+      
+      // 2. Navigate to Live Chat section
       showSection('live-chat');
+      
+      // 3. Wait a moment for section to load, then open the specific chat
       setTimeout(() => {
         showChatHistory(currentInlineChatNumber);
         console.log('✅ Opened specific chat in Live Chat');
       }, 300);
     }
 
+
+
+    // ==========================================
+    // INITIALIZATION (Runs when page loads)
+    // ==========================================
     document.addEventListener('DOMContentLoaded', async () => {
       await loadDashboard();
       showSection('dashboard');
     });
+
   </script>
 
   <!-- 🚨 DELETE ACCOUNT CUSTOM MODAL -->
   <div id="deleteAccountModal" class="fixed inset-0 z-[100] hidden">
+    <!-- Dark Backdrop -->
     <div class="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm transition-opacity" onclick="closeDeleteModal()"></div>
+    
+    <!-- Modal Content -->
     <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-red-100">
       <div class="text-center">
         <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
@@ -1520,6 +2169,8 @@
         </div>
         <h3 class="text-xl font-bold text-gray-900 mb-2">Delete Account Permanently?</h3>
         <p class="text-sm text-gray-600 mb-4">This action cannot be undone. This will permanently delete your account and remove all data from our servers.</p>
+        
+        <!-- Warning List -->
         <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-left">
           <p class="text-xs font-bold text-red-700 uppercase tracking-wide mb-2">You will permanently lose:</p>
           <ul class="text-sm text-red-600 space-y-1 list-disc list-inside">
@@ -1529,13 +2180,21 @@
             <li>All Agent accounts and team invitations</li>
           </ul>
         </div>
+
+        <!-- Error Message (Shows if WhatsApp is still connected) -->
         <div id="deleteModalError" class="hidden bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded-lg p-3 mb-4 flex items-start gap-2">
           <span>⚠️</span>
           <span>Please <strong>disconnect WhatsApp</strong> in Settings before you can delete your account.</span>
         </div>
+
+        <!-- Action Buttons -->
         <div class="flex gap-3">
-          <button onclick="closeDeleteModal()" class="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition">Cancel</button>
-          <button onclick="confirmDeleteAccount()" id="confirmDeleteBtn" class="flex-1 px-4 py-2.5 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition flex items-center justify-center gap-2"><span>Yes, Delete Everything</span></button>
+          <button onclick="closeDeleteModal()" class="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition">
+            Cancel
+          </button>
+          <button onclick="confirmDeleteAccount()" id="confirmDeleteBtn" class="flex-1 px-4 py-2.5 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition flex items-center justify-center gap-2">
+            <span>Yes, Delete Everything</span>
+          </button>
         </div>
       </div>
     </div>
@@ -1543,17 +2202,30 @@
 
   <!--  UNIVERSAL CUSTOM MODAL SYSTEM -->
   <div id="customModal" class="fixed inset-0 z-[200] hidden">
+    <!-- Backdrop with blur -->
     <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity" onclick="closeCustomModal()"></div>
+    
+    <!-- Modal Container -->
     <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-4">
       <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+        
+        <!-- Header with Icon -->
         <div id="modalHeader" class="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
-          <div id="modalIcon" class="w-10 h-10 rounded-full flex items-center justify-center"></div>
+          <div id="modalIcon" class="w-10 h-10 rounded-full flex items-center justify-center">
+            <!-- Icon injected here -->
+          </div>
           <h3 id="modalTitle" class="text-lg font-bold text-gray-900">Title</h3>
         </div>
+        
+        <!-- Message Content -->
         <div class="px-6 py-4">
           <p id="modalMessage" class="text-sm text-gray-600">Message goes here...</p>
         </div>
-        <div id="modalActions" class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex gap-3"></div>
+        
+        <!-- Action Buttons -->
+        <div id="modalActions" class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex gap-3">
+          <!-- Buttons injected here -->
+        </div>
       </div>
     </div>
   </div>
