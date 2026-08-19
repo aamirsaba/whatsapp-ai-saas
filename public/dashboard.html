@@ -332,16 +332,35 @@
       </section>
 
       <!-- LIVE CHAT SECTION -->
-      <section id="section-live-chat" class="section-content hidden">
-        <div class="mb-8">
-          <h2 class="text-2xl font-bold text-gray-800 mb-2">💬 Live Chat Inbox</h2>
-          <p class="text-gray-600">Manually reply to customer messages when AI needs human assistance.</p>
-        </div>
+<section id="section-live-chat" class="section-content hidden">
+  <div class="mb-8">
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">💬 Live Chat Inbox</h2>
+    <p class="text-gray-600">Manually reply to customer messages when AI needs human assistance.</p>
+  </div>
 
-        <!-- Recent Chats -->
-        <div id="recentChats" class="flex flex-col gap-3 mb-6 max-h-96 overflow-y-auto p-1">
-          <div class="text-center text-gray-400 py-12">Loading recent chats...</div>
-        </div>
+  <!-- Recent Chats List -->
+  <div id="recentChats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+    <div class="text-center text-gray-400 py-12 col-span-full">Loading recent chats...</div>
+  </div>
+
+  <!-- 🚨 CHAT HISTORY DISPLAY (This shows the conversation) -->
+  <div id="chatHistoryContainer" class="hidden bg-white border-2 border-gray-200 rounded-xl p-4 mb-6">
+    <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+      <div>
+        <h3 class="text-lg font-semibold text-gray-800">Chat with <span id="chatHistoryNumber" class="text-indigo-600"></span></h3>
+        <p class="text-xs text-gray-500" id="chatHistoryTime"></p>
+      </div>
+      <button onclick="closeChatHistory()" class="text-gray-400 hover:text-gray-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    
+    <!-- Messages will be displayed here -->
+    <div id="chatMessages" class="space-y-3 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-lg mb-4">
+      <!-- Messages injected here by JavaScript -->
+    </div>
+  </div>
+
 
         <!-- Reply Box -->
         <div id="replyBox" class="hidden bg-white border-2 border-indigo-100 rounded-xl p-5 shadow-sm">
@@ -1042,6 +1061,95 @@ async function updateAgent(agentId) {
         const res = await fetch(`/api/dashboard/agents/${agentId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
         if (res.ok) { alert('✅ Agent deleted'); loadAgents(); }
       } catch (error) { alert('❌ Network error'); }
+    }
+
+    // SHOW CHAT HISTORY
+    async function showChatHistory(number) {
+      try {
+        const res = await fetch(`/api/dashboard/chat-history/${number}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        
+        if (res.ok && data.messages) {
+          // Show the container
+          const container = document.getElementById('chatHistoryContainer');
+          const messagesDiv = document.getElementById('chatMessages');
+          
+          document.getElementById('chatHistoryNumber').textContent = '+' + number;
+          document.getElementById('chatHistoryTime').textContent = new Date().toLocaleString();
+          
+          // Display messages
+          messagesDiv.innerHTML = data.messages.map(msg => {
+            const isOutbound = msg.direction === 'outbound';
+            const alignClass = isOutbound ? 'justify-end' : 'justify-start';
+            const bubbleClass = isOutbound ? 'bg-green-500 text-white' : 'bg-white text-gray-800 border border-gray-200';
+            const label = isOutbound ? '🤖 AI' : '👤 Customer';
+            
+            return `
+              <div class="flex ${alignClass}">
+                <div class="max-w-[70%] px-4 py-2 rounded-lg ${bubbleClass} shadow-sm">
+                  <p class="text-xs font-semibold mb-1 opacity-75">${label}</p>
+                  <p class="text-sm whitespace-pre-wrap">${msg.content}</p>
+                  <p class="text-xs mt-1 opacity-75">${new Date(msg.createdAt).toLocaleString()}</p>
+                </div>
+              </div>
+            `;
+          }).join('');
+          
+          container.classList.remove('hidden');
+          
+          // Scroll to bottom
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+          
+          // Also open reply box
+          openReplyBox(number);
+        }
+      } catch (error) {
+        console.error('Load chat history error:', error);
+        alert('❌ Failed to load chat history.');
+      }
+    }
+
+    // CLOSE CHAT HISTORY
+    function closeChatHistory() {
+      document.getElementById('chatHistoryContainer').classList.add('hidden');
+    }
+
+    // UPDATE loadRecentChats TO CALL showChatHistory
+    async function loadRecentChats() {
+      const chatContainer = document.getElementById('recentChats');
+      if (!chatContainer) return;
+      
+      try {
+        const res = await fetch('/api/dashboard/chats', { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        
+        if (res.ok && data.chats && data.chats.length > 0) {
+          chatContainer.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6';
+          chatContainer.innerHTML = data.chats.map(chat => {
+            const truncatedMessage = chat.lastMessage.length > 60 ? chat.lastMessage.substring(0, 60) + '...' : chat.lastMessage;
+            const date = new Date(chat.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            return `
+              <div onclick="showChatHistory('${chat.phoneNumber}')" class="p-4 border border-gray-200 rounded-xl hover:border-indigo-300 hover:shadow-md cursor-pointer transition bg-white hover:bg-gray-50">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="font-bold text-gray-800 text-sm">+${chat.phoneNumber}</span>
+                  <span class="text-xs text-gray-500">${date}</span>
+                </div>
+                <p class="text-sm text-gray-600 truncate">${truncatedMessage}</p>
+                <div class="mt-3 pt-3 border-t border-gray-100 text-xs text-indigo-600 font-medium text-right">
+                  View Chat →
+                </div>
+              </div>
+            `;
+          }).join('');
+        } else { 
+          chatContainer.className = 'mb-6';
+          chatContainer.innerHTML = '<div class="text-center text-gray-400 py-12">No recent conversations</div>'; 
+        }
+      } catch (error) { 
+        console.error('Load recent chats error:', error); 
+      }
     }
 
     // LOAD RECENT CHATS
