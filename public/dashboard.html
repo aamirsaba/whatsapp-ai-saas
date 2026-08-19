@@ -716,18 +716,17 @@ async function loadDashboard() {
   }
 }
 
-    // 🚨 ULTIMATE BULLETPROOF SHOW SECTION FUNCTION
+    // 🚨 ULTIMATE BULLETPROOF SHOW SECTION FUNCTION (WITH MOBILE AUTO-CLOSE)
     function showSection(sectionName) {
       console.log(' Navigating to:', sectionName);
       
-      // FORCE SIDEBAR VISIBLE FIRST (before anything else)
       const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      
+      // FORCE SIDEBAR VISIBLE FIRST (before anything else) - DESKTOP ONLY
       if (sidebar && window.innerWidth >= 1024) {
         sidebar.classList.remove('-translate-x-full', 'hidden');
-        sidebar.style.transform = 'translateX(0) !important';
-        sidebar.style.display = 'block !important';
-        sidebar.style.visibility = 'visible !important';
-        sidebar.style.opacity = '1 !important';
+        sidebar.style.cssText = 'transform: translateX(0) !important; display: block !important; visibility: visible !important; opacity: 1 !important;';
         console.log('✅ Sidebar forced visible BEFORE section change');
       }
       
@@ -757,14 +756,21 @@ async function loadDashboard() {
         console.log('✅ Nav item highlighted:', sectionName);
       }
       
-      // 4. FORCE SIDEBAR VISIBLE AGAIN (after section change)
+      // 4. FORCE SIDEBAR VISIBLE AGAIN (after section change) - DESKTOP ONLY
       if (sidebar && window.innerWidth >= 1024) {
-        sidebar.classList.remove('-translate-x-full', 'hidden');
         sidebar.style.cssText = 'transform: translateX(0) !important; display: block !important; visibility: visible !important; opacity: 1 !important;';
         console.log('✅ Sidebar forced visible AFTER section change');
       }
       
-      // 5. Load specific data
+      //  5. AUTO-CLOSE SIDEBAR ON MOBILE
+      if (sidebar && overlay && window.innerWidth < 1024) {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+        console.log('📱 Mobile sidebar auto-closed');
+      }
+      
+      // 6. Load specific data
       if (sectionName === 'dashboard') loadDashboardData();
       if (sectionName === 'agents') loadAgents();
       if (sectionName === 'live-chat') loadRecentChats();
@@ -774,8 +780,11 @@ async function loadDashboard() {
         console.log(' Loading all conversations...');
         loadAllConversations();
       }
+      if (sectionName === 'settings') {
+        if (typeof loadWhatsAppStatus === 'function') loadWhatsAppStatus();
+      }
       
-      // 6. Final check after 100ms
+      // 7. Final check after 100ms - DESKTOP ONLY
       setTimeout(() => {
         if (sidebar && window.innerWidth >= 1024) {
           sidebar.style.cssText = 'transform: translateX(0) !important; display: block !important; visibility: visible !important; opacity: 1 !important;';
