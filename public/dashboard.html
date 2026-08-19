@@ -1519,14 +1519,11 @@ async function loadConversations() {
     }
 
     // ==========================================
-    // 💾 SAFE SAVE SETTINGS FUNCTION (WITH FEEDBACK)
+    // 💾 SAVE SETTINGS FUNCTION (WITH VISIBLE CONFIRMATION)
     // ==========================================
     async function saveSettings() {
-      const msg = document.getElementById('settingsMsg');
-      if (msg) {
-        msg.textContent = '💾 Saving settings...';
-        msg.className = 'mt-3 text-center text-sm text-blue-600 font-medium';
-      }
+      // Show immediate visual feedback
+      alert('💾 Saving your settings...');
       
       try {
         // 1. Get current tenant data first
@@ -1536,14 +1533,11 @@ async function loadConversations() {
         const data = await res.json();
         
         if (!data.success) {
-          if (msg) {
-            msg.textContent = '❌ Failed to load current settings.';
-            msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
-          }
+          alert('❌ Failed to load current settings.');
           return;
         }
         
-        // 2. HELPER: Safely get value (returns empty string if element is missing)
+        // 2. HELPER: Safely get value
         const getVal = (id) => {
           const el = document.getElementById(id);
           return el ? el.value : '';
@@ -1554,7 +1548,7 @@ async function loadConversations() {
           return el ? el.checked : false;
         };
         
-        // 3. Build contact info string safely
+        // 3. Build contact info string
         const contactInfo = `Contact Person: ${getVal('contactPerson') || 'Not provided'}
 Email: ${getVal('contactEmail') || 'Not provided'}
 Phone/WhatsApp: ${getVal('contactPhone') || 'Not provided'}
@@ -1572,7 +1566,6 @@ Notes: ${getVal('contactNotes') || 'None'}`.trim();
             businessName: getVal('settingsBusinessName') || data.tenant.businessName,
             whatsappNumber: (getVal('settingsWhatsappNumber') || data.tenant.whatsappNumber || '').replace(/\D/g, ''),
             contactInfo: contactInfo,
-            // Keep existing AI settings
             systemPrompt: getVal('systemPrompt') || data.tenant.systemPrompt,
             businessContext: getVal('businessContext') || data.tenant.businessContext,
             llmApiKey: getVal('llmApiKey') || data.tenant.llmApiKey,
@@ -1585,31 +1578,43 @@ Notes: ${getVal('contactNotes') || 'None'}`.trim();
         });
         
         const saveData = await saveRes.json();
+        
+        // 5. SHOW SUCCESS MESSAGE (Both alert AND on-screen)
         if (saveRes.ok) {
-          if (msg) {
-            msg.textContent = '✅ Business settings saved successfully!';
-            msg.className = 'mt-3 text-center text-sm text-green-600 font-bold';
-          }
-          
           // Reload dashboard to update header
           await loadDashboard();
-          if (typeof loadWhatsAppStatus === 'function') loadWhatsAppStatus(); // Refresh WhatsApp status
+          if (typeof loadWhatsAppStatus === 'function') loadWhatsAppStatus();
           
-          setTimeout(() => {
-            if (msg) msg.textContent = '';
-          }, 3000);
-        } else {
+          // Show success alert
+          alert('✅ Settings saved successfully!\n\nYour changes have been applied.');
+          
+          // Also show on-screen message (stays for 10 seconds)
+          const msg = document.getElementById('settingsMsg');
           if (msg) {
-            msg.textContent = '❌ ' + (saveData.error || 'Failed to save settings.');
-            msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+            msg.textContent = '✅ Business settings saved successfully!';
+            msg.className = 'mt-3 text-center text-sm text-green-600 font-bold bg-green-50 p-3 rounded-lg border border-green-200';
+            
+            // Keep message visible longer
+            setTimeout(() => {
+              msg.textContent = '';
+              msg.className = 'mt-3 text-center text-sm font-medium min-h-[20px]';
+            }, 10000); // 10 seconds instead of 3
+          }
+        } else {
+          alert('❌ Failed to save: ' + (saveData.error || 'Unknown error'));
+          const msg = document.getElementById('settingsMsg');
+          if (msg) {
+            msg.textContent = ' ' + (saveData.error || 'Failed to save settings.');
+            msg.className = 'mt-3 text-center text-sm text-red-600 font-bold bg-red-50 p-3 rounded-lg border border-red-200';
           }
         }
       } catch (err) {
         console.error('Save settings error:', err);
+        alert('❌ Network error. Please try again.');
         const msg = document.getElementById('settingsMsg');
         if (msg) {
           msg.textContent = '❌ Network error. Please try again.';
-          msg.className = 'mt-3 text-center text-sm text-red-600 font-bold';
+          msg.className = 'mt-3 text-center text-sm text-red-600 font-bold bg-red-50 p-3 rounded-lg border border-red-200';
         }
       }
     }
