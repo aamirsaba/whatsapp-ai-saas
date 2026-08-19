@@ -311,17 +311,21 @@ const newUser = await prisma.user.create({
     }
 
     // 5. Create Tenant
+    // Create tenant with AI OFF by default
     const newTenant = await prisma.tenant.create({
       data: {
+        userId: newUser.id,
         businessName,
         whatsappNumber,
-        websiteUrl,
-        userId: newUser.id,
-	botType: botType || 'business', // Save their choice
+        websiteUrl: websiteUrl || null,
+        botType: botType || 'business',
         systemPrompt: autoPrompt,
         businessContext: autoContext,
-        isActive: false,
-        isHumanMode: false
+        llmProvider: 'OPENAI', // or detected provider
+        llmModel: 'gpt-3.5-turbo',
+        llmApiKey,
+        isHumanMode: true,  // 🚨 AI IS OFF BY DEFAULT
+        isActive: false     // WhatsApp not connected yet
       }
     });
 
