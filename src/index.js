@@ -102,6 +102,72 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
+// ==========================================
+// 🔐 UPDATE PASSWORD (Force change after first login)
+// ==========================================
+app.post('/api/auth/update-password', authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.userId;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current password and new password are required.' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters.' });
+    }
+
+    // Get user
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    // Verify current password
+    const bcrypt = require('bcryptjs');
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) {
+      return res.status(401).json({ error: 'Current password is incorrect.' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update user
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        password: hashedPassword,
+        requiresPasswordChange: false // Mark as changed
+      }
+    });
+
+    // Generate new JWT token
+    const jwt = require('jsonwebtoken');
+    const newToken = jwt.sign(
+      { userId: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET || 'your-secret-key-change-this',
+      { expiresIn: '7d' }
+    );
+
+    console.log(`✅ Password updated for user: ${user.email}`);
+
+    res.json({
+      success: true,
+      message: 'Password updated successfully.',
+      token: newToken,
+      user: {
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('❌ Update password error:', error);
+    res.status(500).json({ error: 'Failed to update password.' });
+  }
+});
+
 // 🚀 5-MINUTE MVP WIZARD REGISTRATION (AUTO-GENERATE PASSWORD)
 app.post('/api/register-wizard', async (req, res) => {
   try {
@@ -116,8 +182,14 @@ app.post('/api/register-wizard', async (req, res) => {
     const autoPassword = crypto.randomBytes(6).toString('hex');
     const hashedPassword = await require('bcryptjs').hash(autoPassword, 10);
     
+    // 🚨 ADDED: requiresPasswordChange: true to force the update flow
     const newUser = await prisma.user.create({
-      data: { email, password: hashedPassword, role: 'TENANT' }
+      data: { 
+        email, 
+        password: hashedPassword, 
+        role: 'TENANT',
+        requiresPasswordChange: true // 🚨 THIS IS THE MAGIC FLAG
+      }
     });
 
     // 3. Auto-generate Context based on Industry
@@ -291,13 +363,96 @@ app.post('/api/auth/login', async (req, res) => {
     if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
     
     const result = await loginUser(email, password);
-    res.json({ success: true, message: 'Logged in successfully!', ...result });
+    
+    // 🚨 CHECK IF PASSWORD CHANGE IS REQUIRED
+    if (result.user && result.user.requiresPasswordChange) {
+      return res.json({ 
+        success: true, 
+        message: 'Please update your password.', 
+        ...result,
+        requiresPasswordChange: true,
+        redirectUrl: '/update-password.html'
+      });
+    }
+    
+    // Normal login
+    res.json({ 
+      success: true, 
+      message: 'Logged in successfully!', 
+      ...result,
+      requiresPasswordChange: false,
+      redirectUrl: '/dashboard'
+    });
   } catch (error) {
     res.status(401).json({ success: false, error: error.message });
   }
 });
 
+// ==========================================
+// 🔐 UPDATE PASSWORD (Force change after first login)
+// ==========================================
+app.post('/api/auth/update-password', authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.userId;
 
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current password and new password are required.' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters.' });
+    }
+
+    // Get user
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    // Verify current password
+    const bcrypt = require('bcryptjs');
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) {
+      return res.status(401).json({ error: 'Current password is incorrect.' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update user
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        password: hashedPassword,
+        requiresPasswordChange: false // Mark as changed
+      }
+    });
+
+    // Generate new JWT token
+    const jwt = require('jsonwebtoken');
+    const newToken = jwt.sign(
+      { userId: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET || 'your-secret-key-change-this',
+      { expiresIn: '7d' }
+    );
+
+    console.log(`✅ Password updated for user: ${user.email}`);
+
+    res.json({
+      success: true,
+      message: 'Password updated successfully.',
+      token: newToken,
+      user: {
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('❌ Update password error:', error);
+    res.status(500).json({ error: 'Failed to update password.' });
+  }
+});
 
 // ==========================================
 // 🚀 DASHBOARD ROUTES (Protected)

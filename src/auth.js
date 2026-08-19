@@ -54,23 +54,33 @@ async function registerUser(email, password, businessName, whatsappNumber, busin
   };
 }
 
-// 🚀 LOGIN USER
+// Inside src/auth.js (or wherever loginUser is defined)
 async function loginUser(email, password) {
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) throw new Error('Invalid email or password');
+  if (!user) throw new Error('User not found.');
 
-  const isPasswordValid = await bcrypt.compare(password, user.password);
-  if (!isPasswordValid) throw new Error('Invalid email or password');
+  const bcrypt = require('bcryptjs');
+  const isValid = await bcrypt.compare(password, user.password);
+  if (!isValid) throw new Error('Invalid password.');
 
-  const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-  const tenant = await prisma.tenant.findFirst({ where: { userId: user.id } });
+  const jwt = require('jsonwebtoken');
+  const token = jwt.sign(
+    { userId: user.id, email: user.email, role: user.role },
+    process.env.JWT_SECRET || 'your-secret-key-change-this',
+    { expiresIn: '7d' }
+  );
 
-// Inside your loginUser function, after verifying the password:
-return {
-  token,
-  user: { id: user.id, email: user.email, role: user.role },
-  requiresPasswordChange: user.requiresPasswordChange // 🚨 ADD THIS
-};
+  // 🚨 MAKE SURE THIS IS RETURNED
+  return {
+    token,
+    user: {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      requiresPasswordChange: user.requiresPasswordChange || false // 🚨 CRITICAL
+    },
+    tenant: await prisma.tenant.findFirst({ where: { userId: user.id } })
+  };
 }
 
 module.exports = { registerUser, loginUser };
