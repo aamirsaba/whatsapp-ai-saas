@@ -6,7 +6,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <title>Dashboard - Universal AI SaaS</title>
   <script src="https://cdn.tailwindcss.com"></script>
-<!-- Add this CSS in your <head> section -->
 <style>
   /* Custom breakpoint for very small screens */
   @media (max-width: 380px) {
@@ -21,7 +20,18 @@
       display: none !important;
     }
   }
+
+  /* 🚨 NUCLEAR OPTION: FORCE SIDEBAR VISIBLE ON DESKTOP */
+  @media (min-width: 1024px) {
+    #sidebar {
+      transform: translateX(0) !important;
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+  }
 </style>
+
 </head>
 <body class="bg-gray-50 min-h-screen">
   
@@ -660,7 +670,7 @@ async function loadDashboard() {
   }
 }
 
-    // 🚨 BULLETPROOF SHOW SECTION FUNCTION
+    // 🚨 ULTIMATE BULLETPROOF SHOW SECTION FUNCTION
     function showSection(sectionName) {
       console.log('📍 Navigating to:', sectionName);
       
@@ -686,13 +696,18 @@ async function loadDashboard() {
         activeNav.classList.add('bg-green-50', 'text-green-700');
       }
       
-      // 4. FORCE SIDEBAR TO STAY VISIBLE ON DESKTOP
+      // 4. 🚨 FORCE SIDEBAR VISIBLE ON DESKTOP (Inline styles override everything)
       const sidebar = document.getElementById('sidebar');
       if (sidebar) {
         if (window.innerWidth >= 1024) {
-          sidebar.classList.remove('-translate-x-full'); // Ensure it's visible on desktop
+          sidebar.classList.remove('-translate-x-full', 'hidden');
+          sidebar.style.transform = 'translateX(0)';
+          sidebar.style.display = 'block';
+          sidebar.style.visibility = 'visible';
+          console.log('✅ Sidebar forced visible via inline styles');
         } else {
-          sidebar.classList.add('-translate-x-full'); // Hide on mobile unless toggled
+          sidebar.classList.add('-translate-x-full');
+          sidebar.style.display = 'none'; // Hide completely on mobile
         }
       }
       
@@ -1891,6 +1906,17 @@ Notes: ${getVal('contactNotes') || 'None'}`.trim();
         this.checked = !isChecked; 
         if (statusText) statusText.textContent = 'Server error while toggling.'; 
         alert('❌ Server error while toggling.'); 
+      }
+    });
+
+
+    // 🚨 ENSURE SIDEBAR STAYS VISIBLE IF WINDOW IS RESIZED
+    window.addEventListener('resize', () => {
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar && window.innerWidth >= 1024) {
+        sidebar.classList.remove('-translate-x-full', 'hidden');
+        sidebar.style.transform = 'translateX(0)';
+        sidebar.style.display = 'block';
       }
     });
 
