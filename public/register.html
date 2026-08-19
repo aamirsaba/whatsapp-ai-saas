@@ -456,18 +456,19 @@
 
                 const data = await res.json();
                 if (data.success) {
-                    // Don't auto-login! Show success and send them to login page
-                    showSuccess('Account Created!', '✅ Check your email for your temporary password.<br><br>You will now be redirected to the login page.');
+                    // Show success message
+                    showSuccess('Account Created!', '✅ Account created successfully!<br><br>Please connect your WhatsApp number now.');
                     
                     setTimeout(() => {
-                        // 🚨 FORCE REDIRECT TO LOGIN, NOT DASHBOARD
-                        window.location.href = '/login';
+                        // 🚨 REDIRECT TO WHATSAPP CONNECTION PAGE, NOT LOGIN
+                        window.location.href = `/connect/${whatsappRaw.replace(/\D/g, '')}`;
                     }, 2500);
                 } else {
                     showError('Registration Failed', data.error || 'Failed to create account.');
                     btn.innerHTML = originalText;
                     btn.disabled = false;
                 }
+
             } catch (err) {
                 console.error('Registration error:', err);
                 showError('Server Error', 'Server error: ' + err.message);
