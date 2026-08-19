@@ -353,12 +353,13 @@
     }
 
     // ==========================================
-    // 🚨 AGENT STATUS MANAGEMENT
+    // 🚨 AGENT STATUS MANAGEMENT (BULLETPROOF VERSION)
     // ==========================================
     let currentAgentId = null;
 
     async function loadAgentStatus() {
       try {
+        // 1. Try the dedicated agent info endpoint first
         const res = await fetch('/api/agent/info', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -366,9 +367,35 @@
         
         if (res.ok && data.agent) {
           currentAgentId = data.agent.id;
-          const { isAvailable, isBusy } = data.agent;
-          updateStatusButtons(isAvailable, isBusy);
+          updateStatusButtons(data.agent.isAvailable, data.agent.isBusy || false);
+          return; // Success!
         }
+
+        // 2. FALLBACK: If data.agent is null, find agent by matching email from token
+        console.warn('⚠️ Agent not found in /api/agent/info, trying fallback...');
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const userEmail = payload.email;
+
+        const agentsRes = await fetch('/api/dashboard/agents', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const agentsData = await agentsRes.json();
+        
+        if (agentsData.success && agentsData.agents) {
+          const matchedAgent = agentsData.agents.find(a => a.email.toLowerCase() === userEmail.toLowerCase());
+          
+          if (matchedAgent) {
+            currentAgentId = matchedAgent.id;
+            updateStatusButtons(matchedAgent.isAvailable, matchedAgent.isBusy || false);
+            console.log('✅ Fallback successful: Found agent ID', currentAgentId);
+            return;
+          }
+        }
+
+        // 3. If all else fails
+        console.error('❌ Could not find agent record for email:', userEmail);
+        // Don't alert immediately, just log it, so it doesn't block the UI
+        
       } catch (error) {
         console.error('Load agent status error:', error);
       }
@@ -378,6 +405,8 @@
       const btnAvailable = document.getElementById('btnAvailable');
       const btnBusy = document.getElementById('btnBusy');
       const btnOffline = document.getElementById('btnOffline');
+
+      if (!btnAvailable || !btnBusy || !btnOffline) return; // Safety check
 
       // Reset all to default gray
       const defaultClass = "flex-1 px-4 py-3 rounded-lg font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300";
@@ -397,7 +426,7 @@
 
     async function setAgentStatus(isAvailable, isBusy) {
       if (!currentAgentId) {
-        alert('❌ Agent ID not found. Please refresh the page.');
+        alert('❌ Agent ID not found. Please refresh the page or ensure you were added as an agent by the admin.');
         return;
       }
 
