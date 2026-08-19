@@ -1638,7 +1638,52 @@ app.post('/api/agent/update-preference', authenticateToken, async (req, res) => 
   }
 });
 
+//  DASHBOARD: Get ALL conversations across all numbers
+app.get('/api/dashboard/all-conversations', authenticateToken, async (req, res) => {
+  try {
+    const { phone, days } = req.query;
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
 
+    // Build query
+    const query = {
+      tenantId: tenant.id,
+      createdAt: {}
+    };
+
+    // Filter by date
+    if (days && days !== 'all') {
+      const daysAgo = new Date();
+      daysAgo.setDate(daysAgo.getDate() - parseInt(days));
+      query.createdAt.gte = daysAgo;
+    }
+
+    // Filter by phone number if provided
+    if (phone) {
+      query.OR = [
+        { fromNumber: { contains: phone } },
+        { toNumber: { contains: phone } }
+      ];
+    } else {
+      query.OR = [
+        { fromNumber: tenant.whatsappNumber },
+        { toNumber: tenant.whatsappNumber }
+      ];
+    }
+
+    // Fetch messages
+    const messages = await prisma.message.findMany({
+      where: query,
+      orderBy: { createdAt: 'desc' },
+      take: 200
+    });
+
+    res.json({ success: true, messages });
+  } catch (error) {
+    console.error('All conversations error:', error);
+    res.status(500).json({ error: 'Failed to load all conversations.' });
+  }
+});
 
 //  Serve agent dashboard
 app.get('/agent-dashboard', (req, res) => {
