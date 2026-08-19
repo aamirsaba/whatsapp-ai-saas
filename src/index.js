@@ -498,22 +498,36 @@ app.post('/api/dashboard/disconnect', authenticateToken, async (req, res) => {
   }
 });
 
+// 🚀 DELETE ACCOUNT (With complete cleanup to avoid foreign key errors)
 app.delete('/api/dashboard/account', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
     const tenant = await prisma.tenant.findFirst({ where: { userId } });
 
     if (tenant) {
+      // 1. Disconnect WhatsApp gracefully
       const sock = activeSockets.get(tenant.whatsappNumber);
       if (sock) { 
         await sock.logout(); 
         activeSockets.delete(tenant.whatsappNumber); 
       }
+      
+      // 2. Delete ALL related records explicitly to avoid RESTRICT errors
+      await prisma.knowledgeDocument.deleteMany({ where: { tenantId: tenant.id } });
       await prisma.message.deleteMany({ where: { tenantId: tenant.id } });
+      await prisma.lead.deleteMany({ where: { tenantId: tenant.id } });
+      await prisma.conversation.deleteMany({ where: { tenantId: tenant.id } });
+      await prisma.agent.deleteMany({ where: { tenantId: tenant.id } });
+      await prisma.teamMember.deleteMany({ where: { tenantId: tenant.id } });
+      await prisma.teamInvitation.deleteMany({ where: { tenantId: tenant.id } });
+      
+      // 3. Finally, delete the tenant
       await prisma.tenant.delete({ where: { id: tenant.id } });
     }
     
+    // 4. Delete the user
     await prisma.user.delete({ where: { id: userId } });
+    
     res.json({ success: true, message: 'Account deleted successfully.' });
   } catch (error) {
     console.error('Delete account error:', error);
