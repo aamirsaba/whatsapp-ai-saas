@@ -183,14 +183,14 @@ app.post('/api/register-wizard', async (req, res) => {
     const hashedPassword = await require('bcryptjs').hash(autoPassword, 10);
     
     // 🚨 ADDED: requiresPasswordChange: true to force the update flow
-    const newUser = await prisma.user.create({
-      data: { 
-        email, 
-        password: hashedPassword, 
-        role: 'TENANT',
-        requiresPasswordChange: true // 🚨 THIS IS THE MAGIC FLAG
-      }
-    });
+const newUser = await prisma.user.create({
+  data: { 
+    email, 
+    password: hashedPassword, 
+    role: 'TENANT',
+    requiresPasswordChange: true // 🚨 THIS MUST BE HERE
+  }
+});
 
     // 3. Auto-generate Context based on Industry
     let autoContext = `This business operates in the ${industry} industry.`;
@@ -681,20 +681,27 @@ app.delete('/api/dashboard/account', authenticateToken, async (req, res) => {
         activeSockets.delete(tenant.whatsappNumber); 
       }
       
-      // 3. 🚨 CRITICAL: Delete the auth folder to prevent server reconnection loops
-      // Force clean the number to match the folder name exactly (removes +, spaces, etc.)
+      // 3. 🚨 CRITICAL: Delete ALL possible auth folders
       const cleanNumber = tenant.whatsappNumber ? tenant.whatsappNumber.replace(/\D/g, '') : '';
-      const authDir = path.join(process.cwd(), `auth_info_${cleanNumber}`);
       
-      if (cleanNumber && fs.existsSync(authDir)) {
-        try {
-          fs.rmSync(authDir, { recursive: true, force: true });
-          console.log(`🗑️ Successfully deleted auth folder: ${authDir}`);
-        } catch (err) {
-          console.error(`❌ FAILED to delete auth folder ${authDir}:`, err.message);
+      if (cleanNumber) {
+        // Try multiple possible folder name formats
+        const possibleFolders = [
+          path.join(process.cwd(), `auth_info_${cleanNumber}`),
+          path.join(process.cwd(), `auth_info_${tenant.whatsappNumber}`), // with + or spaces
+          path.join(process.cwd(), `auth_info_${cleanNumber.slice(1)}`), // without first digit
+        ];
+        
+        for (const folder of possibleFolders) {
+          if (fs.existsSync(folder)) {
+            try {
+              fs.rmSync(folder, { recursive: true, force: true });
+              console.log(`️ Deleted: ${folder}`);
+            } catch (err) {
+              console.error(`❌ Failed to delete ${folder}:`, err.message);
+            }
+          }
         }
-      } else {
-        console.log(`ℹ️ Auth folder not found or number missing (already clean): ${authDir}`);
       }
 
       // 4. 🚨 NEW: Delete uploaded Knowledge Base files for this tenant

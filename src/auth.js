@@ -70,14 +70,14 @@ async function loginUser(email, password) {
     { expiresIn: '7d' }
   );
 
-  // 🚨 MAKE SURE THIS IS RETURNED
+  // 🚨 CRITICAL: This object is what your login endpoint checks!
   return {
     token,
     user: {
       id: user.id,
       email: user.email,
       role: user.role,
-      requiresPasswordChange: user.requiresPasswordChange || false // 🚨 CRITICAL
+      requiresPasswordChange: user.requiresPasswordChange || false // 🚨 MUST BE HERE
     },
     tenant: await prisma.tenant.findFirst({ where: { userId: user.id } })
   };
