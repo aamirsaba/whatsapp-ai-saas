@@ -498,13 +498,15 @@ app.post('/api/dashboard/disconnect', authenticateToken, async (req, res) => {
   }
 });
 
-// 🚀 DELETE ACCOUNT (With complete cleanup, auth folder deletion, and active connection guard)
+// 🚀 DELETE ACCOUNT (Ultimate Bulletproof Cleanup)
 app.delete('/api/dashboard/account', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
     const tenant = await prisma.tenant.findFirst({ where: { userId } });
 
     if (tenant) {
+      console.log(`🗑️ Starting full account deletion for: ${tenant.businessName} (${tenant.whatsappNumber})`);
+
       // 🚨 1. GUARD: Prevent deletion if WhatsApp is still connected
       if (tenant.isActive) {
         return res.status(400).json({ 
@@ -512,21 +514,54 @@ app.delete('/api/dashboard/account', authenticateToken, async (req, res) => {
         });
       }
 
-      // 2. Disconnect WhatsApp gracefully (just in case)
+      // 2. Disconnect WhatsApp gracefully
       const sock = activeSockets.get(tenant.whatsappNumber);
       if (sock) { 
-        try { await sock.logout(); } catch (e) { /* ignore */ }
+        try { 
+          await sock.logout(); 
+          console.log(`✅ Logged out WhatsApp session for ${tenant.whatsappNumber}`);
+        } catch (e) { 
+          console.log(`⚠️ Socket logout skipped (already closed): ${e.message}`); 
+        }
         activeSockets.delete(tenant.whatsappNumber); 
       }
       
-      // 3. 🚨 CRITICAL: Delete the auth folder to prevent server reconnection loops
-      const authDir = path.join(process.cwd(), `auth_info_${tenant.whatsappNumber}`);
+      // 3. 🚨 CRITICAL: Delete the auth folder with explicit error logging
+      const cleanNumber = tenant.whatsappNumber.replace(/\D/g, ''); // Ensure no + or spaces
+      const authDir = path.join(process.cwd(), `auth_info_${cleanNumber}`);
+      
       if (fs.existsSync(authDir)) {
-        fs.rmSync(authDir, { recursive: true, force: true });
-        console.log(`🗑️ Deleted auth folder: ${authDir}`);
+        try {
+          fs.rmSync(authDir, { recursive: true, force: true });
+          console.log(`🗑️ Successfully deleted auth folder: ${authDir}`);
+        } catch (err) {
+          console.error(`❌ FAILED to delete auth folder ${authDir}:`, err.message);
+          // Don't stop the deletion process, just log the error
+        }
+      } else {
+        console.log(`ℹ️ Auth folder not found (already deleted or never created): ${authDir}`);
       }
 
-      // 4. Delete ALL related records explicitly to avoid RESTRICT errors
+      // 4. 🚨 NEW: Delete uploaded Knowledge Base files for this tenant
+      const knowledgeDocs = await prisma.knowledgeDocument.findMany({ 
+        where: { tenantId: tenant.id },
+        select: { fileName: true }
+      });
+      const knowledgeDir = path.join(process.cwd(), 'uploads', 'knowledge');
+      
+      for (const doc of knowledgeDocs) {
+        const filePath = path.join(knowledgeDir, doc.fileName);
+        if (fs.existsSync(filePath)) {
+          try {
+            fs.unlinkSync(filePath);
+            console.log(`🗑️ Deleted knowledge file: ${doc.fileName}`);
+          } catch (err) {
+            console.error(`❌ Failed to delete knowledge file ${doc.fileName}:`, err.message);
+          }
+        }
+      }
+
+      // 5. Delete ALL related database records explicitly
       await prisma.knowledgeDocument.deleteMany({ where: { tenantId: tenant.id } });
       await prisma.message.deleteMany({ where: { tenantId: tenant.id } });
       await prisma.lead.deleteMany({ where: { tenantId: tenant.id } });
@@ -535,16 +570,18 @@ app.delete('/api/dashboard/account', authenticateToken, async (req, res) => {
       await prisma.teamMember.deleteMany({ where: { tenantId: tenant.id } });
       await prisma.teamInvitation.deleteMany({ where: { tenantId: tenant.id } });
       
-      // 5. Finally, delete the tenant
+      // 6. Finally, delete the tenant
       await prisma.tenant.delete({ where: { id: tenant.id } });
+      console.log(`✅ Tenant and all DB records deleted.`);
     }
     
-    // 6. Delete the user
+    // 7. Delete the user
     await prisma.user.delete({ where: { id: userId } });
+    console.log(`✅ User account ${userId} permanently deleted.`);
     
-    res.json({ success: true, message: 'Account deleted successfully.' });
+    res.json({ success: true, message: 'Account and all associated data permanently deleted.' });
   } catch (error) {
-    console.error('Delete account error:', error);
+    console.error('❌ Delete account fatal error:', error);
     res.status(500).json({ error: 'Failed to delete account.' });
   }
 });
