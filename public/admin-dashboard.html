@@ -240,29 +240,28 @@
 
             tbody.innerHTML += `
               <tr class="hover:bg-gray-50 transition">
-                <td class="px-4 py-3 font-semibold text-gray-800 align-middle">${t.businessName || 'Unnamed Business'}</td>
-                <td class="px-4 py-3 text-gray-600 align-middle">${t.user?.email || 'N/A'}</td>
-                <td class="px-4 py-3 align-middle"><span class="px-2 py-1 text-xs font-bold rounded-full uppercase ${planClass}">${t.plan}</span></td>
-                <td class="px-4 py-3 align-middle">
-                  <div class="flex items-center gap-3 mb-1">
+                <td class="px-4 py-3 font-semibold text-gray-800">${t.businessName || 'Unnamed Business'}</td>
+                <td class="px-4 py-3 text-gray-600">${t.user?.email || 'N/A'}</td>
+                <td class="px-4 py-3"><span class="px-2 py-1 text-xs font-bold rounded-full uppercase ${planClass}">${t.plan}</span></td>
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-3">
                     <div class="w-24 bg-gray-200 rounded-full h-2">
                       <div class="${progressColor} h-2 rounded-full transition-all duration-500" style="width: ${progressPercent}%"></div>
                     </div>
                     <span class="text-xs font-mono text-gray-600 font-medium">${t.tokenBalance.toLocaleString()}</span>
                   </div>
-                  <span class="text-[10px] text-gray-500 font-medium">Remaining Tokens</span>
+		<span class="text-[10px] text-gray-500">Remaining Tokens</span>
                 </td>
-                <td class="px-4 py-3 align-middle">${statusBadge}</td>
-                <td class="px-4 py-3 text-right align-middle">
-                  <div class="flex justify-end gap-2">
-                    <button onclick="openTokenModal('${t.id}', '${t.businessName || 'Unnamed'}', ${t.tokenBalance})" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 text-xs font-medium rounded-lg hover:bg-indigo-100 transition whitespace-nowrap">💰 Add Tokens</button>
-                    <button onclick="toggleSuspend('${t.id}', ${t.isSuspended})" class="px-3 py-1.5 ${t.isSuspended ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-red-50 text-red-600 hover:bg-red-100'} text-xs font-medium rounded-lg transition whitespace-nowrap">
-                      ${t.isSuspended ? '▶️ Activate' : '⏸️ Suspend'}
-                    </button>
-                  </div>
+                <td class="px-4 py-3">${statusBadge}</td>
+                <td class="px-4 py-3 text-right">
+                  <button onclick="openTokenModal('${t.id}', '${t.businessName || 'Unnamed'}', ${t.tokenBalance})" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 text-xs font-medium rounded-lg hover:bg-indigo-100 transition mr-1">💰 Add Tokens</button>
+                  <button onclick="toggleSuspend('${t.id}', ${t.isSuspended})" class="px-3 py-1.5 ${t.isSuspended ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-red-50 text-red-600 hover:bg-red-100'} text-xs font-medium rounded-lg transition">
+                    ${t.isSuspended ? '▶️ Activate' : '⏸️ Suspend'}
+                  </button>
                 </td>
               </tr>
             `;
+          });
 
           document.getElementById('statTotalTenants').textContent = data.tenants.length;
           document.getElementById('statActiveTenants').textContent = activeCount;
