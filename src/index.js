@@ -3167,6 +3167,102 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
+
+// ==========================================
+// 💳 BILLING & SUBSCRIPTION ROUTES
+// ==========================================
+
+// 1. Request Manual Bank Transfer Upgrade
+app.post('/api/billing/request-upgrade', authenticateToken, async (req, res) => {
+  try {
+    const { plan, paymentMethod, transactionReference } = req.body;
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    // Define plan limits
+    const planLimits = {
+      'starter': { tokens: 150000, limit: 5 },
+      'growth': { tokens: 300000, limit: 15 },
+      'business': { tokens: 500000, limit: 30 }
+    };
+
+    const limits = planLimits[plan];
+    if (!limits) return res.status(400).json({ error: 'Invalid plan selected.' });
+
+    // Update tenant to "pending" status
+    await prisma.tenant.update({
+      where: { id: tenant.id },
+      data: {
+        plan: plan,
+        subscriptionStatus: 'pending_payment',
+        paymentMethod: paymentMethod || 'bank_transfer',
+        tokenLimit: limits.tokens,
+        // Note: We don't add tokens yet. The Super Admin will do this after verifying the bank transfer.
+      }
+    });
+
+    // Create an alert for the Super Admin
+    await prisma.alert.create({
+      data: {
+        type: 'info',
+        title: 'Manual Payment Request',
+        message: `${tenant.businessName} requested upgrade to ${plan.toUpperCase()} plan via ${paymentMethod}. Ref: ${transactionReference || 'N/A'}`,
+        tenantId: tenant.id
+      }
+    });
+
+    res.json({ 
+      success: true, 
+      message: 'Upgrade request submitted! Our team will verify your payment and activate your plan shortly.' 
+    });
+  } catch (error) {
+    console.error('Billing upgrade error:', error);
+    res.status(500).json({ error: 'Failed to process upgrade request.' });
+  }
+});
+
+// 2. Super Admin: Approve Manual Payment & Add Tokens
+app.post('/api/admin/billing/approve-payment', authenticateSuperAdmin, async (req, res) => {
+  try {
+    const { tenantId, plan } = req.body;
+    
+    const planLimits = {
+      'starter': 150000,
+      'growth': 300000,
+      'business': 500000
+    };
+
+    const tokensToAdd = planLimits[plan] || 150000;
+    const nextBillingDate = new Date();
+    nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
+
+    const updatedTenant = await prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        subscriptionStatus: 'active',
+        tokenBalance: { increment: tokensToAdd },
+        currentPeriodEnd: nextBillingDate,
+        lowTokenWarningSent: false // Reset warning flag
+      }
+    });
+
+    // Notify tenant (optional: send WhatsApp or email here)
+    await prisma.alert.create({
+      data: {
+        type: 'success',
+        title: 'Payment Approved',
+        message: `Your ${plan.toUpperCase()} plan has been activated! ${tokensToAdd.toLocaleString()} tokens added.`,
+        tenantId: tenantId
+      }
+    });
+
+    res.json({ success: true, message: 'Payment approved and tokens added successfully.' });
+  } catch (error) {
+    console.error('Approve payment error:', error);
+    res.status(500).json({ error: 'Failed to approve payment.' });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 WhatsApp AI SaaS Backend is running!`);
