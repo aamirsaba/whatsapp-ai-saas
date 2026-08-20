@@ -388,17 +388,13 @@ if (conversation.mode === 'HUMAN') {
       const aiReply = await getAIResponse(chatHistory, finalSystemPrompt, tenant);
       console.log(`🗣️ AI Reply: ${aiReply}`);
 
-      // ==========================================
-      // 🚨 NEW: DEDUCT TOKENS & CHECK LOW BALANCE
-      // ==========================================
-      const tokensUsed = 150; // Estimated tokens per AI reply
-      
+      // 🚨 DEDUCT TOKENS
+      const tokensUsed = 150; // Estimated per reply
       const updatedTenant = await prisma.tenant.update({
         where: { id: tenant.id },
-        data: { 
-          tokenBalance: { decrement: tokensUsed } 
-        }
+        data: { tokenBalance: { decrement: tokensUsed } }
       });
+      console.log(`💰 Tokens deducted: ${tokensUsed}. New balance: ${updatedTenant.tokenBalance}`);
 
       // Check if balance is critically low (less than 10,000)
       if (updatedTenant.tokenBalance < 10000 && updatedTenant.tokenBalance >= 0) {

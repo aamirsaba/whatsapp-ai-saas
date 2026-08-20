@@ -866,100 +866,139 @@
 
 
     async function loadDashboardData() {
-      try {
-        const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
-        const data = await res.json();
-        
-        if (data.success && data.tenant) {
-          // 1. Update Top Navigation
-          const topNameEl = document.getElementById('topBusinessName');
-          const topWaEl = document.getElementById('topWhatsappNumber');
-          if (topNameEl) topNameEl.textContent = data.tenant.businessName || 'My Business';
-          if (topWaEl) topWaEl.textContent = data.tenant.whatsappNumber ? ` +${data.tenant.whatsappNumber}` : 'Loading...';
-          
-          // 2. Update Welcome Banner
-          const welcomeNameEl = document.getElementById('businessName');
-          if (welcomeNameEl) welcomeNameEl.textContent = data.tenant.businessName || 'User';
-          
-          // 3. Update Settings Form
-          const settingsNameEl = document.getElementById('settingsBusinessName');
-          const settingsWaEl = document.getElementById('settingsWhatsappNumber');
-          if (settingsNameEl) settingsNameEl.value = data.tenant.businessName || '';
-          if (settingsWaEl) settingsWaEl.value = data.tenant.whatsappNumber || '';
-          
-          document.getElementById('llmApiKey').value = data.tenant.llmApiKey || '';
-          document.getElementById('systemPrompt').value = data.tenant.systemPrompt || '';
-          
-          const contextEl = document.getElementById('businessContext');
-          if (contextEl && data.tenant.businessContext) {
-            const txt = document.createElement("textarea");
-            txt.innerHTML = data.tenant.businessContext;
-            contextEl.value = txt.value;
-          } else if (contextEl) { 
-            contextEl.value = ''; 
-          }
-          
-          document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
-          document.getElementById('llmModel').value = data.tenant.llmModel || '';
-          document.getElementById('aiAgentName').value = data.tenant.aiAgentName || '';
-          
-          // 4. Update Contact Info
-          if (data.tenant.contactInfo) {
-            const lines = data.tenant.contactInfo.split('\n');
-            const getValue = (prefix) => lines.find(l => l.startsWith(prefix))?.split(': ')[1]?.trim() || '';
-            document.getElementById('contactPerson').value = getValue('Contact Person');
-            document.getElementById('contactEmail').value = getValue('Email');
-            document.getElementById('contactPhone').value = getValue('Phone/WhatsApp');
-            document.getElementById('contactWebsite').value = getValue('Website');
-            document.getElementById('contactNotes').value = getValue('Notes');
-          }
-          
-          // 🚨 5. ROBUST HUMAN MODE UI UPDATE
-          const humanModeToggle = document.getElementById('humanModeToggle');
-          const aiStatusIndicator = document.getElementById('aiStatusIndicator');
-          const humanModeStatus = document.getElementById('humanModeStatus');
-          
-          if (humanModeToggle) {
-            // Set checkbox based on database (true = Human Mode ON / AI OFF)
-            humanModeToggle.checked = data.tenant.isHumanMode === true;
-            
-            if (humanModeToggle.checked) {
-              // HUMAN MODE ACTIVE (AI is OFF)
-              if (aiStatusIndicator) {
-                aiStatusIndicator.className = 'mt-4 p-3 rounded-lg border-2 border-red-200 bg-red-50';
-                aiStatusIndicator.innerHTML = `
-                  <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 bg-red-500 rounded-full"></div>
-                    <span class="text-sm font-semibold text-red-700">👨‍💻 Human Mode ACTIVE - AI is paused</span>
-                  </div>`;
-              }
-              if (humanModeStatus) {
-                humanModeStatus.textContent = 'AI is PAUSED. You are in control.';
-              }
-            } else {
-              // AI MODE ACTIVE (Human Mode OFF)
-              if (aiStatusIndicator) {
-                aiStatusIndicator.className = 'mt-4 p-3 rounded-lg border-2 border-green-200 bg-green-50';
-                aiStatusIndicator.innerHTML = `
-                  <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                    <span class="text-sm font-semibold text-green-700">🤖 AI is ACTIVE and replying automatically</span>
-                  </div>`;
-              }
-              if (humanModeStatus) {
-                humanModeStatus.textContent = 'AI is ACTIVE and replying automatically.';
-              }
-            }
-          }
-          
-          // 6. Load Stats and Charts
-          await loadRealStats();
-          loadAnalytics();
-        }
-      } catch (err) { 
-        console.error('Failed to load dashboard', err); 
+  try {
+    const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+    const data = await res.json();
+    
+    if (data.success && data.tenant) {
+      // 1. Update Top Navigation
+      const topNameEl = document.getElementById('topBusinessName');
+      const topWaEl = document.getElementById('topWhatsappNumber');
+      if (topNameEl) topNameEl.textContent = data.tenant.businessName || 'My Business';
+      if (topWaEl) topWaEl.textContent = data.tenant.whatsappNumber ? ` +${data.tenant.whatsappNumber}` : 'Loading...';
+      
+      // 2. Update Welcome Banner
+      const welcomeNameEl = document.getElementById('businessName');
+      if (welcomeNameEl) welcomeNameEl.textContent = data.tenant.businessName || 'User';
+      
+      // 3. Update Settings Form (Safely)
+      const settingsNameEl = document.getElementById('settingsBusinessName');
+      const settingsWaEl = document.getElementById('settingsWhatsappNumber');
+      if (settingsNameEl) settingsNameEl.value = data.tenant.businessName || '';
+      if (settingsWaEl) settingsWaEl.value = data.tenant.whatsappNumber || '';
+      
+      const llmApiKeyEl = document.getElementById('llmApiKey');
+      if (llmApiKeyEl) llmApiKeyEl.value = data.tenant.llmApiKey || '';
+      
+      const systemPromptEl = document.getElementById('systemPrompt');
+      if (systemPromptEl) systemPromptEl.value = data.tenant.systemPrompt || '';
+      
+      const contextEl = document.getElementById('businessContext');
+      if (contextEl && data.tenant.businessContext) {
+        const txt = document.createElement("textarea");
+        txt.innerHTML = data.tenant.businessContext;
+        contextEl.value = txt.value;
+      } else if (contextEl) { 
+        contextEl.value = ''; 
       }
+      
+      const llmProviderEl = document.getElementById('llmProvider');
+      if (llmProviderEl) llmProviderEl.value = data.tenant.llmProvider || '';
+      
+      const llmModelEl = document.getElementById('llmModel');
+      if (llmModelEl) llmModelEl.value = data.tenant.llmModel || '';
+      
+      const aiAgentNameEl = document.getElementById('aiAgentName');
+      if (aiAgentNameEl) aiAgentNameEl.value = data.tenant.aiAgentName || '';
+      
+      // 4. Update Contact Info
+      if (data.tenant.contactInfo) {
+        const lines = data.tenant.contactInfo.split('\n');
+        const getValue = (prefix) => lines.find(l => l.startsWith(prefix))?.split(': ')[1]?.trim() || '';
+        
+        const contactPersonEl = document.getElementById('contactPerson');
+        if (contactPersonEl) contactPersonEl.value = getValue('Contact Person');
+        
+        const contactEmailEl = document.getElementById('contactEmail');
+        if (contactEmailEl) contactEmailEl.value = getValue('Email');
+        
+        const contactPhoneEl = document.getElementById('contactPhone');
+        if (contactPhoneEl) contactPhoneEl.value = getValue('Phone/WhatsApp');
+        
+        const contactWebsiteEl = document.getElementById('contactWebsite');
+        if (contactWebsiteEl) contactWebsiteEl.value = getValue('Website');
+        
+        const contactNotesEl = document.getElementById('contactNotes');
+        if (contactNotesEl) contactNotesEl.value = getValue('Notes');
+      }
+      
+      // 5. ROBUST HUMAN MODE UI UPDATE
+      const humanModeToggle = document.getElementById('humanModeToggle');
+      const aiStatusIndicator = document.getElementById('aiStatusIndicator');
+      const humanModeStatus = document.getElementById('humanModeStatus');
+      
+      if (humanModeToggle) {
+        humanModeToggle.checked = data.tenant.isHumanMode === true;
+        
+        if (humanModeToggle.checked) {
+          if (aiStatusIndicator) {
+            aiStatusIndicator.className = 'mt-4 p-3 rounded-lg border-2 border-red-200 bg-red-50';
+            aiStatusIndicator.innerHTML = `<div class="flex items-center gap-2"><div class="w-3 h-3 bg-red-500 rounded-full"></div><span class="text-sm font-semibold text-red-700">👨‍💻 Human Mode ACTIVE - AI is paused</span></div>`;
+          }
+          if (humanModeStatus) humanModeStatus.textContent = 'AI is PAUSED. You are in control.';
+        } else {
+          if (aiStatusIndicator) {
+            aiStatusIndicator.className = 'mt-4 p-3 rounded-lg border-2 border-green-200 bg-green-50';
+            aiStatusIndicator.innerHTML = `<div class="flex items-center gap-2"><div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div><span class="text-sm font-semibold text-green-700">🤖 AI is ACTIVE and replying automatically</span></div>`;
+          }
+          if (humanModeStatus) humanModeStatus.textContent = 'AI is ACTIVE and replying automatically.';
+        }
+      }
+
+      // 🚨 6. UPDATE BILLING & TOKEN WALLET (Fixes blank billing section)
+      const tokenBalanceEl = document.getElementById('tokenBalanceDisplay');
+      if (tokenBalanceEl) {
+        const balance = data.tenant.tokenBalance || 0;
+        tokenBalanceEl.textContent = balance.toLocaleString();
+        
+        const warningBanner = document.getElementById('lowTokenWarning');
+        if (warningBanner) {
+          if (balance < 10000) warningBanner.classList.remove('hidden');
+          else warningBanner.classList.add('hidden');
+        }
+      }
+
+      const currentPlanEl = document.getElementById('currentPlanDisplay');
+      if (currentPlanEl) {
+        currentPlanEl.textContent = (data.tenant.plan || 'trial').toUpperCase();
+      }
+
+      const subscriptionStatusEl = document.getElementById('subscriptionStatusDisplay');
+      if (subscriptionStatusEl) {
+        const status = data.tenant.subscriptionStatus || 'active';
+        subscriptionStatusEl.textContent = status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ');
+        
+        if (status === 'active' || status === 'trialing') {
+          subscriptionStatusEl.className = 'px-3 py-1 bg-green-100 text-green-700 text-sm font-bold rounded-full';
+        } else if (status === 'pending_payment') {
+          subscriptionStatusEl.className = 'px-3 py-1 bg-yellow-100 text-yellow-700 text-sm font-bold rounded-full';
+        } else {
+          subscriptionStatusEl.className = 'px-3 py-1 bg-red-100 text-red-700 text-sm font-bold rounded-full';
+        }
+      }
+      
+      // 7. Load Stats and Charts
+      if (typeof loadRealStats === 'function') await loadRealStats();
+      if (typeof loadAnalytics === 'function') loadAnalytics();
+      
+    } else {
+      console.error('Failed to load tenant data:', data);
     }
+  } catch (err) { 
+    console.error('Failed to load dashboard', err); 
+  }
+}
+
 
     async function loadRealStats() {
       try {
@@ -2158,6 +2197,59 @@ if (data.tenant) {
       </div>
     </div>
   </div>
+
+<!-- FIRST-TIME USER TOUR MODAL -->
+<div id="tourModal" class="fixed inset-0 z-[300] hidden">
+  <div class="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm"></div>
+  <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8 border border-gray-100">
+    <div class="text-center mb-6">
+      <div class="text-5xl mb-4">🚀</div>
+      <h3 class="text-2xl font-bold text-gray-900">Welcome to Universal AI SaaS!</h3>
+      <p class="text-gray-600 mt-2">Here's a quick guide to get you started:</p>
+    </div>
+    <div class="space-y-4 text-gray-700 mb-8">
+      <div class="flex items-start gap-3">
+        <span class="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">1</span>
+        <p><strong>AI Configuration:</strong> Set up your AI's personality and API key.</p>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">2</span>
+        <p><strong>WhatsApp:</strong> Connect your number by scanning the QR code.</p>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">3</span>
+        <p><strong>Knowledge Base:</strong> Upload PDFs to train your AI on your business.</p>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">4</span>
+        <p><strong>Billing & Plans:</strong> View your token usage and upgrade anytime.</p>
+      </div>
+    </div>
+    <button onclick="closeTourModal()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition text-lg">
+      Got it! Let's get started
+    </button>
+  </div>
+</div>
+
+<script>
+// Show tour on first login
+function showTourModal() {
+  const hasSeenTour = localStorage.getItem('hasSeenTour');
+  if (!hasSeenTour) {
+    document.getElementById('tourModal').classList.remove('hidden');
+    localStorage.setItem('hasSeenTour', 'true');
+  }
+}
+function closeTourModal() {
+  document.getElementById('tourModal').classList.add('hidden');
+}
+// Trigger when dashboard loads
+window.addEventListener('load', () => {
+  if (window.location.pathname.includes('dashboard')) {
+    showTourModal();
+  }
+});
+</script>
 
 </body>
 </html>
