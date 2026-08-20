@@ -1773,60 +1773,72 @@ async function updateWhatsAppButton() {
   }
 }
 
-    async function saveSettings() {
-      showInfo('Saving Settings', '💾 Please wait while we save your settings...');      
-      try {
-        const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
-        const data = await res.json();
-        if (!data.success) { showError('Error', '❌ Failed to load current settings.'); return; }
-        const getVal = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
-        const getCheck = (id) => { const el = document.getElementById(id); return el ? el.checked : false; };
-        const contactInfo = `Contact Person: ${getVal('contactPerson') || 'Not provided'}\nEmail: ${getVal('contactEmail') || 'Not provided'}\nPhone/WhatsApp: ${getVal('contactPhone') || 'Not provided'}\nWebsite: ${getVal('contactWebsite') || 'Not provided'}\nNotes: ${getVal('contactNotes') || 'None'}`.trim();
-        const saveRes = await fetch('/api/dashboard/settings', { 
-          method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, 
-          body: JSON.stringify({ 
-            businessName: getVal('settingsBusinessName') || data.tenant.businessName,
-            whatsappNumber: (getVal('settingsWhatsappNumber') || data.tenant.whatsappNumber || '').replace(/\D/g, ''),
-            contactInfo: contactInfo,
-            systemPrompt: getVal('systemPrompt') || data.tenant.systemPrompt,
-            businessContext: getVal('businessContext') || data.tenant.businessContext,
-            llmApiKey: getVal('llmApiKey') || data.tenant.llmApiKey,
-            llmModel: getVal('llmModel') || data.tenant.llmModel,
-            llmProvider: getVal('llmProvider') || data.tenant.llmProvider,
-            llmBaseUrl: getVal('llmBaseUrl') || data.tenant.llmBaseUrl,
-            aiAgentName: getVal('aiAgentName') || data.tenant.aiAgentName,
-            isHumanMode: getCheck('humanModeToggle')
-          }) 
-        });
-        const saveData = await saveRes.json();
-        if (saveRes.ok) {
-          await loadDashboard();
-          if (typeof loadWhatsAppStatus === 'function') loadWhatsAppStatus();
-          showSuccess('Settings Saved!', '✅ Your settings have been saved successfully.\n\nAll changes have been applied to your account.');          
-          const msg = document.getElementById('settingsMsg');
-          if (msg) {
-            msg.textContent = '✅ Business settings saved successfully!';
-            msg.className = 'mt-3 text-center text-sm text-green-600 font-bold bg-green-50 p-3 rounded-lg border border-green-200';
-            setTimeout(() => { msg.textContent = ''; msg.className = 'mt-3 text-center text-sm font-medium min-h-[20px]'; }, 10000);
-          }
-        } else {
-          showError('Save Failed', '❌ Failed to save settings.\n\n' + (saveData.error || 'Please try again.'));
-          const msg = document.getElementById('settingsMsg');
-          if (msg) {
-            msg.textContent = '❌ ' + (saveData.error || 'Failed to save settings.');
-            msg.className = 'mt-3 text-center text-sm text-red-600 font-bold bg-red-50 p-3 rounded-lg border border-red-200';
-          }
-        }
-      } catch (err) {
-        console.error('Save settings error:', err);
-        showError('Network Error', '❌ Unable to connect to the server.\n\nPlease check your internet connection and try again.');
-        const msg = document.getElementById('settingsMsg');
-        if (msg) {
-          msg.textContent = '❌ Network error. Please try again.';
-          msg.className = 'mt-3 text-center text-sm text-red-600 font-bold bg-red-50 p-3 rounded-lg border border-red-200';
-        }
+async function saveSettings() {
+  showInfo('Saving Settings', '💾 Please wait while we save your settings...');      
+  
+  try {
+    const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+    const data = await res.json();
+    if (!data.success) { showError('Error', '❌ Failed to load current settings.'); return; }
+    
+    const getVal = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+    const getCheck = (id) => { const el = document.getElementById(id); return el ? el.checked : false; };
+    
+    const contactInfo = `Contact Person: ${getVal('contactPerson') || 'Not provided'}\nEmail: ${getVal('contactEmail') || 'Not provided'}\nPhone/WhatsApp: ${getVal('contactPhone') || 'Not provided'}\nWebsite: ${getVal('contactWebsite') || 'Not provided'}\nNotes: ${getVal('contactNotes') || 'None'}`.trim();
+    
+    // 🚨 FORCE QWEN PROVIDER AND MODEL
+    const saveRes = await fetch('/api/dashboard/settings', { 
+      method: 'PUT', 
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, 
+      body: JSON.stringify({ 
+        businessName: getVal('settingsBusinessName') || data.tenant.businessName,
+        whatsappNumber: (getVal('settingsWhatsappNumber') || data.tenant.whatsappNumber || '').replace(/\D/g, ''),
+        contactInfo: contactInfo,
+        systemPrompt: getVal('systemPrompt') || data.tenant.systemPrompt,
+        businessContext: getVal('businessContext') || data.tenant.businessContext,
+        
+        // 🚨 ALWAYS USE QWEN (Ignore user input, use database value for API key)
+        llmApiKey: data.tenant.llmApiKey, // Always use the pre-configured key from DB
+        llmProvider: 'QWEN', // Force Qwen
+        llmModel: getVal('llmModelSelect') || data.tenant.llmModel || 'qwen-plus', // Use the Qwen model dropdown
+        llmBaseUrl: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1', // Force Qwen URL
+        
+        aiAgentName: getVal('aiAgentName') || data.tenant.aiAgentName,
+        isHumanMode: getCheck('humanModeToggle')
+      }) 
+    });
+    
+    const saveData = await saveRes.json();
+    
+    if (saveRes.ok) {
+      await loadDashboard();
+      if (typeof loadWhatsAppStatus === 'function') loadWhatsAppStatus();
+      showSuccess('Settings Saved!', '✅ Your settings have been saved successfully.\n\nAll changes have been applied to your account.');          
+      
+      const msg = document.getElementById('settingsMsg');
+      if (msg) {
+        msg.textContent = '✅ Business settings saved successfully!';
+        msg.className = 'mt-3 text-center text-sm text-green-600 font-bold bg-green-50 p-3 rounded-lg border border-green-200';
+        setTimeout(() => { msg.textContent = ''; msg.className = 'mt-3 text-center text-sm font-medium min-h-[20px]'; }, 10000);
+      }
+    } else {
+      showError('Save Failed', '❌ Failed to save settings.\n\n' + (saveData.error || 'Please try again.'));
+      const msg = document.getElementById('settingsMsg');
+      if (msg) {
+        msg.textContent = '❌ ' + (saveData.error || 'Failed to save settings.');
+        msg.className = 'mt-3 text-center text-sm text-red-600 font-bold bg-red-50 p-3 rounded-lg border border-red-200';
       }
     }
+  } catch (err) {
+    console.error('Save settings error:', err);
+    showError('Network Error', '❌ Unable to connect to the server.\n\nPlease check your internet connection and try again.');
+    const msg = document.getElementById('settingsMsg');
+    if (msg) {
+      msg.textContent = '❌ Network error. Please try again.';
+      msg.className = 'mt-3 text-center text-sm text-red-600 font-bold bg-red-50 p-3 rounded-lg border border-red-200';
+    }
+  }
+}
 
     document.getElementById('humanModeToggle').addEventListener('change', async function() {
   const isChecked = this.checked;
