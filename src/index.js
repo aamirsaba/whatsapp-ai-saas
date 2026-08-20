@@ -107,6 +107,202 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
+
+// ==========================================
+//  SUPER ADMIN: GET ALL TENANTS
+// ==========================================
+app.get('/api/admin/tenants', authenticateSuperAdmin, async (req, res) => {
+  try {
+    const tenants = await prisma.tenant.findMany({
+      include: { user: { select: { email: true } } },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json({ success: true, tenants });
+  } catch (error) {
+    console.error('Get tenants error:', error);
+    res.status(500).json({ error: 'Failed to load tenants.' });
+  }
+});
+
+// ==========================================
+// 🚨 SUPER ADMIN: ADD TOKENS (TOP-UP)
+// ==========================================
+app.post('/api/admin/tenants/:id/add-tokens', authenticateSuperAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { amount } = req.body; // Amount of tokens to add
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: 'Invalid token amount.' });
+    }
+
+    const tenant = await prisma.tenant.findUnique({ where: { id } });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    // Add tokens to their wallet
+    const updatedTenant = await prisma.tenant.update({
+      where: { id },
+      data: { 
+        tokenBalance: { increment: amount },
+        isSuspended: false // Auto-unsuspend if they pay
+      }
+    });
+
+// After successfully adding tokens:
+await prisma.alert.create({
+  data: {
+    type: 'success',
+    title: 'Tokens Added',
+    message: `Added ${amount.toLocaleString()} tokens to ${tenant.businessName}. New balance: ${updatedTenant.tokenBalance.toLocaleString()}`,
+    tenantId: id
+  }
+});
+    console.log(`✅ Added ${amount} tokens to ${tenant.businessName}. New balance: ${updatedTenant.tokenBalance}`);
+    res.json({ success: true, tenant: updatedTenant });
+  } catch (error) {
+    console.error('Add tokens error:', error);
+    res.status(500).json({ error: 'Failed to add tokens.' });
+  }
+});
+
+// ==========================================
+// 🚨 SUPER ADMIN: SUSPEND / ACTIVATE TENANT
+// ==========================================
+app.patch('/api/admin/tenants/:id/status', authenticateSuperAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isSuspended } = req.body;
+
+    await prisma.tenant.update({
+      where: { id },
+      data: { isSuspended }
+    });
+
+    res.json({ success: true, message: `Tenant ${isSuspended ? 'suspended' : 'activated'}.` });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update status.' });
+  }
+});
+
+
+// ==========================================
+// 🚨 ALERTS: GET ALL ALERTS (Super Admin)
+// ==========================================
+app.get('/api/admin/alerts', authenticateSuperAdmin, async (req, res) => {
+  try {
+    const { limit = 50, unreadOnly = false } = req.query;
+    
+    const where = {};
+    if (unreadOnly === 'true') {
+      where.isRead = false;
+    }
+
+    const alerts = await prisma.alert.findMany({
+      where,
+      include: { tenant: { select: { businessName: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: parseInt(limit)
+    });
+
+    const unreadCount = await prisma.alert.count({ where: { isRead: false } });
+
+    res.json({ success: true, alerts, unreadCount });
+  } catch (error) {
+    console.error('Get alerts error:', error);
+    res.status(500).json({ error: 'Failed to load alerts.' });
+  }
+});
+
+// ==========================================
+// 🚨 ALERTS: MARK AS READ
+// ==========================================
+app.patch('/api/admin/alerts/:id/read', authenticateSuperAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    await prisma.alert.update({
+      where: { id },
+      data: { isRead: true }
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to mark as read.' });
+  }
+});
+
+// ==========================================
+// 🚨 ALERTS: MARK ALL AS READ
+// ==========================================
+app.patch('/api/admin/alerts/read-all', authenticateSuperAdmin, async (req, res) => {
+  try {
+    await prisma.alert.updateMany({
+      where: {},
+      data: { isRead: true }
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to mark all as read.' });
+  }
+});
+
+// ==========================================
+//  ALERTS: CREATE ALERT (Internal use)
+// ==========================================
+app.post('/api/admin/alerts', authenticateSuperAdmin, async (req, res) => {
+  try {
+    const { type, title, message, tenantId } = req.body;
+
+    const alert = await prisma.alert.create({
+      data: { type, title, message, tenantId }
+    });
+
+    res.json({ success: true, alert });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create alert.' });
+  }
+});
+
+// ==========================================
+// 🚨 HELPER: AUTO-CREATE ALERTS
+// ==========================================
+
+// Example: Create alert when tenant is low on tokens
+async function checkLowTokenBalance(tenantId) {
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+  
+  if (tenant && tenant.tokenBalance < 10000) { // Less than 10k tokens
+    await prisma.alert.create({
+      data: {
+        type: 'warning',
+        title: 'Low Token Balance',
+        message: `${tenant.businessName} has only ${tenant.tokenBalance.toLocaleString()} tokens remaining.`,
+        tenantId
+      }
+    });
+  }
+}
+
+// Example: Create alert when new tenant signs up
+async function notifyNewTenant(tenantId) {
+  const tenant = await prisma.tenant.findUnique({ 
+    where: { id: tenantId },
+    include: { user: true }
+  });
+  
+  if (tenant) {
+    await prisma.alert.create({
+      data: {
+        type: 'success',
+        title: 'New Client Registered',
+        message: `${tenant.businessName} (${tenant.user.email}) just signed up for the ${tenant.plan} plan.`,
+        tenantId
+      }
+    });
+  }
+}
+
 // ==========================================
 // 🔐 UPDATE PASSWORD (Force change after first login)
 // ==========================================

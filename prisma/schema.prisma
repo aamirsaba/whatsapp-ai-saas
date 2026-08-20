@@ -46,50 +46,58 @@ model User {
   teamMemberships        TeamMember[]
 }
 
-// 4. The Upgraded Tenant Model
+// 4. The Upgraded Tenant Model (with Token Wallet & Billing)
 model Tenant {
-  id               String         @id @default(cuid())
-  businessName     String
-  whatsappNumber   String         @unique
-  websiteUrl       String?
-
-// 🚨 NEW: Save whether they chose personal or business during registration
-  botType          String         @default("business") 
+  id                     String         @id @default(cuid())
+  businessName           String
+  whatsappNumber         String         @unique
+  websiteUrl             String?
+  botType                String         @default("business") 
+  isSummaryEnabled       Boolean        @default(false)
+  summaryTime            String?
+  systemPrompt           String         @default("You are a helpful AI assistant.")
+  businessContext        String?        @db.Text
+  contactInfo            String?        @db.Text
+  serviceAreas           String?        @db.Text 
+  isActive               Boolean        @default(true)
+  isHumanMode            Boolean        @default(false)
+  createdAt              DateTime       @default(now())
+  llmProvider            String?
+  llmApiKey              String?
+  llmModel               String?
+  llmBaseUrl             String?
+  leadWebhookUrl         String?
+  botPolicy              String?        @db.Text 
+  knowledgeBase          String?        @db.Text 
+  userId                 String?
+  user                   User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  isSummaryEnabled Boolean        @default(false)
-  summaryTime      String?
+  messages               Message[]
+  leads                  Lead[]
+  teamMembers            TeamMember[]
+  invitations            TeamInvitation[] 
+  knowledgeDocuments     KnowledgeDocument[]
+  agents                 Agent[]
+  conversations          Conversation[]
+  aiAgentName            String?  
 
-  systemPrompt     String         @default("You are a helpful AI assistant.")
-  businessContext  String?        @db.Text
-  contactInfo      String?        @db.Text
-  serviceAreas     String?        @db.Text 
+  // 🚨 BILLING FIELDS
+  plan                   String         @default("trial") // trial, starter, growth, business
+  tokenBalance           Int            @default(0)       // Current tokens available in wallet
+  tokenLimit             Int            @default(0)       // Monthly limit based on plan
+  isSuspended            Boolean        @default(false)   // Ban bad clients
 
-  isActive         Boolean        @default(true)
-  isHumanMode      Boolean        @default(false)
-  createdAt        DateTime       @default(now())
+  // 🚨 RELATION TO ALERTS
+  alerts                 Alert[]
+}
 
-  llmProvider      String?
-  llmApiKey        String?
-  llmModel         String?
-  llmBaseUrl       String?
-  leadWebhookUrl   String?
-  botPolicy        String?        @db.Text // Stores custom rules/policy (optional for future use)
-  knowledgeBase    String?        @db.Text // 🚨 NEW: Stores extracted text from uploaded PDFs
-
-  userId           String?
-  user             User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  messages         Message[]
-  leads            Lead[]
-  teamMembers      TeamMember[]
-  invitations      TeamInvitation[] // 🚨 ADDED: Relation to invitations
-  // ... other tenant fields ...
-  knowledgeDocuments KnowledgeDocument[]
-
-  agents         Agent[]
-  conversations  Conversation[]
-  // ... other tenant fields ...
-  aiAgentName   String?  //  NEW: Custom name for the AI (e.g., Noor, Haya, Ammar)
+  // ==========================================
+  // 🚨 NEW: SUPER ADMIN & BILLING FIELDS
+  // ==========================================
+  plan             String         @default("trial") // trial, starter, growth, business
+  tokenBalance     Int            @default(0)       // Current tokens available in wallet
+  tokenLimit       Int            @default(0)       // Monthly limit based on plan
+  isSuspended      Boolean        @default(false)   // Ban bad clients
 }
 
 // 5. The Message Model
@@ -206,4 +214,20 @@ model Conversation {
   createdAt       DateTime @default(now())
   
   @@unique([tenantId, userNumber]) // One conversation per user per tenant
+}
+
+//  NEW: Alert Model for System Notifications
+model Alert {
+  id          String   @id @default(cuid())
+  type        String   // "warning", "info", "success", "error"
+  title       String
+  message     String   @db.Text
+  isRead      Boolean  @default(false)
+  tenantId    String?  // Optional: link to specific tenant
+  tenant      Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  
+  @@index([tenantId])
+  @@index([isRead])
+  @@index([createdAt])
 }
