@@ -43,7 +43,7 @@ model User {
   teamMemberships        TeamMember[]
 }
 
-// 4. The Upgraded Tenant Model (with Token Wallet & Billing)
+// 4. The Upgraded Tenant Model (with Token Wallet & Hybrid Billing)
 model Tenant {
   id                     String         @id @default(cuid())
   businessName           String
@@ -78,15 +78,28 @@ model Tenant {
   conversations          Conversation[]
   aiAgentName            String?  
 
-  // 🚨 BILLING FIELDS (Inside the model!)
-  plan                   String         @default("trial")
-  tokenBalance           Int            @default(0)
-  tokenLimit             Int            @default(0)
+  // 🚨 HYBRID BILLING & SUBSCRIPTION FIELDS
+  plan                   String         @default("trial") // trial, starter, growth, business
+  subscriptionStatus     String         @default("active") // active, cancelled, past_due, trialing
+  trialEndsAt            DateTime?      // When trial expires
+  currentPeriodEnd       DateTime?      // When current billing period ends
+  tokenBalance           Int            @default(1000)     // Current tokens
+  tokenLimit             Int            @default(1000)     // Monthly limit based on plan
   isSuspended            Boolean        @default(false)
+  
+  // Payment Info
+  paymentMethod          String?        // "stripe", "bank_transfer", "cash"
+  stripeCustomerId       String?        // For Stripe integration
+  stripeSubscriptionId   String?        // For recurring billing
+  
+  // Alerts
+  lowTokenWarningSent    Boolean        @default(false)    // Prevent spam
 
   // 🚨 RELATION TO ALERTS
   alerts                 Alert[]
 }
+
+
 
 // 5. The Message Model
 model Message {
@@ -218,3 +231,4 @@ model Alert {
   @@index([isRead])
   @@index([createdAt])
 }
+
