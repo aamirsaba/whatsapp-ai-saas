@@ -546,7 +546,7 @@ trialEndsAt.setDate(trialEndsAt.getDate() + 2); // 2 days from now
 
 const newTenant = await prisma.tenant.create({
   data: {
-    userId: newUser.id,
+    user: { connect: { id: newUser.id } },  // ✅ CORRECT
     businessName,
     whatsappNumber,
     websiteUrl: websiteUrl || null,
