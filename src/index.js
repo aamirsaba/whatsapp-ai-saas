@@ -399,7 +399,7 @@ app.post('/api/auth/update-password', authenticateToken, async (req, res) => {
 // 🚀 5-MINUTE MVP WIZARD REGISTRATION (AUTO-GENERATE PASSWORD)
 app.post('/api/register-wizard', async (req, res) => {
   try {
-    const { email, businessName, industry, websiteUrl, whatsappNumber, botType } = req.body;
+    const { email, businessName, industry, websiteUrl, whatsappNumber, botType, llmApiKey } = req.body;
 
     // 1. Check if user exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -555,7 +555,7 @@ const newTenant = await prisma.tenant.create({
     businessContext: autoContext,
     llmProvider: 'OPENAI',
     llmModel: 'gpt-3.5-turbo',
-    llmApiKey,
+    llmApiKey: llmApiKey || null, // Allow null if not provided in wizard    
     isHumanMode: true,
     isActive: false,
     plan: 'trial',
