@@ -1354,22 +1354,7 @@
         
         if (data.success) {
           console.log('✅ Lead updated successfully');
-          
-          // Show temporary success feedback
-          const saveBtn = event.target.closest('tr')?.querySelector('button') || 
-                         event.target.closest('.action-buttons')?.querySelector('button');
-          if (saveBtn) {
-            const originalText = saveBtn.textContent;
-            saveBtn.textContent = '✅ Saved!';
-            saveBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
-            saveBtn.classList.add('bg-green-600');
-            
-            setTimeout(() => {
-              saveBtn.textContent = originalText;
-              saveBtn.classList.remove('bg-green-600');
-              saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
-            }, 2000);
-          }
+          showSuccess('Saved!', `✅ Lead ${leadId} updated successfully!`);
         } else {
           showError('Error', '❌ Failed to save changes: ' + (data.error || 'Unknown error'));
         }
