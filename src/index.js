@@ -552,16 +552,16 @@ const newUser = await prisma.user.create({
         systemPrompt: autoPrompt,
         businessContext: autoContext,
         
-        // 🚨 DEFAULT TO QWEN FOR TRIAL USERS
+        // 🚨 CRITICAL: FORCE QWEN AND USE .ENV FALLBACK
         llmProvider: 'QWEN', 
-        llmModel: 'qwen-plus', // or 'qwen-turbo'
-        llmApiKey: llmApiKey || process.env.QWEN_API_KEY, // Use user's key OR fallback to your .env key
+        llmModel: 'qwen-plus', 
+        llmApiKey: llmApiKey || process.env.QWEN_API_KEY, // 
         llmBaseUrl: process.env.QWEN_API_URL,
         
-        isHumanMode: false,  // 🚨 AI IS ON BY DEFAULT
-        isActive: false,     // WhatsApp not connected yet
+        isHumanMode: false,  // AI ACTIVE by default
+        isActive: false,     
         plan: 'trial',
-        tokenBalance: 2000,  // 2,000 trial tokens
+        tokenBalance: 2000,  
         tokenLimit: 2000,
         trialEndsAt: trialEndsAt, 
         subscriptionStatus: 'trialing'
