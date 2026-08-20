@@ -466,9 +466,14 @@
         <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold text-gray-800">All Leads</h3>
-            <button onclick="loadLeads()" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
-              <span>🔄</span> Refresh
-            </button>
+            <div class="flex gap-2">
+              <button onclick="downloadLeadsCSV()" class="text-sm bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center gap-2 font-medium">
+                <span></span> Download CSV
+              </button>
+              <button onclick="loadLeads()" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
+                <span>🔄</span> Refresh
+              </button>
+            </div>
           </div>
           <div id="leadsMobileView" class="space-y-3 sm:hidden">
             <p class="text-gray-400 text-sm italic text-center py-8">Loading leads...</p>
@@ -1334,14 +1339,46 @@
 
     async function updateLead(leadId, field, value) {
       try {
-        const res = await fetch(`/api/dashboard/leads/${leadId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ [field]: value }) });
+        console.log('📝 Updating lead:', leadId, field, value);
+        
+        const res = await fetch(`/api/dashboard/leads/${leadId}`, { 
+          method: 'PATCH', 
+          headers: { 
+            'Content-Type': 'application/json', 
+            'Authorization': `Bearer ${token}` 
+          }, 
+          body: JSON.stringify({ [field]: value }) 
+        });
+        
         const data = await res.json();
-        if (!data.success) { showError('Error', 'Failed to save changes: ' + (data.error || 'Unknown error')); }
+        
+        if (data.success) {
+          console.log('✅ Lead updated successfully');
+          
+          // Show temporary success feedback
+          const saveBtn = event.target.closest('tr')?.querySelector('button') || 
+                         event.target.closest('.action-buttons')?.querySelector('button');
+          if (saveBtn) {
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = '✅ Saved!';
+            saveBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+            saveBtn.classList.add('bg-green-600');
+            
+            setTimeout(() => {
+              saveBtn.textContent = originalText;
+              saveBtn.classList.remove('bg-green-600');
+              saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+            }, 2000);
+          }
+        } else {
+          showError('Error', '❌ Failed to save changes: ' + (data.error || 'Unknown error'));
+        }
       } catch (err) { 
-        console.error('Failed to update lead', err); 
+        console.error('❌ Failed to update lead', err); 
         showError('Network Error', '❌ Network error. Failed to save changes.'); 
       }
     }
+
 
 async function uploadKnowledge() {
   const fileInput = document.getElementById('knowledgeFile');
@@ -1900,6 +1937,60 @@ async function updateWhatsAppButton() {
       const countDisplay = document.getElementById('contextCharCount');
       if (editor && countDisplay) {
         countDisplay.textContent = editor.value.length.toLocaleString();
+      }
+    }
+
+    // 🚨 DOWNLOAD LEADS AS CSV
+    async function downloadLeadsCSV() {
+      try {
+        showInfo('Downloading...', '📥 Preparing your leads export...');
+        
+        const res = await fetch('/api/dashboard/leads', { 
+          headers: { 'Authorization': `Bearer ${token}` } 
+        });
+        const data = await res.json();
+        
+        if (data.success && data.leads.length > 0) {
+          // CSV Header
+          const csvHeader = 'Date,Phone Number,First Message,Status,Notes,Created At\n';
+          
+          // CSV Rows
+          const csvRows = data.leads.map(lead => {
+            const date = new Date(lead.createdAt).toLocaleDateString();
+            const phone = lead.phoneNumber;
+            const message = `"${(lead.firstMessage || '').replace(/"/g, '""')}"`; // Escape quotes
+            const status = lead.status;
+            const notes = `"${(lead.notes || '').replace(/"/g, '""')}"`; // Escape quotes
+            const createdAt = new Date(lead.createdAt).toISOString();
+            
+            return `${date},${phone},${message},${status},${notes},${createdAt}`;
+          });
+          
+          // Combine
+          const csvContent = csvHeader + csvRows.join('\n');
+          
+          // Create download link
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const link = document.createElement('a');
+          const url = URL.createObjectURL(blob);
+          
+          // Generate filename with date
+          const today = new Date().toISOString().split('T')[0];
+          link.setAttribute('href', url);
+          link.setAttribute('download', `leads_${today}.csv`);
+          link.style.visibility = 'hidden';
+          
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          showSuccess('Download Complete!', `✅ Successfully exported ${data.leads.length} leads to CSV.`);
+        } else {
+          showError('No Leads', ' No leads available to download.');
+        }
+      } catch (err) {
+        console.error('Download error:', err);
+        showError('Download Failed', '❌ Failed to download leads. Please try again.');
       }
     }
 
