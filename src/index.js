@@ -540,23 +540,31 @@ const newUser = await prisma.user.create({
 
     // 5. Create Tenant
     // Create tenant with AI OFF by default
-    const newTenant = await prisma.tenant.create({
-      data: {
-        userId: newUser.id,
-        businessName,
-        whatsappNumber,
-        websiteUrl: websiteUrl || null,
-        botType: botType || 'business',
-        systemPrompt: autoPrompt,
-        businessContext: autoContext,
-        llmProvider: 'OPENAI', // or detected provider
-        llmModel: 'gpt-3.5-turbo',
-        llmApiKey,
-        isHumanMode: true,  // 🚨 AI IS OFF BY DEFAULT
-        isActive: false     // WhatsApp not connected yet
-      }
-    });
+// Inside the tenant creation in /api/register-wizard:
+const trialEndsAt = new Date();
+trialEndsAt.setDate(trialEndsAt.getDate() + 2); // 2 days from now
 
+const newTenant = await prisma.tenant.create({
+  data: {
+    userId: newUser.id,
+    businessName,
+    whatsappNumber,
+    websiteUrl: websiteUrl || null,
+    botType: botType || 'business',
+    systemPrompt: autoPrompt,
+    businessContext: autoContext,
+    llmProvider: 'OPENAI',
+    llmModel: 'gpt-3.5-turbo',
+    llmApiKey,
+    isHumanMode: true,
+    isActive: false,
+    plan: 'trial',
+    tokenBalance: 2000, // 2,000 trial tokens
+    tokenLimit: 2000,
+    trialEndsAt: trialEndsAt, // 🚨 SET TRIAL EXPIRY
+    subscriptionStatus: 'trialing'
+  }
+});
     // 6. Generate JWT
     const jwt = require('jsonwebtoken');
     const token = jwt.sign({ userId: newUser.id, role: newUser.role }, process.env.JWT_SECRET || 'your-super-secret-jwt-key', { expiresIn: '7d' });
@@ -3260,6 +3268,47 @@ app.post('/api/admin/billing/approve-payment', authenticateSuperAdmin, async (re
   } catch (error) {
     console.error('Approve payment error:', error);
     res.status(500).json({ error: 'Failed to approve payment.' });
+  }
+});
+
+// 🚨 AUTO-EXPIRE TRIALS EVERY HOUR
+cron.schedule('0 * * * *', async () => {
+  try {
+    console.log('⏰ Checking for expired trials...');
+    
+    const now = new Date();
+    const expiredTrials = await prisma.tenant.findMany({
+      where: {
+        plan: 'trial',
+        trialEndsAt: { lte: now },
+        isSuspended: false
+      }
+    });
+
+    for (const tenant of expiredTrials) {
+      console.log(`🚫 Trial expired for ${tenant.businessName}. Suspending...`);
+      
+      await prisma.tenant.update({
+        where: { id: tenant.id },
+        data: { isSuspended: true, subscriptionStatus: 'cancelled' }
+      });
+
+      // Notify tenant
+      await prisma.alert.create({
+        data: {
+          type: 'warning',
+          title: 'Trial Expired',
+          message: 'Your free trial has ended. Please upgrade to continue using the service.',
+          tenantId: tenant.id
+        }
+      });
+    }
+
+    if (expiredTrials.length > 0) {
+      console.log(`✅ Suspended ${expiredTrials.length} expired trial accounts.`);
+    }
+  } catch (error) {
+    console.error('❌ Trial expiration check failed:', error);
   }
 });
 

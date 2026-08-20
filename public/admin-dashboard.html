@@ -88,7 +88,7 @@
               <th class="px-4 py-3">Plan</th>
               <th class="px-4 py-3">Token Wallet</th>
               <th class="px-4 py-3">Status</th>
-              <th class="px-4 py-3 rounded-tr-lg text-right">Actions</th>
+	      <th class="px-4 py-3 rounded-tr-lg text-right">ACTIONS</th>
             </tr>
           </thead>
           <tbody id="tenantsTableBody" class="divide-y divide-gray-100">
@@ -254,13 +254,18 @@
                 </td>
                 <td class="px-4 py-3 align-middle">${statusBadge}</td>
                 <td class="px-4 py-3 text-right align-middle">
-                  <div class="flex justify-end gap-2">
-                    <button onclick="openTokenModal('${t.id}', '${t.businessName || 'Unnamed'}', ${t.tokenBalance})" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 text-xs font-medium rounded-lg hover:bg-indigo-100 transition mr-1">💰 Add Tokens</button>
-                    <button onclick="toggleSuspend('${t.id}', ${t.isSuspended})" class="px-3 py-1.5 ${t.isSuspended ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-red-50 text-red-600 hover:bg-red-100'} text-xs font-medium rounded-lg transition">
-                      ${t.isSuspended ? '▶️ Activate' : '⏸️ Suspend'}
-                    </button>
-                  </div>
-                </td>
+  <div class="flex justify-end gap-2">
+    ${t.subscriptionStatus === 'pending_payment' ? `
+      <button onclick="approvePayment('${t.id}', '${t.plan}')" class="px-3 py-1.5 bg-green-50 text-green-600 text-xs font-medium rounded-lg hover:bg-green-100 transition whitespace-nowrap">
+        ✅ Approve
+      </button>
+    ` : ''}
+    <button onclick="openTokenModal('${t.id}', '${(t.businessName || 'Unnamed').replace(/'/g, "\\'")}', ${t.tokenBalance})" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 text-xs font-medium rounded-lg hover:bg-indigo-100 transition whitespace-nowrap">💰 Add Tokens</button>
+    <button onclick="toggleSuspend('${t.id}', ${t.isSuspended})" class="px-3 py-1.5 ${t.isSuspended ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-red-50 text-red-600 hover:bg-red-100'} text-xs font-medium rounded-lg transition whitespace-nowrap">
+      ${t.isSuspended ? '▶️ Activate' : '⏸️ Suspend'}
+    </button>
+  </div>
+</td>
               </tr>
             `;
           });
@@ -428,6 +433,35 @@
       if (hours < 24) return `${hours}h ago`;
       return `${Math.floor(hours / 24)}d ago`;
     }
+
+async function approvePayment(tenantId, plan) {
+  if (!confirm(`Approve payment for ${plan.toUpperCase()} plan?\n\nThis will add tokens and activate the account immediately.`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/admin/billing/approve-payment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ tenantId, plan })
+    });
+
+    const data = await res.json();
+    
+    if (res.ok) {
+      showSuccess('Payment Approved!', '✅ Account activated and tokens added successfully!');
+      loadTenants();
+    } else {
+      showError('Error', '❌ ' + data.error);
+    }
+  } catch (err) {
+    showError('Network Error', ' Failed to approve payment.');
+  }
+}
+
 
     document.addEventListener('click', function(event) {
       const dropdown = document.getElementById('alertsDropdown');
