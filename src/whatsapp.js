@@ -110,6 +110,18 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         return;
       }
 
+      // 🚨 CRITICAL: SUSPENSION CHECK
+      if (tenant.isSuspended) {
+        console.log(`🚫 Tenant ${tenant.businessName} is SUSPENDED. Blocking all messages.`);
+        
+        // Optional: Send a polite message to the customer
+        await sock.sendMessage(msg.key.remoteJid, { 
+          text: '⚠️ This service is currently unavailable. Please contact the business directly.' 
+        });
+        
+        return; // 🚨 THIS STOPS THE CODE HERE. NO AI WILL REPLY.
+      }
+
       // ==========================================
       // 1. PER-USER CONVERSATION CONTROL & WELCOME
       // ==========================================
