@@ -616,16 +616,30 @@
   </div>
 
   <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-    <h3 class="text-lg font-semibold text-gray-800 mb-4">Current Plan</h3>
-    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-      <div>
-        <p class="text-sm text-gray-500">Current Plan</p>
+    <h3 class="text-lg font-semibold text-gray-800 mb-4">Current Plan & Usage</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      
+      <!-- Current Plan -->
+      <div class="p-4 bg-gray-50 rounded-lg">
+        <p class="text-sm text-gray-500 mb-1">Current Plan</p>
         <p class="text-2xl font-bold text-indigo-600" id="currentPlanDisplay">Loading...</p>
       </div>
-      <div>
-        <p class="text-sm text-gray-500">Status</p>
+      
+      <!-- Status -->
+      <div class="p-4 bg-gray-50 rounded-lg">
+        <p class="text-sm text-gray-500 mb-1">Status</p>
         <span id="subscriptionStatusDisplay" class="px-3 py-1 bg-green-100 text-green-700 text-sm font-bold rounded-full">Active</span>
       </div>
+      
+      <!-- Token Balance (ADDED THIS) -->
+      <div class="p-4 bg-indigo-50 rounded-lg border border-indigo-100">
+        <p class="text-sm text-indigo-600 mb-1 font-medium">Remaining Tokens</p>
+        <p class="text-2xl font-bold text-indigo-700" id="tokenBalanceDisplay">0</p>
+        <div id="lowTokenWarning" class="hidden mt-2 bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded inline-flex items-center gap-1">
+          <span>⚠️</span> Low Balance! <a href="#upgrade" class="underline">Upgrade Now</a>
+        </div>
+      </div>
+      
     </div>
   </div>
 
@@ -662,7 +676,7 @@
       <p class="text-xs text-blue-700 mt-2">After payment, click a plan above to submit your upgrade request.</p>
     </div>
   </div>
-</section>    
+</section>
 </main>
   </div>
 
@@ -2128,20 +2142,6 @@ async function requestUpgrade(plan) {
   }
 }
 
-// Inside your loadDashboardData() function, after fetching tenant data:
-if (data.tenant) {
-  // Update Token Display
-  const balance = data.tenant.tokenBalance || 0;
-  document.getElementById('tokenBalanceDisplay').textContent = balance.toLocaleString();
-  
-  // Show warning if balance is below 10,000 tokens
-  const warningBanner = document.getElementById('lowTokenWarning');
-  if (balance < 10000) {
-    warningBanner.classList.remove('hidden');
-  } else {
-    warningBanner.classList.add('hidden');
-  }
-}
     document.addEventListener('DOMContentLoaded', async () => {
       await loadDashboard();
       showSection('dashboard');

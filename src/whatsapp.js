@@ -110,17 +110,17 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         return;
       }
 
-      // 🚨 CRITICAL: SUSPENSION CHECK
-      if (tenant.isSuspended) {
-        console.log(`🚫 Tenant ${tenant.businessName} is SUSPENDED. Blocking all messages.`);
+      // 🚨 CRITICAL: SUSPENSION & ZERO TOKEN CHECK
+      if (tenant.isSuspended || tenant.tokenBalance <= 0) {
+        console.log(`🚫 Tenant ${tenant.businessName} is SUSPENDED or OUT OF TOKENS (${tenant.tokenBalance}). Blocking all messages.`);
         
-        // Optional: Send a polite message to the customer
         await sock.sendMessage(msg.key.remoteJid, { 
-          text: '⚠️ This service is currently unavailable. Please contact the business directly.' 
+          text: '⚠️ This service is currently unavailable. Please contact the business directly to recharge your token balance.' 
         });
         
         return; // 🚨 THIS STOPS THE CODE HERE. NO AI WILL REPLY.
       }
+
 
       // ==========================================
       // 1. PER-USER CONVERSATION CONTROL & WELCOME
