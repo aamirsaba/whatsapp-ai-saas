@@ -11,7 +11,7 @@ datasource db {
 enum Role {
   ADMIN
   TENANT
-  AGENT // 🚨 ADDED: So invited team members get the correct role
+  AGENT
 }
 
 // 2. Define Supported AI Providers
@@ -30,7 +30,6 @@ enum LeadStatus {
 }
 
 // 3. The User Model (For Login & Admin)
-
 model User {
   id                     String   @id @default(cuid())
   email                  String   @unique
@@ -38,8 +37,6 @@ model User {
   role                   Role     @default(TENANT)
   isAgency               Boolean  @default(false)
   createdAt              DateTime @default(now())
-  
-  // 🚨 MAKE SURE THIS LINE IS HERE:
   requiresPasswordChange Boolean  @default(false) 
   
   tenants                Tenant[]
@@ -81,23 +78,14 @@ model Tenant {
   conversations          Conversation[]
   aiAgentName            String?  
 
-  // 🚨 BILLING FIELDS
-  plan                   String         @default("trial") // trial, starter, growth, business
-  tokenBalance           Int            @default(0)       // Current tokens available in wallet
-  tokenLimit             Int            @default(0)       // Monthly limit based on plan
-  isSuspended            Boolean        @default(false)   // Ban bad clients
+  // 🚨 BILLING FIELDS (Inside the model!)
+  plan                   String         @default("trial")
+  tokenBalance           Int            @default(0)
+  tokenLimit             Int            @default(0)
+  isSuspended            Boolean        @default(false)
 
   // 🚨 RELATION TO ALERTS
   alerts                 Alert[]
-}
-
-  // ==========================================
-  // 🚨 NEW: SUPER ADMIN & BILLING FIELDS
-  // ==========================================
-  plan             String         @default("trial") // trial, starter, growth, business
-  tokenBalance     Int            @default(0)       // Current tokens available in wallet
-  tokenLimit       Int            @default(0)       // Monthly limit based on plan
-  isSuspended      Boolean        @default(false)   // Ban bad clients
 }
 
 // 5. The Message Model
@@ -140,7 +128,7 @@ model TeamMember {
   @@unique([tenantId, userId])
 }
 
-// 8. 🚨 NEW: The Team Invitation Model
+// 8. The Team Invitation Model
 model TeamInvitation {
   id        String   @id @default(cuid())
   email     String
@@ -160,9 +148,9 @@ model KnowledgeDocument {
   id          String   @id @default(cuid())
   tenantId    String
   tenant      Tenant   @relation(fields: [tenantId], references: [id])
-  fileName    String   // e.g., "Power_BI_Course.pdf"
-  fileSize    Int      // in bytes
-  content     String   @db.Text // The extracted text
+  fileName    String
+  fileSize    Int
+  content     String   @db.Text
   createdAt   DateTime @default(now())
 }
 
@@ -182,20 +170,19 @@ model Agent {
   createdAt         DateTime @default(now())
   
   conversations     Conversation[]
-  statusLogs        AgentStatusLog[] // 🚨 ADD THIS LINE
+  statusLogs        AgentStatusLog[]
   
   @@unique([tenantId, email])
 }
 
-// Add this model to your schema.prisma
 model AgentStatusLog {
   id        String   @id @default(cuid())
   agentId   String
   agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  status    String   // "AVAILABLE", "BUSY", "OFFLINE"
+  status    String
   startTime DateTime @default(now())
   endTime   DateTime?
-  duration  Int?     // Duration in seconds
+  duration  Int?
   
   @@index([agentId])
   @@index([startTime])
@@ -206,24 +193,24 @@ model Conversation {
   id              String   @id @default(cuid())
   tenantId        String
   tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userNumber      String   // The WhatsApp number of the user
-  mode            String   @default("AI") // "AI" or "HUMAN"
+  userNumber      String
+  mode            String   @default("AI")
   assignedAgentId String?
   assignedAgent   Agent?   @relation(fields: [assignedAgentId], references: [id], onDelete: SetNull)
   lastMessageAt   DateTime @default(now())
   createdAt       DateTime @default(now())
   
-  @@unique([tenantId, userNumber]) // One conversation per user per tenant
+  @@unique([tenantId, userNumber])
 }
 
-//  NEW: Alert Model for System Notifications
+// 🚨 NEW: Alert Model for System Notifications
 model Alert {
   id          String   @id @default(cuid())
-  type        String   // "warning", "info", "success", "error"
+  type        String
   title       String
   message     String   @db.Text
   isRead      Boolean  @default(false)
-  tenantId    String?  // Optional: link to specific tenant
+  tenantId    String?
   tenant      Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   
