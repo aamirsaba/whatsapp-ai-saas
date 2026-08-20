@@ -1339,8 +1339,6 @@
 
     async function updateLead(leadId, field, value) {
       try {
-        console.log('📝 Updating lead:', leadId, field, value);
-        
         const res = await fetch(`/api/dashboard/leads/${leadId}`, { 
           method: 'PATCH', 
           headers: { 
@@ -1353,8 +1351,8 @@
         const data = await res.json();
         
         if (data.success) {
-          console.log('✅ Lead updated successfully');
-          showSuccess('Saved!', `✅ Lead ${leadId} updated successfully!`);
+          // 🚨 CLEAN MESSAGE: No more ugly database IDs!
+          showSuccess('Saved!', '✅ Lead details updated successfully!');
         } else {
           showError('Error', '❌ Failed to save changes: ' + (data.error || 'Unknown error'));
         }
@@ -1363,7 +1361,6 @@
         showError('Network Error', '❌ Network error. Failed to save changes.'); 
       }
     }
-
 
 async function uploadKnowledge() {
   const fileInput = document.getElementById('knowledgeFile');
