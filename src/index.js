@@ -538,33 +538,36 @@ const newUser = await prisma.user.create({
       autoPrompt = "You are a Government & Public Service AI Assistant. Help citizens with service info, office hours, required documents, and procedures. Be clear and respectful.";
     }
 
-    // 5. Create Tenant
-    // Create tenant with AI OFF by default
-// Inside the tenant creation in /api/register-wizard:
-const trialEndsAt = new Date();
-trialEndsAt.setDate(trialEndsAt.getDate() + 2); // 2 days from now
+    // 5. Create Tenant with DEFAULT QWEN API KEY for trials
+    const trialEndsAt = new Date();
+    trialEndsAt.setDate(trialEndsAt.getDate() + 2); // 2 days from now
 
-const newTenant = await prisma.tenant.create({
-  data: {
-    user: { connect: { id: newUser.id } },  // ✅ CORRECT
-    businessName,
-    whatsappNumber,
-    websiteUrl: websiteUrl || null,
-    botType: botType || 'business',
-    systemPrompt: autoPrompt,
-    businessContext: autoContext,
-    llmProvider: 'OPENAI',
-    llmModel: 'gpt-3.5-turbo',
-    llmApiKey: llmApiKey || null, // Allow null if not provided in wizard    
-    isHumanMode: false,  // ✅ AI is ACTIVE by default
-    isActive: false,
-    plan: 'trial',
-    tokenBalance: 2000, // 2,000 trial tokens
-    tokenLimit: 2000,
-    trialEndsAt: trialEndsAt, // 🚨 SET TRIAL EXPIRY
-    subscriptionStatus: 'trialing'
-  }
-});
+    const newTenant = await prisma.tenant.create({
+      data: {
+        userId: newUser.id,
+        businessName,
+        whatsappNumber,
+        websiteUrl: websiteUrl || null,
+        botType: botType || 'business',
+        systemPrompt: autoPrompt,
+        businessContext: autoContext,
+        
+        // 🚨 DEFAULT TO QWEN FOR TRIAL USERS
+        llmProvider: 'QWEN', 
+        llmModel: 'qwen-plus', // or 'qwen-turbo'
+        llmApiKey: llmApiKey || process.env.QWEN_API_KEY, // Use user's key OR fallback to your .env key
+        llmBaseUrl: process.env.QWEN_API_URL,
+        
+        isHumanMode: false,  // 🚨 AI IS ON BY DEFAULT
+        isActive: false,     // WhatsApp not connected yet
+        plan: 'trial',
+        tokenBalance: 2000,  // 2,000 trial tokens
+        tokenLimit: 2000,
+        trialEndsAt: trialEndsAt, 
+        subscriptionStatus: 'trialing'
+      }
+    });
+
     // 6. Generate JWT
     const jwt = require('jsonwebtoken');
     const token = jwt.sign({ userId: newUser.id, role: newUser.role }, process.env.JWT_SECRET || 'your-super-secret-jwt-key', { expiresIn: '7d' });
