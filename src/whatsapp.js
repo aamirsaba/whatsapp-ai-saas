@@ -389,6 +389,45 @@ if (conversation.mode === 'HUMAN') {
       console.log(`🗣️ AI Reply: ${aiReply}`);
 
       // ==========================================
+      // 🚨 NEW: DEDUCT TOKENS & CHECK LOW BALANCE
+      // ==========================================
+      const tokensUsed = 150; // Estimated tokens per AI reply
+      
+      const updatedTenant = await prisma.tenant.update({
+        where: { id: tenant.id },
+        data: { 
+          tokenBalance: { decrement: tokensUsed } 
+        }
+      });
+
+      // Check if balance is critically low (less than 10,000)
+      if (updatedTenant.tokenBalance < 10000 && updatedTenant.tokenBalance >= 0) {
+        console.log(`⚠️ LOW TOKEN WARNING: ${tenant.businessName} has only ${updatedTenant.tokenBalance} tokens left!`);
+        
+        // 1. Create Super Admin Alert
+        await prisma.alert.create({
+          data: {
+            type: 'warning',
+            title: 'Low Token Balance',
+            message: `${tenant.businessName} is running low on tokens (${updatedTenant.tokenBalance} remaining). Please contact them to recharge.`,
+            tenantId: tenant.id
+          }
+        });
+
+        // 2. Send WhatsApp Warning to the Tenant Owner
+        try {
+          const ownerJid = tenant.whatsappNumber + '@s.whatsapp.net';
+          const warningMsg = `⚠️ *Low Token Alert for ${tenant.businessName}*\n\nYour AI assistant is running low on tokens!\n\n💰 *Remaining Balance:* ${updatedTenant.tokenBalance.toLocaleString()} tokens\n\nTo avoid service interruption, please contact your account manager to purchase a Top-Up Pack.\n\nReply "STOP" to disable these alerts.`;
+          
+          await sock.sendMessage(ownerJid, { text: warningMsg });
+          console.log(`✅ Low token warning sent to tenant owner: ${tenant.whatsappNumber}`);
+        } catch (err) {
+          console.error(`❌ Failed to send low token warning to tenant:`, err);
+        }
+      }
+
+
+      // ==========================================
       // 7. HANDLE AI REPLY & PDF SENDING (SEND ONLY ONCE)
       // ==========================================
       const pdfMatch = aiReply.match(/\[(?:send|sent)[_ ]?pdf[:\s]+(.*?\.pdf)\]/i);

@@ -189,6 +189,20 @@
             </div>
           </div>
         </div>
+<!-- Add this inside the grid with your other stat cards -->
+<div class="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 rounded-xl shadow-lg text-white">
+  <div class="flex items-center justify-between mb-2">
+    <p class="text-indigo-100 text-sm font-medium">AI Token Wallet</p>
+    <svg class="w-6 h-6 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+  </div>
+  <p class="text-3xl font-bold" id="tokenBalanceDisplay">Loading...</p>
+  <p class="text-xs text-indigo-200 mt-1">Remaining Tokens</p>
+  
+  <!-- Low Token Warning Banner (Hidden by default) -->
+  <div id="lowTokenWarning" class="hidden mt-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-2">
+    <span>⚠️</span> Low Balance! <a href="/pricing" class="underline hover:text-yellow-900">Recharge Now</a>
+  </div>
+</div>
       </section>
 
       <!-- AI CONFIGURATION SECTION -->
@@ -1976,6 +1990,21 @@ async function updateWhatsAppButton() {
       }
     }
 
+
+// Inside your loadDashboardData() function, after fetching tenant data:
+if (data.tenant) {
+  // Update Token Display
+  const balance = data.tenant.tokenBalance || 0;
+  document.getElementById('tokenBalanceDisplay').textContent = balance.toLocaleString();
+  
+  // Show warning if balance is below 10,000 tokens
+  const warningBanner = document.getElementById('lowTokenWarning');
+  if (balance < 10000) {
+    warningBanner.classList.remove('hidden');
+  } else {
+    warningBanner.classList.add('hidden');
+  }
+}
     document.addEventListener('DOMContentLoaded', async () => {
       await loadDashboard();
       showSection('dashboard');
