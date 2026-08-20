@@ -100,7 +100,6 @@ model Tenant {
 }
 
 
-
 // 5. The Message Model
 model Message {
   id         String   @id @default(cuid())
