@@ -556,7 +556,7 @@ const newTenant = await prisma.tenant.create({
     llmProvider: 'OPENAI',
     llmModel: 'gpt-3.5-turbo',
     llmApiKey: llmApiKey || null, // Allow null if not provided in wizard    
-    isHumanMode: true,
+    isHumanMode: false,  // ✅ AI is ACTIVE by default
     isActive: false,
     plan: 'trial',
     tokenBalance: 2000, // 2,000 trial tokens

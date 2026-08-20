@@ -57,7 +57,7 @@ model Tenant {
   contactInfo            String?        @db.Text
   serviceAreas           String?        @db.Text 
   isActive               Boolean        @default(true)
-  isHumanMode            Boolean        @default(false)
+  isHumanMode 		 Boolean @default(false)  // AI ACTIVE by default
   createdAt              DateTime       @default(now())
   llmProvider            String?
   llmApiKey              String?
