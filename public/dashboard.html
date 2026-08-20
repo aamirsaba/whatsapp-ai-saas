@@ -1817,19 +1817,82 @@ async function updateWhatsAppButton() {
       editor.removeEventListener('input', updateCharCount);
     }
     
-    function saveContextEditor() {
+    async function saveContextEditor() {
       const modal = document.getElementById('contextEditorModal');
       const editor = document.getElementById('fullContextEditor');
       const smallTextarea = document.getElementById('businessContext');
       
-      // Save content back to small textarea
+      if (!editor || !smallTextarea) {
+        console.error(' Editor or textarea not found!');
+        showError('Error', '❌ Editor not found. Please refresh the page.');
+        return;
+      }
+      
+      // 1. Copy content from full editor back to small textarea
       smallTextarea.value = editor.value;
       
-      // Close modal
-      closeContextEditor();
+      console.log('✅ Content copied back to businessContext textarea');
+      console.log(' New length:', smallTextarea.value.length);
       
-      // Show success message
-      showSuccess('Context Saved!', '✅ Your business context has been updated. Click "Save All Settings" to apply changes.');
+      // 2. 🚨 AUTO-SAVE TO DATABASE IMMEDIATELY
+      showInfo('Saving...', '💾 Saving your business context...');
+      
+      try {
+        // Get ALL current settings to save together
+        const getVal = (id) => { 
+          const el = document.getElementById(id); 
+          return el ? el.value : ''; 
+        };
+        
+        const getCheck = (id) => { 
+          const el = document.getElementById(id); 
+          return el ? el.checked : false; 
+        };
+
+        // Build complete settings object
+        const settingsData = {
+          businessName: getVal('settingsBusinessName'),
+          whatsappNumber: (getVal('settingsWhatsappNumber') || '').replace(/\D/g, ''),
+          contactInfo: `Contact Person: ${getVal('contactPerson') || 'Not provided'}\nEmail: ${getVal('contactEmail') || 'Not provided'}\nPhone/WhatsApp: ${getVal('contactPhone') || 'Not provided'}\nWebsite: ${getVal('contactWebsite') || 'Not provided'}\nNotes: ${getVal('contactNotes') || 'None'}`,
+          systemPrompt: getVal('systemPrompt'),
+          businessContext: smallTextarea.value, // 🚨 THE UPDATED CONTEXT
+          llmApiKey: getVal('llmApiKey'),
+          llmModel: getVal('llmModel'),
+          llmProvider: getVal('llmProvider'),
+          llmBaseUrl: getVal('llmBaseUrl'),
+          aiAgentName: getVal('aiAgentName'),
+          isHumanMode: getCheck('humanModeToggle')
+        };
+
+        // Send to backend
+        const saveRes = await fetch('/api/dashboard/settings', { 
+          method: 'PUT', 
+          headers: { 
+            'Content-Type': 'application/json', 
+            'Authorization': `Bearer ${token}` 
+          }, 
+          body: JSON.stringify(settingsData) 
+        });
+        
+        const saveData = await saveRes.json();
+        
+        if (saveRes.ok) {
+          // 3. Close the modal
+          closeContextEditor();
+          
+          // 4. Show success message
+          showSuccess('Saved!', '✅ Business context has been saved successfully!\n\nYour AI agent will now use this updated information.');
+          
+          // 5. Reload dashboard to reflect changes
+          await loadDashboardData();
+          
+        } else {
+          showError('Save Failed', '❌ Failed to save to database.\n\n' + (saveData.error || 'Please try again.'));
+        }
+      } catch (err) {
+        console.error('Auto-save error:', err);
+        showError('Network Error', '❌ Network error while saving. Please try again.');
+      }
     }
     
     function updateCharCount() {
