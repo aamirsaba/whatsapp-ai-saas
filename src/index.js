@@ -56,6 +56,32 @@ const wss = new WebSocketServer({ server });
 const prisma = new PrismaClient();
 app.use(express.json());
 
+// ==========================================
+// 🚨 SUPER ADMIN MIDDLEWARE (MUST BE BEFORE ROUTES)
+// ==========================================
+const authenticateSuperAdmin = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'No token provided' });
+    
+    // Verify token (make sure your JWT_SECRET matches your .env)
+    const decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET || 'your-secret-key-change-this');
+    
+    const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+    
+    // Check if user exists and is an ADMIN
+    if (!user || user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Access denied. Admin only.' });
+    }
+    
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error('Auth error:', error);
+    res.status(401).json({ error: 'Invalid or expired token' });
+  }
+};
+
 // 🚨 CRITICAL: Serve static files (HTML, CSS, JS) from the 'public' folder
 // This fixes the "Cannot GET /accept-invitation.html" error
 
