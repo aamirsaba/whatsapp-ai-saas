@@ -1065,36 +1065,6 @@ async function loadDashboardData() {
   }
 }
 
-// ==========================================
-// 🚀 NAVIGATION: SHOW/HIDE SECTIONS
-// ==========================================
-function showSection(sectionId) {
-  // 1. Hide all sections
-  const sections = document.querySelectorAll('.section-content');
-  sections.forEach(section => {
-    section.classList.add('hidden');
-  });
-
-  // 2. Show the target section
-  const target = document.getElementById(sectionId);
-  if (target) {
-    target.classList.remove('hidden');
-  }
-
-  // 3. Update active state in sidebar (optional but recommended)
-  const navLinks = document.querySelectorAll('.nav-link');
-  navLinks.forEach(link => {
-    link.classList.remove('bg-indigo-50', 'text-indigo-600', 'font-semibold');
-    link.classList.add('text-gray-600');
-  });
-  
-  // Highlight the clicked link (if it has an ID matching the section)
-  const activeLink = document.querySelector(`a[href="#${sectionId}"]`);
-  if (activeLink) {
-    activeLink.classList.add('bg-indigo-50', 'text-indigo-600', 'font-semibold');
-    activeLink.classList.remove('text-gray-600');
-  }
-}
 
     async function loadRealStats() {
       try {
