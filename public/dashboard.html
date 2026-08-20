@@ -890,7 +890,7 @@
     }
 
 
-    async function loadDashboardData() {
+async function loadDashboardData() {
   try {
     const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
     const data = await res.json();
@@ -912,9 +912,6 @@
       if (settingsNameEl) settingsNameEl.value = data.tenant.businessName || '';
       if (settingsWaEl) settingsWaEl.value = data.tenant.whatsappNumber || '';
       
-      const llmApiKeyEl = document.getElementById('llmApiKey');
-      if (llmApiKeyEl) llmApiKeyEl.value = data.tenant.llmApiKey || '';
-      
       const systemPromptEl = document.getElementById('systemPrompt');
       if (systemPromptEl) systemPromptEl.value = data.tenant.systemPrompt || '';
       
@@ -926,34 +923,21 @@
       } else if (contextEl) { 
         contextEl.value = ''; 
       }
+
+      // 🚨 4. FORCE QWEN PROVIDER & PRE-FILL API KEY (Cleaned up!)
+      const llmProviderEl = document.getElementById('llmProvider');
+      if (llmProviderEl) llmProviderEl.value = 'QWEN';
+
+      const llmApiKeyEl = document.getElementById('llmApiKey');
+      if (llmApiKeyEl) llmApiKeyEl.value = data.tenant.llmApiKey || '';
+
+      const llmModelEl = document.getElementById('llmModel');
+      if (llmModelEl) llmModelEl.value = data.tenant.llmModel || 'qwen-plus';
+
+      const llmModelSelectEl = document.getElementById('llmModelSelect');
+      if (llmModelSelectEl) llmModelSelectEl.value = data.tenant.llmModel || 'qwen-plus';
       
-      // In loadDashboardData(), after fetching tenant data:
-
-// Force Qwen provider
-const llmProviderEl = document.getElementById('llmProvider');
-if (llmProviderEl) {
-  llmProviderEl.value = 'QWEN';
-}
-
-// Pre-fill API key from database
-const llmApiKeyEl = document.getElementById('llmApiKey');
-if (llmApiKeyEl && data.tenant.llmApiKey) {
-  llmApiKeyEl.value = data.tenant.llmApiKey;
-}
-
-// Set default model
-const llmModelEl = document.getElementById('llmModel');
-if (llmModelEl) {
-  llmModelEl.value = data.tenant.llmModel || 'qwen-plus';
-}
-
-const llmModelSelectEl = document.getElementById('llmModelSelect');
-if (llmModelSelectEl) {
-  llmModelSelectEl.value = data.tenant.llmModel || 'qwen-plus';
-}
-
-      
-      // 4. Update Contact Info
+      // 5. Update Contact Info
       if (data.tenant.contactInfo) {
         const lines = data.tenant.contactInfo.split('\n');
         const getValue = (prefix) => lines.find(l => l.startsWith(prefix))?.split(': ')[1]?.trim() || '';
@@ -974,7 +958,7 @@ if (llmModelSelectEl) {
         if (contactNotesEl) contactNotesEl.value = getValue('Notes');
       }
       
-      // 5. ROBUST HUMAN MODE UI UPDATE
+      // 6. ROBUST HUMAN MODE UI UPDATE
       const humanModeToggle = document.getElementById('humanModeToggle');
       const aiStatusIndicator = document.getElementById('aiStatusIndicator');
       const humanModeStatus = document.getElementById('humanModeStatus');
@@ -997,7 +981,7 @@ if (llmModelSelectEl) {
         }
       }
 
-      // 🚨 6. UPDATE BILLING & TOKEN WALLET (Fixes blank billing section)
+      // 7. UPDATE BILLING & TOKEN WALLET
       const tokenBalanceEl = document.getElementById('tokenBalanceDisplay');
       if (tokenBalanceEl) {
         const balance = data.tenant.tokenBalance || 0;
@@ -1029,7 +1013,7 @@ if (llmModelSelectEl) {
         }
       }
       
-      // 7. Load Stats and Charts
+      // 8. Load Stats and Charts
       if (typeof loadRealStats === 'function') await loadRealStats();
       if (typeof loadAnalytics === 'function') loadAnalytics();
       
@@ -1041,6 +1025,36 @@ if (llmModelSelectEl) {
   }
 }
 
+// ==========================================
+// 🚀 NAVIGATION: SHOW/HIDE SECTIONS
+// ==========================================
+function showSection(sectionId) {
+  // 1. Hide all sections
+  const sections = document.querySelectorAll('.section-content');
+  sections.forEach(section => {
+    section.classList.add('hidden');
+  });
+
+  // 2. Show the target section
+  const target = document.getElementById(sectionId);
+  if (target) {
+    target.classList.remove('hidden');
+  }
+
+  // 3. Update active state in sidebar (optional but recommended)
+  const navLinks = document.querySelectorAll('.nav-link');
+  navLinks.forEach(link => {
+    link.classList.remove('bg-indigo-50', 'text-indigo-600', 'font-semibold');
+    link.classList.add('text-gray-600');
+  });
+  
+  // Highlight the clicked link (if it has an ID matching the section)
+  const activeLink = document.querySelector(`a[href="#${sectionId}"]`);
+  if (activeLink) {
+    activeLink.classList.add('bg-indigo-50', 'text-indigo-600', 'font-semibold');
+    activeLink.classList.remove('text-gray-600');
+  }
+}
 
     async function loadRealStats() {
       try {

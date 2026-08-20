@@ -704,6 +704,11 @@ app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html'));
 });
 
+// 🚀 PRICING PAGE ROUTE
+app.get('/pricing', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'pricing.html'));
+});
+
 // 🚀 GET DASHBOARD DATA (Tenant Info & Leads)
 app.get('/api/dashboard', authenticateToken, async (req, res) => {
   try {
