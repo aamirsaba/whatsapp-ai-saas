@@ -849,46 +849,86 @@
     }
 
     async function loadDashboard() {
-      try {
-        const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
-        const data = await res.json();
-        if (data.success && data.tenant) {
-          const topNameEl = document.getElementById('topBusinessName');
-          const topWaEl = document.getElementById('topWhatsappNumber');
-          if (topNameEl) topNameEl.textContent = data.tenant.businessName || 'My Business';
-          if (topWaEl) topWaEl.textContent = data.tenant.whatsappNumber ? ` +${data.tenant.whatsappNumber}` : 'Loading...';
-          const welcomeNameEl = document.getElementById('businessName');
-          if (welcomeNameEl) welcomeNameEl.textContent = data.tenant.businessName || 'User';
-          const settingsNameEl = document.getElementById('settingsBusinessName');
-          const settingsWaEl = document.getElementById('settingsWhatsappNumber');
-          if (settingsNameEl) settingsNameEl.value = data.tenant.businessName || '';
-          if (settingsWaEl) settingsWaEl.value = data.tenant.whatsappNumber || '';
-          document.getElementById('llmApiKey').value = data.tenant.llmApiKey || '';
-          document.getElementById('systemPrompt').value = data.tenant.systemPrompt || '';
-          const contextEl = document.getElementById('businessContext');
-          if (contextEl && data.tenant.businessContext) {
-            const txt = document.createElement("textarea");
-            txt.innerHTML = data.tenant.businessContext;
-            contextEl.value = txt.value;
-          } else if (contextEl) { contextEl.value = ''; }
-          document.getElementById('llmProvider').value = data.tenant.llmProvider || '';
-          document.getElementById('llmModel').value = data.tenant.llmModel || '';
-          document.getElementById('aiAgentName').value = data.tenant.aiAgentName || '';
-          if (data.tenant.contactInfo) {
-            const lines = data.tenant.contactInfo.split('\n');
-            const getValue = (prefix) => lines.find(l => l.startsWith(prefix))?.split(': ')[1]?.trim() || '';
-            document.getElementById('contactPerson').value = getValue('Contact Person');
-            document.getElementById('contactEmail').value = getValue('Email');
-            document.getElementById('contactPhone').value = getValue('Phone/WhatsApp');
-            document.getElementById('contactWebsite').value = getValue('Website');
-            document.getElementById('contactNotes').value = getValue('Notes');
-          }
-          document.getElementById('totalMessages').textContent = data.messages?.length || 0;
-          loadAnalytics();
-        }
-      } catch (err) { console.error('Failed to load dashboard', err); }
+  try {
+    const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+    const data = await res.json();
+    
+    if (data.success && data.tenant) {
+      // 1. Top Navigation
+      const topNameEl = document.getElementById('topBusinessName');
+      const topWaEl = document.getElementById('topWhatsappNumber');
+      if (topNameEl) topNameEl.textContent = data.tenant.businessName || 'My Business';
+      if (topWaEl) topWaEl.textContent = data.tenant.whatsappNumber ? ` +${data.tenant.whatsappNumber}` : 'Loading...';
+      
+      // 2. Welcome Banner
+      const welcomeNameEl = document.getElementById('businessName');
+      if (welcomeNameEl) welcomeNameEl.textContent = data.tenant.businessName || 'User';
+      
+      // 3. Settings Form (SAFE NULL CHECKS)
+      const settingsNameEl = document.getElementById('settingsBusinessName');
+      const settingsWaEl = document.getElementById('settingsWhatsappNumber');
+      if (settingsNameEl) settingsNameEl.value = data.tenant.businessName || '';
+      if (settingsWaEl) settingsWaEl.value = data.tenant.whatsappNumber || '';
+      
+      const llmApiKeyEl = document.getElementById('llmApiKey');
+      if (llmApiKeyEl) llmApiKeyEl.value = data.tenant.llmApiKey || '';
+      
+      const systemPromptEl = document.getElementById('systemPrompt');
+      if (systemPromptEl) systemPromptEl.value = data.tenant.systemPrompt || '';
+      
+      const contextEl = document.getElementById('businessContext');
+      if (contextEl && data.tenant.businessContext) {
+        const txt = document.createElement("textarea");
+        txt.innerHTML = data.tenant.businessContext;
+        contextEl.value = txt.value;
+      } else if (contextEl) { 
+        contextEl.value = ''; 
+      }
+      
+      // 🚨 FORCE QWEN PROVIDER
+      const llmProviderEl = document.getElementById('llmProvider');
+      if (llmProviderEl) llmProviderEl.value = 'QWEN';
+      
+      const llmModelEl = document.getElementById('llmModel');
+      if (llmModelEl) llmModelEl.value = data.tenant.llmModel || 'qwen-plus';
+      
+      const llmModelSelectEl = document.getElementById('llmModelSelect');
+      if (llmModelSelectEl) llmModelSelectEl.value = data.tenant.llmModel || 'qwen-plus';
+      
+      const aiAgentNameEl = document.getElementById('aiAgentName');
+      if (aiAgentNameEl) aiAgentNameEl.value = data.tenant.aiAgentName || '';
+      
+      // 4. Contact Info
+      if (data.tenant.contactInfo) {
+        const lines = data.tenant.contactInfo.split('\n');
+        const getValue = (prefix) => lines.find(l => l.startsWith(prefix))?.split(': ')[1]?.trim() || '';
+        
+        const contactPersonEl = document.getElementById('contactPerson');
+        if (contactPersonEl) contactPersonEl.value = getValue('Contact Person');
+        
+        const contactEmailEl = document.getElementById('contactEmail');
+        if (contactEmailEl) contactEmailEl.value = getValue('Email');
+        
+        const contactPhoneEl = document.getElementById('contactPhone');
+        if (contactPhoneEl) contactPhoneEl.value = getValue('Phone/WhatsApp');
+        
+        const contactWebsiteEl = document.getElementById('contactWebsite');
+        if (contactWebsiteEl) contactWebsiteEl.value = getValue('Website');
+        
+        const contactNotesEl = document.getElementById('contactNotes');
+        if (contactNotesEl) contactNotesEl.value = getValue('Notes');
+      }
+      
+      // 5. Update Stats Safely
+      const totalMsgEl = document.getElementById('totalMessages');
+      if (totalMsgEl) totalMsgEl.textContent = data.messages?.length || 0;
+      
+      if (typeof loadAnalytics === 'function') loadAnalytics();
     }
-
+  } catch (err) { 
+    console.error('Failed to load dashboard', err); 
+  }
+}
 
 async function loadDashboardData() {
   try {
