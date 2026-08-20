@@ -226,10 +226,58 @@
   <p class="text-xs text-gray-500 mt-1">Automatically extract business context from your website</p>
 </div>
 
+            <!-- Business / Topic Context -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Business / Topic Context</label>
-              <textarea id="businessContext" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm transition"></textarea>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-sm font-medium text-gray-700">Business / Topic Context <span class="text-xs text-gray-500">(Auto-generated from website)</span></label>
+                <button type="button" onclick="openContextEditor()" class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-lg hover:bg-indigo-200 transition flex items-center gap-1">
+                  <span>⬜</span> Full-Screen Editor
+                </button>
+              </div>
+              <textarea id="businessContext" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm transition font-mono"></textarea>
+              <p class="text-xs text-gray-500 mt-1">Click "Full-Screen Editor" to review and edit the auto-generated content</p>
             </div>
+
+            <!-- 🚨 FULL-SCREEN CONTEXT EDITOR MODAL -->
+            <div id="contextEditorModal" class="fixed inset-0 z-[300] hidden">
+              <div class="absolute inset-0 bg-black bg-opacity-70 backdrop-blur-sm"></div>
+              <div class="absolute inset-0 flex items-center justify-center p-4">
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col">
+                  <!-- Modal Header -->
+                  <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                    <div>
+                      <h3 class="text-xl font-bold text-gray-800">📝 Business Context Editor</h3>
+                      <p class="text-sm text-gray-500">Review, edit, and customize the auto-generated content</p>
+                    </div>
+                    <button onclick="closeContextEditor()" class="text-gray-400 hover:text-gray-600 p-2">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                  </div>
+                  
+                  <!-- Modal Body - Large Textarea -->
+                  <div class="flex-1 p-6 overflow-hidden">
+                    <textarea id="fullContextEditor" rows="30" class="w-full h-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-mono resize-none" placeholder="Business context will appear here..."></textarea>
+                  </div>
+                  
+                  <!-- Modal Footer -->
+                  <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
+                    <div class="flex items-center gap-2 text-sm text-gray-600">
+                      <span>📊 Characters:</span>
+                      <span id="contextCharCount" class="font-mono font-semibold">0</span>
+                    </div>
+                    <div class="flex gap-3">
+                      <button onclick="closeContextEditor()" class="px-6 py-2.5 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition">
+                        Cancel
+                      </button>
+                      <button onclick="saveContextEditor()" class="px-6 py-2.5 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition flex items-center gap-2">
+                        <span>💾</span> Save & Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">AI Provider</label>
               <select id="llmProviderSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white transition">
@@ -1730,6 +1778,66 @@ async function updateWhatsAppButton() {
         showChatHistory(currentInlineChatNumber);
         console.log('✅ Opened specific chat in Live Chat');
       }, 300);
+    }
+
+
+    // ==========================================
+    //  FULL-SCREEN CONTEXT EDITOR FUNCTIONS
+    // ==========================================
+    
+    function openContextEditor() {
+      const modal = document.getElementById('contextEditorModal');
+      const editor = document.getElementById('fullContextEditor');
+      const smallTextarea = document.getElementById('businessContext');
+      
+      // Copy content from small textarea to full editor
+      editor.value = smallTextarea.value;
+      
+      // Show modal
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+      
+      // Focus editor
+      editor.focus();
+      
+      // Update character count
+      updateCharCount();
+      
+      // Auto-update count while typing
+      editor.addEventListener('input', updateCharCount);
+    }
+    
+    function closeContextEditor() {
+      const modal = document.getElementById('contextEditorModal');
+      modal.classList.add('hidden');
+      document.body.style.overflow = ''; // Restore scrolling
+      
+      // Remove event listener
+      const editor = document.getElementById('fullContextEditor');
+      editor.removeEventListener('input', updateCharCount);
+    }
+    
+    function saveContextEditor() {
+      const modal = document.getElementById('contextEditorModal');
+      const editor = document.getElementById('fullContextEditor');
+      const smallTextarea = document.getElementById('businessContext');
+      
+      // Save content back to small textarea
+      smallTextarea.value = editor.value;
+      
+      // Close modal
+      closeContextEditor();
+      
+      // Show success message
+      showSuccess('Context Saved!', '✅ Your business context has been updated. Click "Save All Settings" to apply changes.');
+    }
+    
+    function updateCharCount() {
+      const editor = document.getElementById('fullContextEditor');
+      const countDisplay = document.getElementById('contextCharCount');
+      if (editor && countDisplay) {
+        countDisplay.textContent = editor.value.length.toLocaleString();
+      }
     }
 
     document.addEventListener('DOMContentLoaded', async () => {

@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
@@ -7,6 +8,10 @@ const { startWhatsAppSession, activeSockets, qrCodes } = require('./whatsapp');
 const { registerUser, loginUser } = require('./auth');
 const { authenticateToken } = require('./middleware'); // 🚀 NEW: Auth Middleware
 const { getAIResponse, translateText } = require('./ai'); // 🚨 ADDED translateText
+
+
+const axios = require('axios');
+const cheerio = require('cheerio');
 
 const cron = require('node-cron');
 
@@ -957,25 +962,103 @@ const { scrapeWebsiteContext } = require('./scraper'); // Add this at the top wi
 
 // ... (keep all your existing routes) ...
 
-// 🚀 NEW: SCRAPE WEBSITE FOR AI CONTEXT (Protected)
+
+// 🚀 UNIVERSAL FULL WEBSITE SCRAPER (Crawls ALL pages for ANY business)
 app.post('/api/dashboard/scrape-website', authenticateToken, async (req, res) => {
   try {
     const { websiteUrl } = req.body;
     if (!websiteUrl) return res.status(400).json({ error: 'Website URL is required.' });
 
-    const scrapedText = await scrapeWebsiteContext(websiteUrl);
-    
-    if (!scrapedText) {
-      return res.status(400).json({ error: 'Could not extract text from this website. Please enter the context manually.' });
+    let baseUrl = websiteUrl;
+    if (!baseUrl.startsWith('http')) {
+      baseUrl = 'https://' + baseUrl;
     }
 
-    // Format it into a perfect AI prompt
-    const generatedContext = `This business is based on their website (${websiteUrl}). Here is their core information: ${scrapedText}. Use this information to answer customer questions accurately and professionally.`;
+    console.log(`🕷️ Starting FULL website crawl of: ${baseUrl}`);
 
-    res.json({ success: true, generatedContext });
+    const crawledPages = new Set();
+    const pagesToCrawl = [baseUrl];
+    const maxPages = 50; // Safety limit to prevent infinite loops
+    const maxTotalChars = 15000; // Prevent LLM token overflow
+    let totalCollectedText = '';
+
+    while (pagesToCrawl.length > 0 && crawledPages.size < maxPages && totalCollectedText.length < maxTotalChars) {
+      const currentPage = pagesToCrawl.shift();
+      
+      if (crawledPages.has(currentPage)) continue;
+      crawledPages.add(currentPage);
+
+      try {
+        const response = await axios.get(currentPage, { 
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+          timeout: 10000 
+        });
+        
+        const $ = cheerio.load(response.data);
+        // Remove non-content elements to get clean text
+        $('script, style, nav, footer, header, iframe, noscript, svg').remove();
+        
+        // Extract meaningful content
+        const title = $('title').text().trim();
+        const headings = $('h1, h2, h3, h4').map((i, el) => $(el).text().trim()).get().join('. ');
+        const paragraphs = $('p, li, td').map((i, el) => $(el).text().trim()).get().join('. ');
+        
+        const pageContent = `PAGE: ${title || currentPage}\nHeadings: ${headings}\nContent: ${paragraphs}`;
+        totalCollectedText += `\n\n---\n${pageContent}`;
+
+        // Find all internal links to crawl next
+        $('a').each((i, el) => {
+          const href = $(el).attr('href');
+          if (href && !href.startsWith('http') && !href.startsWith('#') && !href.startsWith('javascript:') && !href.endsWith('.pdf') && !href.endsWith('.jpg') && !href.endsWith('.png') && !href.endsWith('.zip')) {
+            try {
+              const absoluteUrl = new URL(href, baseUrl).toString();
+              // Only crawl links that belong to the same domain
+              const baseDomain = new URL(baseUrl).hostname;
+              const linkDomain = new URL(absoluteUrl).hostname;
+              
+              if (!crawledPages.has(absoluteUrl) && linkDomain === baseDomain) {
+                pagesToCrawl.push(absoluteUrl);
+              }
+            } catch (e) {
+              // Ignore invalid URLs
+            }
+          }
+        });
+
+        console.log(`✅ Crawled ${crawledPages.size} pages so far...`);
+        
+      } catch (err) {
+        console.log(`⚠️ Skipped ${currentPage}: ${err.message}`);
+      }
+    }
+
+    // 🌐 UNIVERSAL DYNAMIC PROMPT (Works for ANY business, agency, or personal site)
+    const generatedContext = `🌐 COMPREHENSIVE WEBSITE INFORMATION
+
+This is the COMPLETE information scraped from the business website: ${baseUrl} 
+(Total pages crawled: ${crawledPages.size})
+
+Use this detailed information to answer ALL customer questions accurately and professionally:
+
+${totalCollectedText.substring(0, maxTotalChars)}
+
+---
+🤖 STRICT INSTRUCTIONS FOR THE AI AGENT:
+1. Answer questions based ONLY on the information provided above.
+2. Adopt the tone and branding of the business based on the scraped content.
+3. If a specific detail (like exact pricing, hours, or future dates) is NOT mentioned in the text above, politely state that the customer should contact the business directly for the most current information. Do NOT make up or hallucinate facts.
+4. Be professional, helpful, concise, and accurate.
+5. If the user asks for contact info, extract it from the scraped text above.`;
+
+    res.json({ 
+      success: true, 
+      generatedContext,
+      message: `✅ Successfully crawled ${crawledPages.size} pages from ${baseUrl}!`
+    });
+
   } catch (error) {
-    console.error('Scrape error:', error);
-    res.status(500).json({ error: 'Failed to scrape website.' });
+    console.error('❌ Full scrape error:', error);
+    res.status(500).json({ error: 'Failed to scrape website. Please check the URL and ensure it is accessible.' });
   }
 });
 
