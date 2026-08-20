@@ -972,10 +972,22 @@ async function loadDashboardData() {
       if (llmApiKeyEl) llmApiKeyEl.value = data.tenant.llmApiKey || '';
 
       const llmModelEl = document.getElementById('llmModel');
-      if (llmModelEl) llmModelEl.value = data.tenant.llmModel || 'qwen-plus';
+const llmModelSelectEl = document.getElementById('llmModelSelect');
 
-      const llmModelSelectEl = document.getElementById('llmModelSelect');
-      if (llmModelSelectEl) llmModelSelectEl.value = data.tenant.llmModel || 'qwen-plus';
+// 🚨 ENSURE MODEL IS ALWAYS SET (even if null/undefined/empty)
+const defaultModel = 'qwen-plus';
+const tenantModel = data.tenant.llmModel;
+
+// Only set if we have a valid model value
+if (tenantModel && tenantModel.trim() !== '') {
+  if (llmModelEl) llmModelEl.value = tenantModel;
+  if (llmModelSelectEl) llmModelSelectEl.value = tenantModel;
+} else {
+  // Force default to qwen-plus
+  if (llmModelEl) llmModelEl.value = defaultModel;
+  if (llmModelSelectEl) llmModelSelectEl.value = defaultModel;
+}
+
       
       // 5. Update Contact Info
       if (data.tenant.contactInfo) {
