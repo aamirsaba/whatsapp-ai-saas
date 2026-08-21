@@ -649,22 +649,23 @@
     <h3 class="text-lg font-semibold text-gray-800 mb-4">Upgrade Your Plan</h3>
     <p class="text-sm text-gray-600 mb-6">Choose a plan that fits your business needs. Secure payment powered by Stripe.</p>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <button onclick="requestUpgrade('starter')" class="p-4 border-2 border-gray-200 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition text-left">
-        <p class="font-bold text-gray-800">Starter</p>
-        <p class="text-2xl font-bold text-indigo-600">£49.99<span class="text-sm text-gray-500">/mo</span></p>
-        <p class="text-xs text-gray-500 mt-2">150,000 tokens</p>
-      </button>
-      <button onclick="requestUpgrade('growth')" class="p-4 border-2 border-indigo-500 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition text-left">
-        <div class="text-xs font-bold text-indigo-600 mb-1">MOST POPULAR</div>
-        <p class="font-bold text-gray-800">Growth</p>
-        <p class="text-2xl font-bold text-indigo-600">£66.99<span class="text-sm text-gray-500">/mo</span></p>
-        <p class="text-xs text-gray-500 mt-2">300,000 tokens</p>
-      </button>
-      <button onclick="requestUpgrade('business')" class="p-4 border-2 border-gray-200 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition text-left">
-        <p class="font-bold text-gray-800">Business</p>
-        <p class="text-2xl font-bold text-indigo-600">£72.99<span class="text-sm text-gray-500">/mo</span></p>
-        <p class="text-xs text-gray-500 mt-2">500,000 tokens</p>
-      </button>
+      <!-- NEW CODE: Paste this instead -->
+<button onclick="requestUpgrade('starter')" class="p-4 border-2 border-gray-200 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition text-left">
+  <p class="font-bold text-gray-800">Starter</p>
+  <p class="text-2xl font-bold text-indigo-600 price-amount" data-gbp="49.99">£49.99<span class="text-sm text-gray-500">/mo</span></p>
+  <p class="text-xs text-gray-500 mt-2">150,000 tokens</p>
+</button>
+<button onclick="requestUpgrade('growth')" class="p-4 border-2 border-indigo-500 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition text-left">
+  <div class="text-xs font-bold text-indigo-600 mb-1">MOST POPULAR</div>
+  <p class="font-bold text-gray-800">Growth</p>
+  <p class="text-2xl font-bold text-indigo-600 price-amount" data-gbp="66.99">£66.99<span class="text-sm text-gray-500">/mo</span></p>
+  <p class="text-xs text-gray-500 mt-2">300,000 tokens</p>
+</button>
+<button onclick="requestUpgrade('business')" class="p-4 border-2 border-gray-200 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition text-left">
+  <p class="font-bold text-gray-800">Business</p>
+  <p class="text-2xl font-bold text-indigo-600 price-amount" data-gbp="72.99">£72.99<span class="text-sm text-gray-500">/mo</span></p>
+  <p class="text-xs text-gray-500 mt-2">500,000 tokens</p>
+</button>
     </div>
     <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
       <p class="text-sm text-blue-900 font-semibold mb-2">🔒 Secure Payment:</p>
@@ -2163,32 +2164,41 @@ async function saveSettings() {
     }
 
 
+// NEW CODE: Paste this instead
 async function requestUpgrade(plan) {
+  // Use the globally detected currency, default to GBP
+  const currency = window.detectedCurrency || { code: 'GBP', symbol: '£', rate: 1 };
+  
+  const basePrices = { 'starter': 49.99, 'growth': 66.99, 'business': 72.99 };
+  const localPrice = Math.round(basePrices[plan] * currency.rate);
+  
   const planNames = {
-    'starter': 'Starter (£49.99/mo)',
-    'growth': 'Growth (£66.99/mo)',
-    'business': 'Business (£72.99/mo)'
+    'starter': `Starter (${currency.symbol}${localPrice}/mo)`,
+    'growth': `Growth (${currency.symbol}${localPrice}/mo)`,
+    'business': `Business (${currency.symbol}${localPrice}/mo)`
   };
 
-  showConfirm('Confirm Upgrade', `You are about to subscribe to the <strong>${planNames[plan]}</strong> plan.<br><br>You will be redirected to Stripe's secure checkout page.`, async () => {
+  showConfirm('Confirm Upgrade', `You are about to subscribe to the <strong>${planNames[plan]}</strong> plan.<br><br>You will be charged in <strong>${currency.code}</strong> (Local Currency). Stripe will handle the conversion.`, async () => {
     try {
       showInfo('Redirecting...', '🔄 Taking you to secure payment...');
-      
       const res = await fetch('/api/billing/create-checkout-session', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json', 
           'Authorization': `Bearer ${token}` 
         },
-        body: JSON.stringify({ plan: plan })
+        body: JSON.stringify({ 
+          plan: plan,
+          currency: currency.code // Send detected currency to backend
+        })
       });
 
       const data = await res.json();
 
       if (res.ok && data.url) {
-        window.location.href = data.url; // Redirect to Stripe
+        window.location.href = data.url;
       } else {
-        showError('Error', ' ' + (data.error || 'Failed to start payment.'));
+        showError('Error', '❌ ' + (data.error || 'Failed to start payment.'));
       }
     } catch (err) {
       console.error('Upgrade error:', err);
@@ -2306,5 +2316,56 @@ window.addEventListener('load', () => {
 });
 </script>
 
+<!-- 🌍 GLOBAL CURRENCY DETECTION (Zero Hardcoding!) -->
+<script>
+window.detectedCurrency = { code: 'GBP', symbol: '£', rate: 1 };
+
+async function detectAndSetCurrency() {
+  try {
+    // 1. Detect country/currency via IP
+    const ipRes = await fetch('https://ipapi.co/json/');
+    const ipData = await ipRes.json();
+    const detectedCurr = ipData.currency || 'GBP';
+
+    // 2. Fetch live exchange rate (Base: GBP)
+    const rateRes = await fetch('https://api.exchangerate-api.com/v4/latest/GBP');
+    const rateData = await rateRes.json();
+    const rate = rateData.rates[detectedCurr] || 1;
+
+    // 3. Get symbol using browser's built-in Intl API (supports ALL 150+ currencies natively)
+    let symbol = '£';
+    try {
+      const parts = new Intl.NumberFormat('en-US', { 
+        style: 'currency', 
+        currency: detectedCurr, 
+        currencyDisplay: 'narrowSymbol' 
+      }).formatToParts(0);
+      const currencyPart = parts.find(part => part.type === 'currency');
+      symbol = currencyPart ? currencyPart.value : detectedCurr + ' ';
+    } catch (e) {
+      symbol = detectedCurr + ' ';
+    }
+
+    // 4. Save globally so requestUpgrade can use it
+    window.detectedCurrency = { code: detectedCurr, symbol: symbol, rate: rate };
+
+    // 5. Update the UI dynamically if not GBP
+    if (detectedCurr !== 'GBP') {
+      document.querySelectorAll('.price-amount').forEach(el => {
+        const gbpPrice = parseFloat(el.dataset.gbp);
+        const localPrice = Math.round(gbpPrice * rate);
+        // Keep the "/mo" span intact
+        el.innerHTML = `${symbol}${localPrice.toLocaleString()}<span class="text-sm text-gray-500">/mo</span>`;
+      });
+      console.log(`💱 Global Pricing Active: ${detectedCurr} (Rate: ${rate})`);
+    }
+  } catch (error) {
+    console.log('Currency detection failed, defaulting to GBP');
+  }
+}
+
+// Run detection when page loads
+document.addEventListener('DOMContentLoaded', detectAndSetCurrency);
+</script>
 </body>
 </html>
