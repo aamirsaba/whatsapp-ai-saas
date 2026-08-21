@@ -155,9 +155,85 @@ async function sendAgentInvitationEmail(email, businessName, inviteLink) {
   }
 }
 
+
+// 🚨 PAYMENT REQUEST NOTIFICATION EMAIL
+async function sendPaymentRequestEmail(toEmail, businessName, userEmail, plan, price, whatsappNumber, reference) {
+  const nodemailer = require('nodemailer');
+  
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.hostinger.com',
+    port: parseInt(process.env.SMTP_PORT || '465'),
+    secure: true,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    }
+  });
+
+  const emailContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 2px solid #10b981; border-radius: 12px;">
+      <div style="background-color: #10b981; color: white; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; font-size: 24px;">🚨 New Payment Request!</h2>
+      </div>
+      
+      <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+        <h3 style="color: #1f2937; margin-top: 0;">Payment Details:</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;"><strong> Business Name:</strong></td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right;">${businessName}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;"><strong>👤 User Email:</strong></td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right;">${userEmail}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;"><strong>💰 Plan:</strong></td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right;"><strong style="color: #10b981;">${plan} (${price})</strong></td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;"><strong>📞 WhatsApp:</strong></td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right;">+${whatsappNumber}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0;"><strong>📝 Reference:</strong></td>
+            <td style="padding: 8px 0; text-align: right;">${reference}</td>
+          </tr>
+        </table>
+      </div>
+      
+      <div style="text-align: center; margin: 20px 0;">
+        <a href="https://bot.aamirsaba.com/admin-dashboard.html" style="display: inline-block; background-color: #10b981; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+          🔗 Approve Payment Now
+        </a>
+      </div>
+      
+      <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin-top: 20px; border-radius: 4px;">
+        <p style="margin: 0; color: #92400e; font-size: 14px;">
+          <strong>⏰ Action Required:</strong> Please verify the bank transfer and approve this payment in the Super Admin Dashboard to activate the tenant's plan and add tokens.
+        </p>
+      </div>
+      
+      <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 12px;">
+        <p>Universal AI SaaS - Automated Payment Notification</p>
+        <p>Sent: ${new Date().toLocaleString('en-GB', { timeZone: 'Asia/Muscat' })}</p>
+      </div>
+    </div>
+  `;
+
+  await transporter.sendMail({
+    from: `"Universal AI SaaS" <${process.env.SMTP_USER}>`,
+    to: toEmail,
+    subject: `🚨 New Payment Request: ${businessName} - ${plan} (${price})`,
+    html: emailContent
+  });
+}
+
 module.exports = { 
   sendWelcomeEmail, 
-  sendAdminNotificationEmail, 
-  sendPasswordResetEmail,
-  sendAgentInvitationEmail  // 🚨 ADD THIS
+  sendPasswordResetEmail, 
+  sendAgentInvitationEmail,
+  sendAdminNotificationEmail,
+  sendPaymentRequestEmail  // 🚨 ADD THIS
 };
+

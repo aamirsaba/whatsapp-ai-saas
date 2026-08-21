@@ -3192,14 +3192,18 @@ app.use((err, req, res, next) => {
 app.post('/api/billing/request-upgrade', authenticateToken, async (req, res) => {
   try {
     const { plan, paymentMethod, transactionReference } = req.body;
-    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
+    const tenant = await prisma.tenant.findFirst({ 
+      where: { userId: req.user.userId },
+      include: { user: true }
+    });
+    
     if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
 
     // Define plan limits
     const planLimits = {
-      'starter': { tokens: 150000, limit: 5 },
-      'growth': { tokens: 300000, limit: 15 },
-      'business': { tokens: 500000, limit: 30 }
+      'starter': { tokens: 150000, price: '25 OMR' },
+      'growth': { tokens: 300000, price: '35 OMR' },
+      'business': { tokens: 500000, price: '50 OMR' }
     };
 
     const limits = planLimits[plan];
@@ -3213,7 +3217,6 @@ app.post('/api/billing/request-upgrade', authenticateToken, async (req, res) => 
         subscriptionStatus: 'pending_payment',
         paymentMethod: paymentMethod || 'bank_transfer',
         tokenLimit: limits.tokens,
-        // Note: We don't add tokens yet. The Super Admin will do this after verifying the bank transfer.
       }
     });
 
@@ -3222,10 +3225,45 @@ app.post('/api/billing/request-upgrade', authenticateToken, async (req, res) => 
       data: {
         type: 'info',
         title: 'Manual Payment Request',
-        message: `${tenant.businessName} requested upgrade to ${plan.toUpperCase()} plan via ${paymentMethod}. Ref: ${transactionReference || 'N/A'}`,
+        message: `${tenant.businessName} (${tenant.user.email}) requested upgrade to ${plan.toUpperCase()} plan (${limits.price}). Ref: ${transactionReference || 'N/A'}`,
         tenantId: tenant.id
       }
     });
+
+    // 🚨 1. SEND WHATSAPP ALERT TO SUPER ADMIN (+96891293119)
+    try {
+      const superAdminNumber = '96891293119'; // Your number
+      const sock = activeSockets.get(superAdminNumber); // Find the socket for this number
+      
+      if (sock) {
+        const alertMsg = `🚨 *NEW PAYMENT REQUEST!*\n\n📋 *Business:* ${tenant.businessName}\n *Email:* ${tenant.user.email}\n💰 *Plan:* ${plan.toUpperCase()} (${limits.price})\n📞 *WhatsApp:* ${tenant.whatsappNumber}\n *Reference:* ${transactionReference || 'N/A'}\n\n⏰ *Time:* ${new Date().toLocaleString('en-GB', { timeZone: 'Asia/Muscat' })}\n\n🔗 *Login to approve:* https://bot.aamirsaba.com/admin-dashboard.html`;
+        
+        await sock.sendMessage(superAdminNumber + '@s.whatsapp.net', { text: alertMsg });
+        console.log(`✅ WhatsApp alert sent to +${superAdminNumber}`);
+      } else {
+        console.log(`⚠️ No active WhatsApp session for +${superAdminNumber}. Alert not sent.`);
+      }
+    } catch (waError) {
+      console.error(' Failed to send WhatsApp alert:', waError);
+    }
+
+    // 🚨 2. SEND EMAIL ALERT TO accounts@aamirsaba.com
+    try {
+      const { sendPaymentRequestEmail } = require('./email');
+      
+      await sendPaymentRequestEmail(
+        'accounts@aamirsaba.com',
+        tenant.businessName,
+        tenant.user.email,
+        plan.toUpperCase(),
+        limits.price,
+        tenant.whatsappNumber,
+        transactionReference || 'N/A'
+      );
+      console.log(`✅ Email alert sent to accounts@aamirsaba.com`);
+    } catch (emailError) {
+      console.error('❌ Failed to send email alert:', emailError);
+    }
 
     res.json({ 
       success: true, 
