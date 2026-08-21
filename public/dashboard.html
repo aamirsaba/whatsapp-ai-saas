@@ -2212,20 +2212,38 @@ async function detectAndSetCurrency() {
 
 // NEW CODE - PASTE THIS
 async function requestUpgrade(plan) {
-  const currency = window.detectedCurrency || { code: 'GBP', symbol: '£', rate: 1 };
+  // 1. Detect user's currency
+  let currency = 'GBP';
+  let symbol = '£';
+  let rate = 1;
   
+  try {
+    const res = await fetch('/api/currency/detect');
+    const data = await res.json();
+    if (data.success) {
+      currency = data.currency;
+      symbol = data.currency === 'GBP' ? '£' : currency + ' ';
+      rate = data.exchangeRate;
+    }
+  } catch (err) {
+    console.log('Currency detection failed, using GBP');
+  }
+
+  // 2. Calculate local price
   const basePrices = { 'starter': 49.99, 'growth': 66.99, 'business': 72.99 };
-  const localPrice = Math.round(basePrices[plan] * currency.rate);
-  
+  const localPrice = Math.round(basePrices[plan] * rate);
+
+  // 3. Show confirmation
   const planNames = {
-    'starter': `Starter (${currency.symbol}${localPrice}/mo)`,
-    'growth': `Growth (${currency.symbol}${localPrice}/mo)`,
-    'business': `Business (${currency.symbol}${localPrice}/mo)`
+    'starter': `Starter (${symbol}${localPrice}/mo)`,
+    'growth': `Growth (${symbol}${localPrice}/mo)`,
+    'business': `Business (${symbol}${localPrice}/mo)`
   };
 
-  showConfirm('Confirm Upgrade', `You are about to subscribe to the <strong>${planNames[plan]}</strong> plan.<br><br>You will be charged in <strong>${currency.code}</strong> (Local Currency). Stripe will handle the conversion.`, async () => {
+  showConfirm('Confirm Upgrade', `You are about to subscribe to the <strong>${planNames[plan]}</strong> plan.<br><br>You will be charged in <strong>${currency}</strong> (Local Currency). Stripe will handle the conversion.`, async () => {
     try {
       showInfo('Redirecting...', '🔄 Taking you to secure payment...');
+      
       const res = await fetch('/api/billing/create-checkout-session', {
         method: 'POST',
         headers: { 
@@ -2234,7 +2252,7 @@ async function requestUpgrade(plan) {
         },
         body: JSON.stringify({ 
           plan: plan,
-          currency: currency.code 
+          currency: currency // Send detected currency to backend
         })
       });
 
@@ -2364,41 +2382,35 @@ window.addEventListener('load', () => {
 });
 </script>
 
-<!-- 🌍 GLOBAL CURRENCY DETECTION (Zero Hardcoding!) -->
 <script>
-window.detectedCurrency = { code: 'GBP', symbol: '£', rate: 1 };
-
-async function detectAndSetCurrency() {
+// 🌍 AUTO-DETECT AND CONVERT PRICES ON PAGE LOAD
+async function detectAndConvertPrices() {
   try {
-    const ipRes = await fetch('https://ipapi.co/json/');
-    const ipData = await ipRes.json();
-    const detectedCurr = ipData.currency || 'GBP';
-
-    const rateRes = await fetch('https://api.exchangerate-api.com/v4/latest/GBP');
-    const rateData = await rateRes.json();
-    const rate = rateData.rates[detectedCurr] || 1;
-
-    window.detectedCurrency = { code: detectedCurr, symbol: detectedCurr + ' ', rate: rate };
-
-    if (detectedCurr !== 'GBP') {
-      try {
-        const parts = new Intl.NumberFormat('en-US', { style: 'currency', currency: detectedCurr, currencyDisplay: 'narrowSymbol' }).formatToParts(0);
-        const currencyPart = parts.find(part => part.type === 'currency');
-        if (currencyPart) window.detectedCurrency.symbol = currencyPart.value;
-      } catch (e) {}
-
+    const res = await fetch('/api/currency/detect');
+    const data = await res.json();
+    
+    if (data.success && data.currency !== 'GBP') {
+      const symbol = data.currency === 'GBP' ? '£' : data.currency + ' ';
+      const rate = data.exchangeRate;
+      
+      // Find all price elements
       document.querySelectorAll('.price-amount').forEach(el => {
         const gbpPrice = parseFloat(el.dataset.gbp);
-        const localPrice = Math.round(gbpPrice * rate);
-        el.innerHTML = `${window.detectedCurrency.symbol}${localPrice.toLocaleString()}<span class="text-sm text-gray-500">/mo</span>`;
+        if (gbpPrice) {
+          const localPrice = Math.round(gbpPrice * rate);
+          el.innerHTML = `${symbol}${localPrice.toLocaleString()}<span class="text-sm text-gray-500">/mo</span>`;
+        }
       });
-      console.log(`💱 Global Pricing Active: ${detectedCurr} (Rate: ${rate})`);
+      
+      console.log(`💱 Global Pricing Active: ${data.currency} (Rate: ${rate})`);
     }
-  } catch (error) {
-    console.log('Currency detection failed, defaulting to GBP');
+  } catch (err) {
+    console.log('Currency detection failed');
   }
 }
-document.addEventListener('DOMContentLoaded', detectAndSetCurrency);
+
+// Run on page load
+document.addEventListener('DOMContentLoaded', detectAndConvertPrices);
 </script>
 
 </body>

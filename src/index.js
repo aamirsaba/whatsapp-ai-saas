@@ -18,6 +18,8 @@ const { fromPath } = require('pdf2pic');
 const pdf = require('pdf-parse');
 const fs = require('fs');
 const path = require('path');
+const currencyRoutes = require('./routes/currency');
+
 
 // ==========================================
 // 1. INITIALIZE APP, SERVER, PRISMA & STRIPE
@@ -99,6 +101,9 @@ app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), asyn
 // =================================================================
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'public')));
+// Register currency routes
+app.use('/api/currency', currencyRoutes);
+
 
 // ==========================================
 // 4. MIDDLEWARES & HELPERS
@@ -168,38 +173,36 @@ app.post('/api/billing/create-checkout-session', authenticateToken, async (req, 
     
     if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
 
-    // Base prices in GBP
-    const basePrices = { 'starter': 49.99, 'growth': 66.99, 'business': 72.99 };
-    const basePrice = basePrices[plan] || basePrices['starter'];
-
-    // Fetch LIVE exchange rate (Base: GBP)
-    let rate = 1;
-    let finalCurrency = (currency || 'GBP').toUpperCase();
+    // Base prices in GBP (pence)
+    const basePrices = { 
+      'starter': 4999,    // £49.99
+      'growth': 6699,     // £66.99
+      'business': 7299    // £72.99
+    };
     
-    try {
-      const rateRes = await axios.get('https://api.exchangerate-api.com/v4/latest/GBP');
-      rate = rateRes.data.rates[finalCurrency] || 1;
-    } catch (err) {
-      console.log('Exchange rate fetch failed, defaulting to GBP');
-      finalCurrency = 'GBP';
+    const basePrice = basePrices[plan] || basePrices['starter'];
+    const finalCurrency = (currency || 'GBP').toLowerCase();
+
+    // If not GBP, fetch exchange rate and convert
+    let amount = basePrice;
+    if (finalCurrency !== 'gbp') {
+      try {
+        const rateRes = await axios.get('https://api.exchangerate-api.com/v4/latest/GBP');
+        const rate = rateRes.data.rates[currency.toUpperCase()] || 1;
+        amount = Math.round(basePrice * rate);
+      } catch (err) {
+        console.log('Exchange rate fetch failed, using GBP');
+        amount = basePrice;
+      }
     }
 
-    // Calculate amount in local currency
-    const localPrice = basePrice * rate;
-    
-    // Stripe requires amount in smallest unit (cents/paisa/etc.)
-    const zeroDecimalCurrencies = ['bif', 'clp', 'djf', 'gnf', 'jpy', 'kmf', 'krw', 'mga', 'pyg', 'rwf', 'vnd', 'vuv', 'xaf', 'xof', 'xpf'];
-    const isZeroDecimal = zeroDecimalCurrencies.includes(finalCurrency.toLowerCase());
-    
-    const amount = isZeroDecimal ? Math.round(localPrice) : Math.round(localPrice * 100);
-
-    // Create Stripe Session with DYNAMIC price_data
+    // Create Stripe Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       customer_email: tenant.user.email,
       line_items: [{
         price_data: {
-          currency: finalCurrency.toLowerCase(), // e.g., 'omr', 'usd', 'pkr'
+          currency: finalCurrency,
           product_data: {
             name: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
             description: 'Monthly AI SaaS Subscription'
@@ -213,7 +216,7 @@ app.post('/api/billing/create-checkout-session', authenticateToken, async (req, 
       metadata: { 
         tenantId: tenant.id, 
         plan: plan,
-        chargedCurrency: finalCurrency
+        chargedCurrency: currency || 'GBP'
       },
       success_url: `${process.env.FRONTEND_URL}/dashboard?payment=success`,
       cancel_url: `${process.env.FRONTEND_URL}/dashboard?payment=cancelled`,
