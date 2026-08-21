@@ -2383,22 +2383,26 @@ window.addEventListener('load', () => {
 </script>
 
 <script>
-// 🌍 GLOBAL CURRENCY DETECTION
+// 🌍 GLOBAL CURRENCY DETECTION (WITH HEAVY DEBUGGING)
 window.detectedCurrency = { code: 'GBP', symbol: '£', rate: 1 };
 
 async function detectAndSetCurrency() {
+  console.log('🔍 [DEBUG 1] Currency detection started...');
   try {
-    // Detect user's country/currency via IP
+    console.log('🔍 [DEBUG 2] Fetching IP data from ipapi.co...');
     const ipRes = await fetch('https://ipapi.co/json/');
+    console.log('🔍 [DEBUG 3] IP Response status:', ipRes.status);
     const ipData = await ipRes.json();
+    console.log('🔍 [DEBUG 4] IP Data received:', ipData);
     const detectedCurr = ipData.currency || 'GBP';
+    console.log('🔍 [DEBUG 5] Detected Currency:', detectedCurr);
 
-    // Fetch live exchange rate (Base: GBP)
+    console.log('🔍 [DEBUG 6] Fetching exchange rates...');
     const rateRes = await fetch('https://api.exchangerate-api.com/v4/latest/GBP');
     const rateData = await rateRes.json();
     const rate = rateData.rates[detectedCurr] || 1;
+    console.log('🔍 [DEBUG 7] Exchange Rate for', detectedCurr, 'is', rate);
 
-    // Get symbol using browser's built-in Intl API (supports ALL currencies)
     let symbol = '£';
     try {
       const parts = new Intl.NumberFormat('en-US', { 
@@ -2411,25 +2415,40 @@ async function detectAndSetCurrency() {
     } catch (e) {
       symbol = detectedCurr + ' ';
     }
+    console.log('🔍 [DEBUG 8] Currency Symbol:', symbol);
 
-    // Save globally
     window.detectedCurrency = { code: detectedCurr, symbol: symbol, rate: rate };
 
-    // Update the UI if not GBP
     if (detectedCurr !== 'GBP') {
-      document.querySelectorAll('.price-amount').forEach(el => {
+      console.log('🔍 [DEBUG 9] Currency is NOT GBP. Updating UI...');
+      const elements = document.querySelectorAll('.price-amount');
+      console.log('🔍 [DEBUG 10] Found', elements.length, 'elements with class "price-amount"');
+      
+      elements.forEach((el, index) => {
         const gbpPrice = parseFloat(el.dataset.gbp);
+        console.log(`🔍 [DEBUG 11] Element ${index}: dataset.gbp =`, gbpPrice);
         if (gbpPrice) {
           const localPrice = Math.round(gbpPrice * rate);
           el.innerHTML = `${symbol}${localPrice.toLocaleString()}<span class="text-sm text-gray-500">/mo</span>`;
+          console.log(`✅ [DEBUG 12] Updated Element ${index} to:`, el.innerHTML);
         }
       });
       console.log(`💱 Global Pricing Active: ${detectedCurr} (Rate: ${rate})`);
+    } else {
+      console.log('ℹ️ [DEBUG] User is in UK (GBP), no conversion needed.');
     }
   } catch (error) {
-    console.log('Currency detection failed, defaulting to GBP');
+    console.error('❌ [DEBUG] Currency detection FAILED:', error);
+    console.log('ℹ️ [DEBUG] Defaulting to GBP due to error.');
   }
 }
+
+// Run detection when page loads
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('🚀 [DEBUG] DOMContentLoaded fired. Running detectAndSetCurrency...');
+  detectAndSetCurrency();
+});
+</script>
 
 //  UPDATED REQUEST UPGRADE (Sends Currency to Backend)
 async function requestUpgrade(plan) {
