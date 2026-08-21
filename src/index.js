@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
@@ -6,71 +5,112 @@ const { WebSocketServer } = require('ws');
 const { PrismaClient } = require('@prisma/client');
 const { startWhatsAppSession, activeSockets, qrCodes } = require('./whatsapp');
 const { registerUser, loginUser } = require('./auth');
-const { authenticateToken } = require('./middleware'); // 🚀 NEW: Auth Middleware
-const { getAIResponse, translateText } = require('./ai'); // 🚨 ADDED translateText
+const { authenticateToken } = require('./middleware');
+const { getAIResponse, translateText } = require('./ai');
 const Stripe = require('stripe');
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const axios = require('axios');
 const cheerio = require('cheerio');
-
 const cron = require('node-cron');
-
 const multer = require('multer');
 const Tesseract = require('tesseract.js');
-const { fromPath } = require('pdf2pic'); // 🚨 CORRECT IMPORT (not 'convert')
+const { fromPath } = require('pdf2pic');
+const pdf = require('pdf-parse');
+const fs = require('fs');
+const path = require('path');
 
+// ==========================================
+// 1. INITIALIZE APP, SERVER, PRISMA & STRIPE
+// ==========================================
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
+const prisma = new PrismaClient();
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+// Multer Configurations
 const knowledgeStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'uploads/knowledge/');
   },
   filename: function (req, file, cb) {
-    // Save with the exact original name (e.g., "Power BI Course.pdf")
     cb(null, file.originalname);
   }
 });
 
 const knowledgeUpload = multer({ 
   storage: knowledgeStorage,
-  limits: { fileSize: 50 * 1024 * 1024 } // 🚨 INCREASED TO 50MB (was 10MB)
+  limits: { fileSize: 50 * 1024 * 1024 } 
 });
 
-// Ensure the folder exists on startup
-if (!require('fs').existsSync('uploads/knowledge')) {
-  require('fs').mkdirSync('uploads/knowledge', { recursive: true });
+if (!fs.existsSync('uploads/knowledge')) {
+  fs.mkdirSync('uploads/knowledge', { recursive: true });
 }
-const pdf = require('pdf-parse');
-const fs = require('fs');
-const path = require('path');
 
-// Configure Multer for file uploads
 const upload = multer({ 
   dest: 'uploads/',
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+  limits: { fileSize: 5 * 1024 * 1024 } 
 });
 
-const app = express();
+// =================================================================
+// 2. 🚨 CRITICAL: STRIPE WEBHOOK MUST BE *BEFORE* express.json()
+// =================================================================
+app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  let event;
 
-const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    console.error(`❌ Webhook signature verification failed:`, err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
 
-const prisma = new PrismaClient();
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const tenantId = session.metadata.tenantId;
+    const plan = session.metadata.plan;
+
+    console.log(`✅ Payment successful for Tenant ${tenantId}, Plan: ${plan}`);
+
+    const planLimits = { 'starter': 150000, 'growth': 300000, 'business': 500000 };
+    const tokensToAdd = planLimits[plan] || 0;
+
+    await prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        plan: plan,
+        subscriptionStatus: 'active',
+        tokenBalance: { increment: tokensToAdd },
+        tokenLimit: tokensToAdd,
+        stripeCustomerId: session.customer,
+        paymentMethod: 'stripe'
+      }
+    });
+    
+    console.log(`🎉 Tokens added successfully! New balance updated.`);
+  }
+
+  res.json({ received: true });
+});
+
+// =================================================================
+// 3. ✅ NOW ADD GLOBAL JSON PARSER & STATIC FILES FOR ALL OTHER ROUTES
+// =================================================================
 app.use(express.json());
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // ==========================================
-// 🚨 SUPER ADMIN MIDDLEWARE (MUST BE BEFORE ROUTES)
+// 4. MIDDLEWARES & HELPERS
 // ==========================================
 const authenticateSuperAdmin = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'No token provided' });
     
-    // Verify token (make sure your JWT_SECRET matches your .env)
     const decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET || 'your-secret-key-change-this');
-    
     const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
     
-    // Check if user exists and is an ADMIN
     if (!user || user.role !== 'ADMIN') {
       return res.status(403).json({ error: 'Access denied. Admin only.' });
     }
@@ -83,29 +123,19 @@ const authenticateSuperAdmin = async (req, res, next) => {
   }
 };
 
-// 🚨 CRITICAL: Serve static files (HTML, CSS, JS) from the 'public' folder
-// This fixes the "Cannot GET /accept-invitation.html" error
-
-app.use(express.static(path.join(__dirname, '..', 'public')));
-
-// 🧠 CACHE TO REMEMBER THE LATEST QR CODE FOR EACH NUMBER
 const qrCache = {};
 
 // ==========================================
-// 🚀 AUTH ROUTES
+// 5. ROUTES
 // ==========================================
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { email, password, businessName, whatsappNumber, businessContext, inviteToken } = req.body;
     
-    // 🚨 NEW: Check if this is an invitation registration
     if (inviteToken) {
-      // Verify the invitation token matches the email
-      // For now, we'll just trust the token and auto-add them
       console.log(`🎉 Processing invitation registration for ${email}`);
     }
     
-    // 🚨 Password is now OPTIONAL. Backend will auto-generate if missing.
     if (!email || !businessName || !whatsappNumber || !businessContext) {
       return res.status(400).json({ error: 'Email, business name, WhatsApp number, and Business Context are all required.' });
     }
@@ -113,16 +143,8 @@ app.post('/api/auth/register', async (req, res) => {
     const cleanNumber = whatsappNumber.replace(/\D/g, '');
     const result = await registerUser(email, password, businessName, cleanNumber, businessContext);
     
-    // 🚨 NEW: If they registered via invitation, auto-add them as team member
     if (inviteToken && result.tenant) {
-      try {
-        // Find the tenant who sent the invitation
-        // This requires knowing which tenant invited them
-        // For MVP, we'll skip this and just log it
-        console.log(`✅ User ${email} registered via invitation. Auto-adding as team member (TODO: implement auto-add logic)`);
-      } catch (teamError) {
-        console.error('Failed to auto-add as team member:', teamError);
-      }
+      console.log(`✅ User ${email} registered via invitation. Auto-adding as team member.`);
     }
     
     startWhatsAppSession(result.tenant.id, cleanNumber, handleQr, handleSuccess);
@@ -133,7 +155,6 @@ app.post('/api/auth/register', async (req, res) => {
     res.status(400).json({ success: false, error: error.message });
   }
 });
-
 
 //  STRIPE CHECKOUT: Create Payment Session
 app.post('/api/billing/create-checkout-session', authenticateToken, async (req, res) => {
@@ -170,44 +191,6 @@ app.post('/api/billing/create-checkout-session', authenticateToken, async (req, 
     console.error('Stripe checkout error:', error);
     res.status(500).json({ error: 'Failed to create checkout session.' });
   }
-});
-
-//  STRIPE WEBHOOK: Listen for successful payments
-app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  let event;
-
-  try {
-    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-  } catch (err) {
-    console.error(`Webhook signature verification failed:`, err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    const tenantId = session.metadata.tenantId;
-    const plan = session.metadata.plan;
-
-    console.log(`✅ Payment successful for Tenant ${tenantId}, Plan: ${plan}`);
-
-    const planLimits = { 'starter': 150000, 'growth': 300000, 'business': 500000 };
-    const tokensToAdd = planLimits[plan] || 0;
-
-    await prisma.tenant.update({
-      where: { id: tenantId },
-      data: {
-        plan: plan,
-        subscriptionStatus: 'active',
-        tokenBalance: { increment: tokensToAdd },
-        tokenLimit: tokensToAdd,
-        stripeCustomerId: session.customer,
-        paymentMethod: 'stripe'
-      }
-    });
-  }
-
-  res.json({ received: true });
 });
 
 
