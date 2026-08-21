@@ -3230,22 +3230,33 @@ app.post('/api/billing/request-upgrade', authenticateToken, async (req, res) => 
       }
     });
 
-    // 🚨 1. SEND WHATSAPP ALERT TO SUPER ADMIN (+96891293119)
+    // 🚨 1. SEND WHATSAPP ALERT TO SUPER ADMIN (Reliable Prisma Method)
     try {
-      const superAdminNumber = '96891293119'; // Your number
-      const sock = activeSockets.get(superAdminNumber); // Find the socket for this number
+      // 1. Fetch admin number from Prisma (Fallback to .env if not found)
+      const adminConfig = await prisma.systemConfig.findUnique({ where: { key: 'admin_whatsapp_number' } });
+      const adminNumber = adminConfig?.value || process.env.ADMIN_WHATSAPP_NUMBER;
       
-      if (sock) {
-        const alertMsg = `🚨 *NEW PAYMENT REQUEST!*\n\n📋 *Business:* ${tenant.businessName}\n *Email:* ${tenant.user.email}\n💰 *Plan:* ${plan.toUpperCase()} (${limits.price})\n📞 *WhatsApp:* ${tenant.whatsappNumber}\n *Reference:* ${transactionReference || 'N/A'}\n\n⏰ *Time:* ${new Date().toLocaleString('en-GB', { timeZone: 'Asia/Muscat' })}\n\n🔗 *Login to approve:* https://bot.aamirsaba.com/admin-dashboard.html`;
-        
-        await sock.sendMessage(superAdminNumber + '@s.whatsapp.net', { text: alertMsg });
-        console.log(`✅ WhatsApp alert sent to +${superAdminNumber}`);
+      if (!adminNumber) {
+        console.log(`⚠️ No admin WhatsApp number configured in SystemConfig or .env. Skipping WhatsApp alert.`);
       } else {
-        console.log(`⚠️ No active WhatsApp session for +${superAdminNumber}. Alert not sent.`);
+        // 2. Grab ANY active WhatsApp socket currently running on the server
+        const activeSocket = Array.from(activeSockets.values())[0];
+        
+        if (activeSocket) {
+          const adminJid = adminNumber.replace(/\D/g, '') + '@s.whatsapp.net';
+          
+          const alertMsg = `🚨 *NEW PAYMENT REQUEST!*\n\n📋 *Business:* ${tenant.businessName}\n👤 *Email:* ${tenant.user.email}\n💰 *Plan:* ${plan.toUpperCase()} (${limits.price})\n📞 *Customer WhatsApp:* +${tenant.whatsappNumber}\n📝 *Reference:* ${transactionReference || 'N/A'}\n\n⏰ *Time:* ${new Date().toLocaleString('en-GB', { timeZone: 'Asia/Muscat' })}\n\n *Login to approve:* https://bot.aamirsaba.com/admin-dashboard.html`;
+          
+          await activeSocket.sendMessage(adminJid, { text: alertMsg });
+          console.log(`✅ WhatsApp alert sent to admin +${adminNumber} via active bot session`);
+        } else {
+          console.log(`⚠️ No active WhatsApp bot sessions found on server. WhatsApp alert skipped. (Email/Discord still sent)`);
+        }
       }
     } catch (waError) {
-      console.error(' Failed to send WhatsApp alert:', waError);
+      console.error('❌ Failed to send WhatsApp alert:', waError);
     }
+
 
     // 🚨 2. SEND EMAIL ALERT TO accounts@aamirsaba.com
     try {
