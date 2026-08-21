@@ -157,9 +157,11 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 //  STRIPE CHECKOUT: Create Payment Session
+const axios = require('axios'); // Ensure this is at the top of your file
+
 app.post('/api/billing/create-checkout-session', authenticateToken, async (req, res) => {
   try {
-    const { plan } = req.body;
+    const { plan, currency } = req.body;
     const tenant = await prisma.tenant.findFirst({ 
       where: { userId: req.user.userId },
       include: { user: true }
@@ -167,23 +169,55 @@ app.post('/api/billing/create-checkout-session', authenticateToken, async (req, 
     
     if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
 
-    const priceMap = {
-      'starter': process.env.STRIPE_PRICE_STARTER,
-      'growth': process.env.STRIPE_PRICE_GROWTH,
-      'business': process.env.STRIPE_PRICE_BUSINESS
-    };
+    // Base prices in GBP
+    const basePrices = { 'starter': 49.99, 'growth': 66.99, 'business': 72.99 };
+    const basePrice = basePrices[plan] || basePrices['starter'];
 
-    const priceId = priceMap[plan];
-    if (!priceId) return res.status(400).json({ error: 'Invalid plan.' });
+    // Fetch LIVE exchange rate (Base: GBP)
+    let rate = 1;
+    let finalCurrency = (currency || 'GBP').toUpperCase();
+    
+    try {
+      const rateRes = await axios.get('https://api.exchangerate-api.com/v4/latest/GBP');
+      rate = rateRes.data.rates[finalCurrency] || 1;
+    } catch (err) {
+      console.log('Exchange rate fetch failed, defaulting to GBP');
+      finalCurrency = 'GBP';
+    }
 
+    // Calculate amount in local currency
+    const localPrice = basePrice * rate;
+    
+    // Stripe requires amount in smallest unit (cents/paisa/etc.)
+    const zeroDecimalCurrencies = ['bif', 'clp', 'djf', 'gnf', 'jpy', 'kmf', 'krw', 'mga', 'pyg', 'rwf', 'vnd', 'vuv', 'xaf', 'xof', 'xpf'];
+    const isZeroDecimal = zeroDecimalCurrencies.includes(finalCurrency.toLowerCase());
+    
+    const amount = isZeroDecimal ? Math.round(localPrice) : Math.round(localPrice * 100);
+
+    // Create Stripe Session with DYNAMIC price_data
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       customer_email: tenant.user.email,
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: [{
+        price_data: {
+          currency: finalCurrency.toLowerCase(), // e.g., 'omr', 'usd', 'pkr'
+          product_data: {
+            name: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
+            description: 'Monthly AI SaaS Subscription'
+          },
+          unit_amount: amount,
+          recurring: { interval: 'month' }
+        },
+        quantity: 1,
+      }],
       mode: 'subscription',
-      metadata: { tenantId: tenant.id, plan: plan },
-      success_url: `${process.env.FRONTEND_URL || 'https://dev.aamirsaba.com'}/dashboard?payment=success`,
-      cancel_url: `${process.env.FRONTEND_URL || 'https://dev.aamirsaba.com'}/dashboard?payment=cancelled`,
+      metadata: { 
+        tenantId: tenant.id, 
+        plan: plan,
+        chargedCurrency: finalCurrency
+      },
+      success_url: `${process.env.FRONTEND_URL}/dashboard?payment=success`,
+      cancel_url: `${process.env.FRONTEND_URL}/dashboard?payment=cancelled`,
     });
 
     res.json({ url: session.url });
