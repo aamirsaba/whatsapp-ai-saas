@@ -8,7 +8,8 @@ const { startWhatsAppSession, activeSockets, qrCodes } = require('./whatsapp');
 const { registerUser, loginUser } = require('./auth');
 const { authenticateToken } = require('./middleware'); // 🚀 NEW: Auth Middleware
 const { getAIResponse, translateText } = require('./ai'); // 🚨 ADDED translateText
-
+const Stripe = require('stripe');
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const axios = require('axios');
 const cheerio = require('cheerio');
@@ -133,6 +134,81 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
+
+//  STRIPE CHECKOUT: Create Payment Session
+app.post('/api/billing/create-checkout-session', authenticateToken, async (req, res) => {
+  try {
+    const { plan } = req.body;
+    const tenant = await prisma.tenant.findFirst({ 
+      where: { userId: req.user.userId },
+      include: { user: true }
+    });
+    
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    const priceMap = {
+      'starter': process.env.STRIPE_PRICE_STARTER,
+      'growth': process.env.STRIPE_PRICE_GROWTH,
+      'business': process.env.STRIPE_PRICE_BUSINESS
+    };
+
+    const priceId = priceMap[plan];
+    if (!priceId) return res.status(400).json({ error: 'Invalid plan.' });
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      customer_email: tenant.user.email,
+      line_items: [{ price: priceId, quantity: 1 }],
+      mode: 'subscription',
+      metadata: { tenantId: tenant.id, plan: plan },
+      success_url: `${process.env.FRONTEND_URL || 'https://dev.aamirsaba.com'}/dashboard?payment=success`,
+      cancel_url: `${process.env.FRONTEND_URL || 'https://dev.aamirsaba.com'}/dashboard?payment=cancelled`,
+    });
+
+    res.json({ url: session.url });
+  } catch (error) {
+    console.error('Stripe checkout error:', error);
+    res.status(500).json({ error: 'Failed to create checkout session.' });
+  }
+});
+
+//  STRIPE WEBHOOK: Listen for successful payments
+app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    console.error(`Webhook signature verification failed:`, err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const tenantId = session.metadata.tenantId;
+    const plan = session.metadata.plan;
+
+    console.log(`✅ Payment successful for Tenant ${tenantId}, Plan: ${plan}`);
+
+    const planLimits = { 'starter': 150000, 'growth': 300000, 'business': 500000 };
+    const tokensToAdd = planLimits[plan] || 0;
+
+    await prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        plan: plan,
+        subscriptionStatus: 'active',
+        tokenBalance: { increment: tokensToAdd },
+        tokenLimit: tokensToAdd,
+        stripeCustomerId: session.customer,
+        paymentMethod: 'stripe'
+      }
+    });
+  }
+
+  res.json({ received: true });
+});
 
 
 // ==========================================
