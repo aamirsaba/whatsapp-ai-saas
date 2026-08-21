@@ -157,7 +157,6 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 //  STRIPE CHECKOUT: Create Payment Session
-const axios = require('axios'); // Ensure this is at the top of your file
 
 app.post('/api/billing/create-checkout-session', authenticateToken, async (req, res) => {
   try {
