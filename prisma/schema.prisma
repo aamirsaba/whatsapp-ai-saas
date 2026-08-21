@@ -231,3 +231,9 @@ model Alert {
   @@index([createdAt])
 }
 
+// 🚨 GLOBAL SYSTEM SETTINGS
+model SystemConfig {
+  id    String @id @default(cuid())
+  key   String @unique // e.g., 'admin_whatsapp_number', 'admin_email'
+  value String @db.Text
+}
