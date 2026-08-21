@@ -2382,18 +2382,40 @@ window.addEventListener('load', () => {
 });
 </script>
 
-<script>
-// 🌍 AUTO-DETECT AND CONVERT PRICES ON PAGE LOAD
-async function detectAndConvertPrices() {
+// 🌍 GLOBAL CURRENCY DETECTION
+window.detectedCurrency = { code: 'GBP', symbol: '£', rate: 1 };
+
+async function detectAndSetCurrency() {
   try {
-    const res = await fetch('/api/currency/detect');
-    const data = await res.json();
-    
-    if (data.success && data.currency !== 'GBP') {
-      const symbol = data.currency === 'GBP' ? '£' : data.currency + ' ';
-      const rate = data.exchangeRate;
-      
-      // Find all price elements
+    // Detect user's country/currency via IP
+    const ipRes = await fetch('https://ipapi.co/json/');
+    const ipData = await ipRes.json();
+    const detectedCurr = ipData.currency || 'GBP';
+
+    // Fetch live exchange rate (Base: GBP)
+    const rateRes = await fetch('https://api.exchangerate-api.com/v4/latest/GBP');
+    const rateData = await rateRes.json();
+    const rate = rateData.rates[detectedCurr] || 1;
+
+    // Get symbol using browser's built-in Intl API (supports ALL currencies)
+    let symbol = '£';
+    try {
+      const parts = new Intl.NumberFormat('en-US', { 
+        style: 'currency', 
+        currency: detectedCurr, 
+        currencyDisplay: 'narrowSymbol' 
+      }).formatToParts(0);
+      const currencyPart = parts.find(part => part.type === 'currency');
+      symbol = currencyPart ? currencyPart.value : detectedCurr + ' ';
+    } catch (e) {
+      symbol = detectedCurr + ' ';
+    }
+
+    // Save globally
+    window.detectedCurrency = { code: detectedCurr, symbol: symbol, rate: rate };
+
+    // Update the UI if not GBP
+    if (detectedCurr !== 'GBP') {
       document.querySelectorAll('.price-amount').forEach(el => {
         const gbpPrice = parseFloat(el.dataset.gbp);
         if (gbpPrice) {
@@ -2401,16 +2423,59 @@ async function detectAndConvertPrices() {
           el.innerHTML = `${symbol}${localPrice.toLocaleString()}<span class="text-sm text-gray-500">/mo</span>`;
         }
       });
-      
-      console.log(`💱 Global Pricing Active: ${data.currency} (Rate: ${rate})`);
+      console.log(`💱 Global Pricing Active: ${detectedCurr} (Rate: ${rate})`);
     }
-  } catch (err) {
-    console.log('Currency detection failed');
+  } catch (error) {
+    console.log('Currency detection failed, defaulting to GBP');
   }
 }
 
-// Run on page load
-document.addEventListener('DOMContentLoaded', detectAndConvertPrices);
+//  UPDATED REQUEST UPGRADE (Sends Currency to Backend)
+async function requestUpgrade(plan) {
+  const currency = window.detectedCurrency || { code: 'GBP', symbol: '£', rate: 1 };
+  
+  const basePrices = { 'starter': 49.99, 'growth': 66.99, 'business': 72.99 };
+  const localPrice = Math.round(basePrices[plan] * currency.rate);
+  
+  const planNames = {
+    'starter': `Starter (${currency.symbol}${localPrice}/mo)`,
+    'growth': `Growth (${currency.symbol}${localPrice}/mo)`,
+    'business': `Business (${currency.symbol}${localPrice}/mo)`
+  };
+
+  showConfirm('Confirm Upgrade', `You are about to subscribe to the <strong>${planNames[plan]}</strong> plan.<br><br>You will be charged in <strong>${currency.code}</strong> (Local Currency). Stripe will handle the conversion.`, async () => {
+    try {
+      showInfo('Redirecting...', '🔄 Taking you to secure payment...');
+      
+      const res = await fetch('/api/billing/create-checkout-session', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({ 
+          plan: plan,
+          currency: currency.code // Send detected currency to backend
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+      } else {
+        showError('Error', '❌ ' + (data.error || 'Failed to start payment.'));
+      }
+    } catch (err) {
+      console.error('Upgrade error:', err);
+      showError('Network Error', '❌ Failed to connect to payment server.');
+    }
+  });
+}
+
+// Run detection when page loads
+document.addEventListener('DOMContentLoaded', detectAndSetCurrency);
+
 </script>
 
 </body>
