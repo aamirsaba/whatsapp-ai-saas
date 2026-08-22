@@ -2342,6 +2342,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 </div>
 
 <script>
+// Show tour on first login
 function showTourModal() {
   const hasSeenTour = localStorage.getItem('hasSeenTour');
   if (!hasSeenTour) {
@@ -2352,6 +2353,7 @@ function showTourModal() {
 function closeTourModal() {
   document.getElementById('tourModal').classList.add('hidden');
 }
+// Trigger when dashboard loads
 window.addEventListener('load', () => {
   if (window.location.pathname.includes('dashboard')) {
     showTourModal();
