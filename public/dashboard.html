@@ -2164,12 +2164,23 @@ async function saveSettings() {
     }
 
 
-// 🌍 GLOBAL CURRENCY DETECTION (Using Backend Proxy)
+<script>
+// ==========================================
+// 🚀 1. INITIALIZE DASHBOARD (CRITICAL - DO NOT REMOVE)
+// ==========================================
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadDashboard();
+  showSection('dashboard');
+});
+
+// ==========================================
+// 🌍 2. GLOBAL CURRENCY DETECTION (Backend Proxy - No CORS)
+// ==========================================
 window.detectedCurrency = { code: 'GBP', symbol: '£', rate: 1 };
 
 async function detectAndSetCurrency() {
   try {
-    // Call OUR backend endpoint (no CORS issues)
+    // Call OUR backend endpoint (no CORS issues!)
     const res = await fetch('/api/currency/detect');
     const data = await res.json();
     
@@ -2198,64 +2209,104 @@ async function detectAndSetCurrency() {
   }
 }
 
-// Run detection when page loads
-document.addEventListener('DOMContentLoaded', detectAndSetCurrency);
+// ==========================================
+// 💳 3. UPDATED REQUEST UPGRADE (Uses Detected Currency)
+// ==========================================
+async function requestUpgrade(plan) {
+  const currency = window.detectedCurrency || { code: 'GBP', symbol: '£', rate: 1 };
+  
+  const basePrices = { 'starter': 49.99, 'growth': 66.99, 'business': 72.99 };
+  const localPrice = Math.round(basePrices[plan] * currency.rate);
+  
+  const planNames = {
+    'starter': `Starter (${currency.symbol}${localPrice}/mo)`,
+    'growth': `Growth (${currency.symbol}${localPrice}/mo)`,
+    'business': `Business (${currency.symbol}${localPrice}/mo)`
+  };
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      await loadDashboard();
-      showSection('dashboard');
-    });
-  </script>
+  showConfirm('Confirm Upgrade', `You are about to subscribe to the <strong>${planNames[plan]}</strong> plan.<br><br>You will be charged in <strong>${currency.code}</strong> (Local Currency). Stripe will handle the conversion.`, async () => {
+    try {
+      showInfo('Redirecting...', '🔄 Taking you to secure payment...');
+      
+      const res = await fetch('/api/billing/create-checkout-session', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({ 
+          plan: plan,
+          currency: currency.code // Send detected currency to backend
+        })
+      });
 
-  <!-- 🚨 DELETE ACCOUNT CUSTOM MODAL -->
-  <div id="deleteAccountModal" class="fixed inset-0 z-[100] hidden">
-    <div class="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm transition-opacity" onclick="closeDeleteModal()"></div>
-    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-red-100">
-      <div class="text-center">
-        <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
-          <svg class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-        </div>
-        <h3 class="text-xl font-bold text-gray-900 mb-2">Delete Account Permanently?</h3>
-        <p class="text-sm text-gray-600 mb-4">This action cannot be undone. This will permanently delete your account and remove all data from our servers.</p>
-        <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-left">
-          <p class="text-xs font-bold text-red-700 uppercase tracking-wide mb-2">You will permanently lose:</p>
-          <ul class="text-sm text-red-600 space-y-1 list-disc list-inside">
-            <li>All WhatsApp connections and chat history</li>
-            <li>All saved Leads and CRM data</li>
-            <li>AI Configuration and Knowledge Base files</li>
-            <li>All Agent accounts and team invitations</li>
-          </ul>
-        </div>
-        <div id="deleteModalError" class="hidden bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded-lg p-3 mb-4 flex items-start gap-2">
-          <span>⚠️</span>
-          <span>Please <strong>disconnect WhatsApp</strong> in Settings before you can delete your account.</span>
-        </div>
-        <div class="flex gap-3">
-          <button onclick="closeDeleteModal()" class="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition">Cancel</button>
-          <button onclick="confirmDeleteAccount()" id="confirmDeleteBtn" class="flex-1 px-4 py-2.5 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition flex items-center justify-center gap-2"><span>Yes, Delete Everything</span></button>
-        </div>
+      const data = await res.json();
+
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+      } else {
+        showError('Error', '❌ ' + (data.error || 'Failed to start payment.'));
+      }
+    } catch (err) {
+      console.error('Upgrade error:', err);
+      showError('Network Error', '❌ Failed to connect to payment server.');
+    }
+  });
+}
+
+// Run currency detection immediately
+detectAndSetCurrency();
+</script>
+
+<!-- 🚨 DELETE ACCOUNT CUSTOM MODAL -->
+<div id="deleteAccountModal" class="fixed inset-0 z-[100] hidden">
+  <div class="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm transition-opacity" onclick="closeDeleteModal()"></div>
+  <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-red-100">
+    <div class="text-center">
+      <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+        <svg class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      </div>
+      <h3 class="text-xl font-bold text-gray-900 mb-2">Delete Account Permanently?</h3>
+      <p class="text-sm text-gray-600 mb-4">This action cannot be undone. This will permanently delete your account and remove all data from our servers.</p>
+      <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-left">
+        <p class="text-xs font-bold text-red-700 uppercase tracking-wide mb-2">You will permanently lose:</p>
+        <ul class="text-sm text-red-600 space-y-1 list-disc list-inside">
+          <li>All WhatsApp connections and chat history</li>
+          <li>All saved Leads and CRM data</li>
+          <li>AI Configuration and Knowledge Base files</li>
+          <li>All Agent accounts and team invitations</li>
+        </ul>
+      </div>
+      <div id="deleteModalError" class="hidden bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded-lg p-3 mb-4 flex items-start gap-2">
+        <span>⚠️</span>
+        <span>Please <strong>disconnect WhatsApp</strong> in Settings before you can delete your account.</span>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="closeDeleteModal()" class="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition">Cancel</button>
+        <button onclick="confirmDeleteAccount()" id="confirmDeleteBtn" class="flex-1 px-4 py-2.5 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition flex items-center justify-center gap-2"><span>Yes, Delete Everything</span></button>
       </div>
     </div>
   </div>
+</div>
 
-  <!--  UNIVERSAL CUSTOM MODAL SYSTEM -->
-  <div id="customModal" class="fixed inset-0 z-[200] hidden">
-    <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity" onclick="closeCustomModal()"></div>
-    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-4">
-      <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <div id="modalHeader" class="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
-          <div id="modalIcon" class="w-10 h-10 rounded-full flex items-center justify-center"></div>
-          <h3 id="modalTitle" class="text-lg font-bold text-gray-900">Title</h3>
-        </div>
-        <div class="px-6 py-4">
-          <p id="modalMessage" class="text-sm text-gray-600">Message goes here...</p>
-        </div>
-        <div id="modalActions" class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex gap-3"></div>
+<!-- UNIVERSAL CUSTOM MODAL SYSTEM -->
+<div id="customModal" class="fixed inset-0 z-[200] hidden">
+  <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity" onclick="closeCustomModal()"></div>
+  <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-4">
+    <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div id="modalHeader" class="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+        <div id="modalIcon" class="w-10 h-10 rounded-full flex items-center justify-center"></div>
+        <h3 id="modalTitle" class="text-lg font-bold text-gray-900">Title</h3>
       </div>
+      <div class="px-6 py-4">
+        <p id="modalMessage" class="text-sm text-gray-600">Message goes here...</p>
+      </div>
+      <div id="modalActions" class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex gap-3"></div>
     </div>
   </div>
+</div>
 
 <!-- FIRST-TIME USER TOUR MODAL -->
 <div id="tourModal" class="fixed inset-0 z-[300] hidden">
@@ -2308,122 +2359,6 @@ window.addEventListener('load', () => {
     showTourModal();
   }
 });
-</script>
-
-<script>
-// 🌍 GLOBAL CURRENCY DETECTION (WITH HEAVY DEBUGGING)
-window.detectedCurrency = { code: 'GBP', symbol: '£', rate: 1 };
-
-async function detectAndSetCurrency() {
-  console.log('🔍 [DEBUG 1] Currency detection started...');
-  try {
-    console.log('🔍 [DEBUG 2] Fetching IP data from ipapi.co...');
-    const ipRes = await fetch('https://ipapi.co/json/');
-    console.log('🔍 [DEBUG 3] IP Response status:', ipRes.status);
-    const ipData = await ipRes.json();
-    console.log('🔍 [DEBUG 4] IP Data received:', ipData);
-    const detectedCurr = ipData.currency || 'GBP';
-    console.log('🔍 [DEBUG 5] Detected Currency:', detectedCurr);
-
-    console.log('🔍 [DEBUG 6] Fetching exchange rates...');
-    const rateRes = await fetch('https://api.exchangerate-api.com/v4/latest/GBP');
-    const rateData = await rateRes.json();
-    const rate = rateData.rates[detectedCurr] || 1;
-    console.log('🔍 [DEBUG 7] Exchange Rate for', detectedCurr, 'is', rate);
-
-    let symbol = '£';
-    try {
-      const parts = new Intl.NumberFormat('en-US', { 
-        style: 'currency', 
-        currency: detectedCurr, 
-        currencyDisplay: 'narrowSymbol' 
-      }).formatToParts(0);
-      const currencyPart = parts.find(part => part.type === 'currency');
-      symbol = currencyPart ? currencyPart.value : detectedCurr + ' ';
-    } catch (e) {
-      symbol = detectedCurr + ' ';
-    }
-    console.log('🔍 [DEBUG 8] Currency Symbol:', symbol);
-
-    window.detectedCurrency = { code: detectedCurr, symbol: symbol, rate: rate };
-
-    if (detectedCurr !== 'GBP') {
-      console.log('🔍 [DEBUG 9] Currency is NOT GBP. Updating UI...');
-      const elements = document.querySelectorAll('.price-amount');
-      console.log('🔍 [DEBUG 10] Found', elements.length, 'elements with class "price-amount"');
-      
-      elements.forEach((el, index) => {
-        const gbpPrice = parseFloat(el.dataset.gbp);
-        console.log(`🔍 [DEBUG 11] Element ${index}: dataset.gbp =`, gbpPrice);
-        if (gbpPrice) {
-          const localPrice = Math.round(gbpPrice * rate);
-          el.innerHTML = `${symbol}${localPrice.toLocaleString()}<span class="text-sm text-gray-500">/mo</span>`;
-          console.log(`✅ [DEBUG 12] Updated Element ${index} to:`, el.innerHTML);
-        }
-      });
-      console.log(`💱 Global Pricing Active: ${detectedCurr} (Rate: ${rate})`);
-    } else {
-      console.log('ℹ️ [DEBUG] User is in UK (GBP), no conversion needed.');
-    }
-  } catch (error) {
-    console.error('❌ [DEBUG] Currency detection FAILED:', error);
-    console.log('ℹ️ [DEBUG] Defaulting to GBP due to error.');
-  }
-}
-
-// Run detection when page loads
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('🚀 [DEBUG] DOMContentLoaded fired. Running detectAndSetCurrency...');
-  detectAndSetCurrency();
-});
-
-//  UPDATED REQUEST UPGRADE (Sends Currency to Backend)
-async function requestUpgrade(plan) {
-  const currency = window.detectedCurrency || { code: 'GBP', symbol: '£', rate: 1 };
-  
-  const basePrices = { 'starter': 49.99, 'growth': 66.99, 'business': 72.99 };
-  const localPrice = Math.round(basePrices[plan] * currency.rate);
-  
-  const planNames = {
-    'starter': `Starter (${currency.symbol}${localPrice}/mo)`,
-    'growth': `Growth (${currency.symbol}${localPrice}/mo)`,
-    'business': `Business (${currency.symbol}${localPrice}/mo)`
-  };
-
-  showConfirm('Confirm Upgrade', `You are about to subscribe to the <strong>${planNames[plan]}</strong> plan.<br><br>You will be charged in <strong>${currency.code}</strong> (Local Currency). Stripe will handle the conversion.`, async () => {
-    try {
-      showInfo('Redirecting...', '🔄 Taking you to secure payment...');
-      
-      const res = await fetch('/api/billing/create-checkout-session', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json', 
-          'Authorization': `Bearer ${token}` 
-        },
-        body: JSON.stringify({ 
-          plan: plan,
-          currency: currency.code // Send detected currency to backend
-        })
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.url) {
-        window.location.href = data.url;
-      } else {
-        showError('Error', '❌ ' + (data.error || 'Failed to start payment.'));
-      }
-    } catch (err) {
-      console.error('Upgrade error:', err);
-      showError('Network Error', '❌ Failed to connect to payment server.');
-    }
-  });
-}
-
-// Run detection when page loads
-document.addEventListener('DOMContentLoaded', detectAndSetCurrency);
-</script>
-
 </script>
 
 </body>
