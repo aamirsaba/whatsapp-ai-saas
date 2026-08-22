@@ -165,7 +165,7 @@ app.post('/api/auth/register', async (req, res) => {
 
 app.post('/api/billing/create-checkout-session', authenticateToken, async (req, res) => {
   try {
-    const { plan, currency } = req.body;
+    const { plan } = req.body; // Ignore currency, always use GBP
     const tenant = await prisma.tenant.findFirst({ 
       where: { userId: req.user.userId },
       include: { user: true }
@@ -180,29 +180,15 @@ app.post('/api/billing/create-checkout-session', authenticateToken, async (req, 
       'business': 7299    // £72.99
     };
     
-    const basePrice = basePrices[plan] || basePrices['starter'];
-    const finalCurrency = (currency || 'GBP').toLowerCase();
+    const amount = basePrices[plan] || basePrices['starter'];
 
-    // If not GBP, fetch exchange rate and convert
-    let amount = basePrice;
-    if (finalCurrency !== 'gbp') {
-      try {
-        const rateRes = await axios.get('https://api.exchangerate-api.com/v4/latest/GBP');
-        const rate = rateRes.data.rates[currency.toUpperCase()] || 1;
-        amount = Math.round(basePrice * rate);
-      } catch (err) {
-        console.log('Exchange rate fetch failed, using GBP');
-        amount = basePrice;
-      }
-    }
-
-    // Create Stripe Session
+    // Create Stripe Session with GBP (Stripe auto-converts for the customer)
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       customer_email: tenant.user.email,
       line_items: [{
         price_data: {
-          currency: finalCurrency,
+          currency: 'gbp', // Always charge in GBP
           product_data: {
             name: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
             description: 'Monthly AI SaaS Subscription'
@@ -215,8 +201,7 @@ app.post('/api/billing/create-checkout-session', authenticateToken, async (req, 
       mode: 'subscription',
       metadata: { 
         tenantId: tenant.id, 
-        plan: plan,
-        chargedCurrency: currency || 'GBP'
+        plan: plan
       },
       success_url: `${process.env.FRONTEND_URL}/dashboard?payment=success`,
       cancel_url: `${process.env.FRONTEND_URL}/dashboard?payment=cancelled`,
