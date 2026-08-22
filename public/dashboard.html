@@ -2164,110 +2164,38 @@ async function saveSettings() {
     }
 
 
-// 🌍 GLOBAL CURRENCY DETECTION
+// 🌍 GLOBAL CURRENCY DETECTION (Using Backend Proxy)
 window.detectedCurrency = { code: 'GBP', symbol: '£', rate: 1 };
 
 async function detectAndSetCurrency() {
   try {
-    // Detect user's country/currency via IP
-    const ipRes = await fetch('https://ipapi.co/json/');
-    const ipData = await ipRes.json();
-    const detectedCurr = ipData.currency || 'GBP';
-
-    // Fetch live exchange rate (Base: GBP)
-    const rateRes = await fetch('https://api.exchangerate-api.com/v4/latest/GBP');
-    const rateData = await rateRes.json();
-    const rate = rateData.rates[detectedCurr] || 1;
-
-    // Get symbol using browser's built-in Intl API (supports ALL currencies)
-    let symbol = '£';
-    try {
-      const parts = new Intl.NumberFormat('en-US', { 
-        style: 'currency', 
-        currency: detectedCurr, 
-        currencyDisplay: 'narrowSymbol' 
-      }).formatToParts(0);
-      const currencyPart = parts.find(part => part.type === 'currency');
-      symbol = currencyPart ? currencyPart.value : detectedCurr + ' ';
-    } catch (e) {
-      symbol = detectedCurr + ' ';
-    }
-
-    // Save globally
-    window.detectedCurrency = { code: detectedCurr, symbol: symbol, rate: rate };
-
-    // Update the UI if not GBP
-    if (detectedCurr !== 'GBP') {
-      document.querySelectorAll('.price-amount').forEach(el => {
-        const gbpPrice = parseFloat(el.dataset.gbp);
-        const localPrice = Math.round(gbpPrice * rate);
-        el.innerHTML = `${symbol}${localPrice.toLocaleString()}<span class="text-sm text-gray-500">/mo</span>`;
-      });
-      console.log(`💱 Global Pricing Active: ${detectedCurr} (Rate: ${rate})`);
-    }
-  } catch (error) {
-    console.log('Currency detection failed, defaulting to GBP');
-  }
-}
-
-// NEW CODE - PASTE THIS
-async function requestUpgrade(plan) {
-  // 1. Detect user's currency
-  let currency = 'GBP';
-  let symbol = '£';
-  let rate = 1;
-  
-  try {
+    // Call OUR backend endpoint (no CORS issues)
     const res = await fetch('/api/currency/detect');
     const data = await res.json();
+    
     if (data.success) {
-      currency = data.currency;
-      symbol = data.currency === 'GBP' ? '£' : currency + ' ';
-      rate = data.exchangeRate;
-    }
-  } catch (err) {
-    console.log('Currency detection failed, using GBP');
-  }
+      window.detectedCurrency = {
+        code: data.currency,
+        symbol: data.currency === 'GBP' ? '£' : data.currency + ' ',
+        rate: data.exchangeRate
+      };
 
-  // 2. Calculate local price
-  const basePrices = { 'starter': 49.99, 'growth': 66.99, 'business': 72.99 };
-  const localPrice = Math.round(basePrices[plan] * rate);
-
-  // 3. Show confirmation
-  const planNames = {
-    'starter': `Starter (${symbol}${localPrice}/mo)`,
-    'growth': `Growth (${symbol}${localPrice}/mo)`,
-    'business': `Business (${symbol}${localPrice}/mo)`
-  };
-
-  showConfirm('Confirm Upgrade', `You are about to subscribe to the <strong>${planNames[plan]}</strong> plan.<br><br>You will be charged in <strong>${currency}</strong> (Local Currency). Stripe will handle the conversion.`, async () => {
-    try {
-      showInfo('Redirecting...', '🔄 Taking you to secure payment...');
-      
-      const res = await fetch('/api/billing/create-checkout-session', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json', 
-          'Authorization': `Bearer ${token}` 
-        },
-        body: JSON.stringify({ 
-          plan: plan,
-          currency: currency // Send detected currency to backend
-        })
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.url) {
-        window.location.href = data.url;
-      } else {
-        showError('Error', '❌ ' + (data.error || 'Failed to start payment.'));
+      // Update prices if not GBP
+      if (data.currency !== 'GBP') {
+        document.querySelectorAll('.price-amount').forEach(el => {
+          const gbpPrice = parseFloat(el.dataset.gbp);
+          if (gbpPrice) {
+            const localPrice = Math.round(gbpPrice * data.exchangeRate);
+            el.innerHTML = `${window.detectedCurrency.symbol}${localPrice.toLocaleString()}<span class="text-sm text-gray-500">/mo</span>`;
+          }
+        });
+        console.log(`💱 Global Pricing Active: ${data.currency} (Rate: ${data.exchangeRate})`);
       }
-    } catch (err) {
-      console.error('Upgrade error:', err);
-      showError('Network Error', '❌ Failed to connect to payment server.');
     }
-  });
+  } catch (error) {
+    console.log('Currency detection failed, using GBP');
+    window.detectedCurrency = { code: 'GBP', symbol: '£', rate: 1 };
+  }
 }
 
 // Run detection when page loads

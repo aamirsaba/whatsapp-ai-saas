@@ -8,12 +8,12 @@ let exchangeRatesCache = { rates: {}, lastUpdated: null };
 //  AUTO-DETECT USER COUNTRY & CURRENCY
 router.get('/detect', async (req, res) => {
   try {
-    // Get user's IP
+    // Get user's IP from request headers
     const clientIP = req.headers['x-forwarded-for']?.split(',')[0] || 
                      req.headers['x-real-ip'] || 
                      req.socket.remoteAddress;
 
-    // Detect country from IP using free API
+    // Detect country from IP (server-side, no CORS issues)
     const ipResponse = await axios.get(`https://ipapi.co/${clientIP}/json/`);
     const { country_code, currency, currency_name } = ipResponse.data;
 
