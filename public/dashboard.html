@@ -2166,15 +2166,7 @@ async function saveSettings() {
 
 <script>
 // ==========================================
-// 🚀 1. INITIALIZE DASHBOARD (CRITICAL - DO NOT REMOVE)
-// ==========================================
-document.addEventListener('DOMContentLoaded', async () => {
-  await loadDashboard();
-  showSection('dashboard');
-});
-
-// ==========================================
-// 🌍 2. GLOBAL CURRENCY DETECTION (Backend Proxy - No CORS)
+// 🌍 GLOBAL CURRENCY DETECTION (Backend Proxy - NO CORS ERRORS)
 // ==========================================
 window.detectedCurrency = { code: 'GBP', symbol: '£', rate: 1 };
 
@@ -2210,7 +2202,7 @@ async function detectAndSetCurrency() {
 }
 
 // ==========================================
-// 💳 3. UPDATED REQUEST UPGRADE (Uses Detected Currency)
+// 💳 UPDATED REQUEST UPGRADE (Uses Detected Currency)
 // ==========================================
 async function requestUpgrade(plan) {
   const currency = window.detectedCurrency || { code: 'GBP', symbol: '£', rate: 1 };
@@ -2256,6 +2248,14 @@ async function requestUpgrade(plan) {
 
 // Run currency detection immediately
 detectAndSetCurrency();
+
+// ==========================================
+// 🚀 INITIALIZE DASHBOARD (CRITICAL - DO NOT REMOVE)
+// ==========================================
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadDashboard();
+  showSection('dashboard');
+});
 </script>
 
 <!-- 🚨 DELETE ACCOUNT CUSTOM MODAL -->
@@ -2342,7 +2342,6 @@ detectAndSetCurrency();
 </div>
 
 <script>
-// Show tour on first login
 function showTourModal() {
   const hasSeenTour = localStorage.getItem('hasSeenTour');
   if (!hasSeenTour) {
@@ -2353,7 +2352,6 @@ function showTourModal() {
 function closeTourModal() {
   document.getElementById('tourModal').classList.add('hidden');
 }
-// Trigger when dashboard loads
 window.addEventListener('load', () => {
   if (window.location.pathname.includes('dashboard')) {
     showTourModal();
