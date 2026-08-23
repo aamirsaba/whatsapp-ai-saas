@@ -8,7 +8,7 @@ const { startWhatsAppSession, activeSockets, qrCodes } = require('./whatsapp');
 const { registerUser, loginUser } = require('./auth');
 const { authenticateToken } = require('./middleware'); // 🚀 NEW: Auth Middleware
 const { getAIResponse, translateText } = require('./ai'); // 🚨 ADDED translateText
-
+const { chromium } = require('playwright');
 
 const axios = require('axios');
 const cheerio = require('cheerio');
@@ -1213,65 +1213,92 @@ app.post('/api/dashboard/scrape-website', authenticateToken, async (req, res) =>
       baseUrl = 'https://' + baseUrl;
     }
 
-    console.log(`🕷️ Starting FULL website crawl of: ${baseUrl}`);
+    console.log(`🕷️ Starting Playwright scrape of: ${baseUrl}`);
 
+    // Launch a real, headless browser
+    const browser = await chromium.launch({ 
+      headless: true, 
+      args: ['--no-sandbox', '--disable-setuid-sandbox'] 
+    });
+    
     const crawledPages = new Set();
     const pagesToCrawl = [baseUrl];
-    const maxPages = 50; // Safety limit to prevent infinite loops
-    const maxTotalChars = 15000; // Prevent LLM token overflow
+    const maxPages = 5; // Reduced for Playwright to prevent timeouts (5 pages is plenty for core context)
+    const maxTotalChars = 12000; // Prevent LLM token overflow
     let totalCollectedText = '';
 
     while (pagesToCrawl.length > 0 && crawledPages.size < maxPages && totalCollectedText.length < maxTotalChars) {
       const currentPage = pagesToCrawl.shift();
-      
       if (crawledPages.has(currentPage)) continue;
-      crawledPages.add(currentPage);
-
+      
       try {
-        const response = await axios.get(currentPage, { 
-          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
-          timeout: 10000 
+        const page = await browser.newPage();
+        await page.setDefaultTimeout(10000); // 10 second timeout per page
+        
+        // Go to page and wait for ALL JavaScript to finish rendering
+        await page.goto(currentPage, { waitUntil: 'networkidle', timeout: 10000 });
+        
+        // Extract ONLY the visible text, ignoring code, scripts, and hidden elements
+        const pageContent = await page.evaluate(() => {
+          // Remove non-content elements that clutter the text
+          document.querySelectorAll('script, style, nav, footer, header, iframe, noscript, svg, button, form').forEach(el => el.remove());
+          
+          const title = document.title || 'Unknown Title';
+          const headings = Array.from(document.querySelectorAll('h1, h2, h3, h4')).map(el => el.innerText.trim()).filter(t => t).join('. ');
+          
+          // Get all visible text, clean up excessive whitespace
+          const rawText = document.body.innerText;
+          const cleanText = rawText.replace(/\s+/g, ' ').trim();
+          
+          // Take a snippet to avoid massive bloat per page
+          const contentSnippet = cleanText.substring(0, 4000);
+          
+          return `PAGE: ${title}\nHeadings: ${headings}\nContent: ${contentSnippet}`;
         });
-        
-        const $ = cheerio.load(response.data);
-        // Remove non-content elements to get clean text
-        $('script, style, nav, footer, header, iframe, noscript, svg').remove();
-        
-        // Extract meaningful content
-        const title = $('title').text().trim();
-        const headings = $('h1, h2, h3, h4').map((i, el) => $(el).text().trim()).get().join('. ');
-        const paragraphs = $('p, li, td').map((i, el) => $(el).text().trim()).get().join('. ');
-        
-        const pageContent = `PAGE: ${title || currentPage}\nHeadings: ${headings}\nContent: ${paragraphs}`;
-        totalCollectedText += `\n\n---\n${pageContent}`;
 
-        // Find all internal links to crawl next
-        $('a').each((i, el) => {
-          const href = $(el).attr('href');
-          if (href && !href.startsWith('http') && !href.startsWith('#') && !href.startsWith('javascript:') && !href.endsWith('.pdf') && !href.endsWith('.jpg') && !href.endsWith('.png') && !href.endsWith('.zip')) {
-            try {
-              const absoluteUrl = new URL(href, baseUrl).toString();
-              // Only crawl links that belong to the same domain
-              const baseDomain = new URL(baseUrl).hostname;
-              const linkDomain = new URL(absoluteUrl).hostname;
-              
-              if (!crawledPages.has(absoluteUrl) && linkDomain === baseDomain) {
-                pagesToCrawl.push(absoluteUrl);
-              }
-            } catch (e) {
-              // Ignore invalid URLs
+        totalCollectedText += `\n\n---\n${pageContent}`;
+        crawledPages.add(currentPage);
+        console.log(`✅ Crawled ${crawledPages.size} pages so far...`);
+
+        // Find internal links to crawl next (limit to first 5 valid links to keep it fast)
+        const links = await page.evaluate((currentBaseUrl) => {
+          const baseDomain = new URL(currentBaseUrl).hostname;
+          const foundLinks = [];
+          document.querySelectorAll('a').forEach(a => {
+            const href = a.getAttribute('href');
+            if (href && !href.startsWith('http') && !href.startsWith('#') && !href.includes('javascript:') && !href.match(/\.(pdf|jpg|png|zip)$/i)) {
+              try {
+                const absoluteUrl = new URL(href, currentBaseUrl).toString();
+                const linkDomain = new URL(absoluteUrl).hostname;
+                if (linkDomain === baseDomain && !foundLinks.includes(absoluteUrl)) {
+                  foundLinks.push(absoluteUrl);
+                }
+              } catch (e) {}
             }
+          });
+          return foundLinks.slice(0, 5); 
+        });
+
+        links.forEach(link => {
+          if (!crawledPages.has(link) && !pagesToCrawl.includes(link)) {
+            pagesToCrawl.push(link);
           }
         });
 
-        console.log(`✅ Crawled ${crawledPages.size} pages so far...`);
-        
+        await page.close();
+
       } catch (err) {
         console.log(`⚠️ Skipped ${currentPage}: ${err.message}`);
       }
     }
 
-    // 🌐 UNIVERSAL DYNAMIC PROMPT (Works for ANY business, agency, or personal site)
+    await browser.close();
+
+    if (totalCollectedText.length < 100) {
+      return res.status(400).json({ error: 'Could not extract enough text. The website might be heavily protected, require a login, or be blank.' });
+    }
+
+    // 🌐 UNIVERSAL DYNAMIC PROMPT
     const generatedContext = `🌐 COMPREHENSIVE WEBSITE INFORMATION
 
 This is the COMPLETE information scraped from the business website: ${baseUrl} 
@@ -1292,7 +1319,7 @@ ${totalCollectedText.substring(0, maxTotalChars)}
     res.json({ 
       success: true, 
       generatedContext,
-      message: `✅ Successfully crawled ${crawledPages.size} pages from ${baseUrl}!`
+      message: `✅ Successfully crawled ${crawledPages.size} pages from ${baseUrl} using Playwright!`
     });
 
   } catch (error) {
