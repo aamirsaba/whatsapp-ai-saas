@@ -7,6 +7,9 @@ const { startWhatsAppSession, activeSockets, qrCodes } = require('./whatsapp');
 const { registerUser, loginUser } = require('./auth');
 const { authenticateToken } = require('./middleware');
 const { getAIResponse, translateText } = require('./ai');
+const { ApifyClient } = require('apify-client');
+const { scrapeWebsiteContext } = require('./scraper'); // Add this at the top with other requires
+
 const Stripe = require('stripe');
 
 const axios = require('axios');
@@ -19,6 +22,7 @@ const pdf = require('pdf-parse');
 const fs = require('fs');
 const path = require('path');
 const currencyRoutes = require('./routes/currency');
+
 
 
 // ==========================================
@@ -1277,12 +1281,11 @@ app.post('/api/connect', async (req, res) => {
   }
 });
 
-const { scrapeWebsiteContext } = require('./scraper'); // Add this at the top with other requires
 
 // ... (keep all your existing routes) ...
 
 
-// 🚀 UNIVERSAL FULL WEBSITE SCRAPER (Crawls ALL pages for ANY business)
+// 🚀 ENTERPRISE-GRADE WEBSITE SCRAPER (Using Apify Deep Crawl)
 app.post('/api/dashboard/scrape-website', authenticateToken, async (req, res) => {
   try {
     const { websiteUrl } = req.body;
@@ -1293,73 +1296,64 @@ app.post('/api/dashboard/scrape-website', authenticateToken, async (req, res) =>
       baseUrl = 'https://' + baseUrl;
     }
 
-    console.log(`🕷️ Starting FULL website crawl of: ${baseUrl}`);
+    console.log(`🕷️ Starting Apify Deep Crawl of: ${baseUrl}`);
 
-    const crawledPages = new Set();
-    const pagesToCrawl = [baseUrl];
-    const maxPages = 50; // Safety limit to prevent infinite loops
-    const maxTotalChars = 15000; // Prevent LLM token overflow
-    let totalCollectedText = '';
+    // Initialize Apify Client
+    const client = new ApifyClient({
+      token: process.env.APIFY_API_TOKEN,
+    });
 
-    while (pagesToCrawl.length > 0 && crawledPages.size < maxPages && totalCollectedText.length < maxTotalChars) {
-      const currentPage = pagesToCrawl.shift();
-      
-      if (crawledPages.has(currentPage)) continue;
-      crawledPages.add(currentPage);
+    // Input for the Website Content Crawler Actor
+    const input = {
+      startUrls: [{ url: baseUrl }],
+      maxCrawlPages: 5, // Deep crawl up to 5 pages (Homepage + 4 subpages)
+      maxCrawlDepth: 2, // Click links up to 2 levels deep
+      keepUrlFragments: false,
+      removeCookieWarnings: true,
+      saveHtml: false, // We only need text/markdown for the AI
+      saveMarkdown: true,
+    };
 
-      try {
-        const response = await axios.get(currentPage, { 
-          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
-          timeout: 10000 
-        });
-        
-        const $ = cheerio.load(response.data);
-        // Remove non-content elements to get clean text
-        $('script, style, nav, footer, header, iframe, noscript, svg').remove();
-        
-        // Extract meaningful content
-        const title = $('title').text().trim();
-        const headings = $('h1, h2, h3, h4').map((i, el) => $(el).text().trim()).get().join('. ');
-        const paragraphs = $('p, li, td').map((i, el) => $(el).text().trim()).get().join('. ');
-        
-        const pageContent = `PAGE: ${title || currentPage}\nHeadings: ${headings}\nContent: ${paragraphs}`;
-        totalCollectedText += `\n\n---\n${pageContent}`;
+    // Run the Actor and wait for it to finish
+    const run = await client.actor("apify/website-content-crawler").call(input);
+    
+    // Fetch the results
+    const { items } = await client.dataset(run.defaultDatasetId).listItems();
 
-        // Find all internal links to crawl next
-        $('a').each((i, el) => {
-          const href = $(el).attr('href');
-          if (href && !href.startsWith('http') && !href.startsWith('#') && !href.startsWith('javascript:') && !href.endsWith('.pdf') && !href.endsWith('.jpg') && !href.endsWith('.png') && !href.endsWith('.zip')) {
-            try {
-              const absoluteUrl = new URL(href, baseUrl).toString();
-              // Only crawl links that belong to the same domain
-              const baseDomain = new URL(baseUrl).hostname;
-              const linkDomain = new URL(absoluteUrl).hostname;
-              
-              if (!crawledPages.has(absoluteUrl) && linkDomain === baseDomain) {
-                pagesToCrawl.push(absoluteUrl);
-              }
-            } catch (e) {
-              // Ignore invalid URLs
-            }
-          }
-        });
-
-        console.log(`✅ Crawled ${crawledPages.size} pages so far...`);
-        
-      } catch (err) {
-        console.log(`⚠️ Skipped ${currentPage}: ${err.message}`);
-      }
+    if (!items || items.length === 0) {
+      return res.status(400).json({ error: 'Apify could not extract any text from this website. It may be heavily protected or blank.' });
     }
 
-    // 🌐 UNIVERSAL DYNAMIC PROMPT (Works for ANY business, agency, or personal site)
+    // Format the scraped data into a clean, LLM-friendly context
+    let totalCollectedText = '';
+    let pagesCrawled = 0;
+
+    items.forEach((item) => {
+      // Only process pages that have meaningful text
+      if (item.text && item.text.trim().length > 100) {
+        pagesCrawled++;
+        const title = item.title || 'Unknown Title';
+        const url = item.url || '';
+        // Limit each page to 3000 characters to prevent token overflow
+        const contentSnippet = item.text.trim().substring(0, 3000); 
+        
+        totalCollectedText += `\n\n---\nPAGE TITLE: ${title}\nURL: ${url}\nCONTENT:\n${contentSnippet}\n`;
+      }
+    });
+
+    if (totalCollectedText.length < 200) {
+      return res.status(400).json({ error: 'Not enough meaningful text was found on the website.' });
+    }
+
+    // 🌐 UNIVERSAL DYNAMIC PROMPT
     const generatedContext = `🌐 COMPREHENSIVE WEBSITE INFORMATION
 
-This is the COMPLETE information scraped from the business website: ${baseUrl} 
-(Total pages crawled: ${crawledPages.size})
+This is the COMPLETE information deep-scraped from the business website: ${baseUrl} 
+(Total meaningful pages crawled: ${pagesCrawled})
 
 Use this detailed information to answer ALL customer questions accurately and professionally:
 
-${totalCollectedText.substring(0, maxTotalChars)}
+${totalCollectedText.substring(0, 12000)} // Hard limit to prevent LLM token overflow
 
 ---
 🤖 STRICT INSTRUCTIONS FOR THE AI AGENT:
@@ -1372,12 +1366,12 @@ ${totalCollectedText.substring(0, maxTotalChars)}
     res.json({ 
       success: true, 
       generatedContext,
-      message: `✅ Successfully crawled ${crawledPages.size} pages from ${baseUrl}!`
+      message: `✅ Successfully deep-crawled ${pagesCrawled} pages using Apify!`
     });
 
   } catch (error) {
-    console.error('❌ Full scrape error:', error);
-    res.status(500).json({ error: 'Failed to scrape website. Please check the URL and ensure it is accessible.' });
+    console.error('❌ Apify scrape error:', error.message);
+    res.status(500).json({ error: 'Failed to scrape website via Apify. Please check the URL, ensure it is publicly accessible, and verify your Apify API token.' });
   }
 });
 
