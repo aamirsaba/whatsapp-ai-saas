@@ -1285,7 +1285,7 @@ app.post('/api/connect', async (req, res) => {
 // ... (keep all your existing routes) ...
 
 
-// 🚀 ENTERPRISE-GRADE WEBSITE SCRAPER (Using Apify Deep Crawl)
+// 🚀 ENTERPRISE-GRADE WEBSITE SCRAPER (Using Custom Apify Actor)
 app.post('/api/dashboard/scrape-website', authenticateToken, async (req, res) => {
   try {
     const { websiteUrl } = req.body;
@@ -1296,26 +1296,23 @@ app.post('/api/dashboard/scrape-website', authenticateToken, async (req, res) =>
       baseUrl = 'https://' + baseUrl;
     }
 
-    console.log(`🕷️ Starting Apify Deep Crawl of: ${baseUrl}`);
+    console.log(`🕷️ Starting Custom Apify Crawl of: ${baseUrl}`);
 
     // Initialize Apify Client
     const client = new ApifyClient({
       token: process.env.APIFY_API_TOKEN,
     });
 
-    // Input for the Website Content Crawler Actor
+    //  USE YOUR CUSTOM ACTOR
+    const actorId = "roomratecompare/whatsapp-saas-scraper";
+
+    // Input for the Custom Actor (Matches your INPUT_SCHEMA.json)
     const input = {
-      startUrls: [{ url: baseUrl }],
-      maxCrawlPages: 5, // Deep crawl up to 5 pages (Homepage + 4 subpages)
-      maxCrawlDepth: 2, // Click links up to 2 levels deep
-      keepUrlFragments: false,
-      removeCookieWarnings: true,
-      saveHtml: false, // We only need text/markdown for the AI
-      saveMarkdown: true,
+      startUrl: baseUrl, 
     };
 
     // Run the Actor and wait for it to finish
-    const run = await client.actor("apify/website-content-crawler").call(input);
+    const run = await client.actor(actorId).call(input);
     
     // Fetch the results
     const { items } = await client.dataset(run.defaultDatasetId).listItems();
@@ -1346,7 +1343,7 @@ app.post('/api/dashboard/scrape-website', authenticateToken, async (req, res) =>
     }
 
     // 🌐 UNIVERSAL DYNAMIC PROMPT
-    const generatedContext = `🌐 COMPREHENSIVE WEBSITE INFORMATION
+    const generatedContext = ` COMPREHENSIVE WEBSITE INFORMATION
 
 This is the COMPLETE information deep-scraped from the business website: ${baseUrl} 
 (Total meaningful pages crawled: ${pagesCrawled})
@@ -1366,7 +1363,7 @@ ${totalCollectedText.substring(0, 12000)} // Hard limit to prevent LLM token ove
     res.json({ 
       success: true, 
       generatedContext,
-      message: `✅ Successfully deep-crawled ${pagesCrawled} pages using Apify!`
+      message: `✅ Successfully deep-crawled ${pagesCrawled} pages using your custom Apify scraper!`
     });
 
   } catch (error) {
