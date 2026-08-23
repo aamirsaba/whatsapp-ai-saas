@@ -789,7 +789,7 @@ function showModal(type, title, message, actions = []) {
   const modalActions = document.getElementById('modalActions');
   
   modalTitle.textContent = title;
-  // ✅ FIXED: \n is properly escaped
+  // ✅ CORRECT: \n is on the same line
   modalMessage.innerHTML = message.replace(/\n/g, '<br>');
   
   const icons = {
@@ -1380,7 +1380,7 @@ if (tenantModel && tenantModel.trim() !== '') {
   const selectedText = select.value;
   if (selectedText) {
     if (textarea.value.trim().length > 0) { 
-      // ✅ FIXED: \n properly escaped
+      // ✅ CORRECT: \n is on the same line
       textarea.value = textarea.value + '\n' + selectedText; 
     } else { 
       textarea.value = selectedText; 
@@ -2121,7 +2121,7 @@ async function saveSettings() {
     const res = await fetch('/api/dashboard/leads', { headers: { 'Authorization': `Bearer ${token}` } });
     const data = await res.json();
     if (data.success && data.leads.length > 0) {
-      // ✅ FIXED: \n properly escaped
+      // ✅ CORRECT: \n is on the same line
       const csvHeader = 'Date,Phone Number,First Message,Status,Notes,Created At\n';
       const csvRows = data.leads.map(lead => {
         const date = new Date(lead.createdAt).toLocaleDateString();
@@ -2132,7 +2132,7 @@ async function saveSettings() {
         const createdAt = new Date(lead.createdAt).toISOString();
         return `${date},${phone},${message},${status},${notes},${createdAt}`;
       });
-      // ✅ FIXED: \n properly escaped
+      // ✅ CORRECT: \n is on the same line
       const csvContent = csvHeader + csvRows.join('\n');
       
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -2149,11 +2149,12 @@ async function saveSettings() {
     } else {
       showError('No Leads', '❌ No leads available to download.');
     }
-   } catch (err) {
-     console.error('Download error:', err);
-     showError('Download Failed', '❌ Failed to download leads. Please try again.');
-   }
-   }
+  } catch (err) {
+    console.error('Download error:', err);
+    showError('Download Failed', '❌ Failed to download leads. Please try again.');
+  }
+}
+
    </script> <!-- 🚨 THIS WAS MISSING! -->
 
    <script>
