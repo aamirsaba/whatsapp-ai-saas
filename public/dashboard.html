@@ -778,59 +778,58 @@
     }
 
     // ==========================================
-    // 🎨 UNIVERSAL MODAL SYSTEM
-    // ==========================================
-    function showModal(type, title, message, actions = []) {
-      const modal = document.getElementById('customModal');
-      const modalHeader = document.getElementById('modalHeader');
-      const modalIcon = document.getElementById('modalIcon');
-      const modalTitle = document.getElementById('modalTitle');
-      const modalMessage = document.getElementById('modalMessage');
-      const modalActions = document.getElementById('modalActions');
-      
-      modalTitle.textContent = title;
-      modalMessage.innerHTML = message.replace(/\n/g, '<br>');
-      
-      const icons = {
-        success: { bg: 'bg-green-100', icon: '✅', text: 'text-green-700' },
-        error: { bg: 'bg-red-100', icon: '❌', text: 'text-red-700' },
-        warning: { bg: 'bg-yellow-100', icon: '⚠️', text: 'text-yellow-700' },
-        info: { bg: 'bg-blue-100', icon: 'ℹ️', text: 'text-blue-700' },
-        confirm: { bg: 'bg-indigo-100', icon: '❓', text: 'text-indigo-700' }
-      };
-      
-      const style = icons[type] || icons.info;
-      modalHeader.className = `px-6 py-4 border-b border-gray-100 flex items-center gap-3`;
-      modalIcon.className = `w-10 h-10 rounded-full flex items-center justify-center ${style.bg}`;
-      modalIcon.innerHTML = `<span class="text-2xl">${style.icon}</span>`;
-      modalTitle.className = `text-lg font-bold ${style.text}`;
-      
-      modalActions.innerHTML = '';
-      if (actions.length === 0) {
-        modalActions.innerHTML = `<button onclick="closeCustomModal()" class="flex-1 px-4 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition">OK</button>`;
-      } else {
-        actions.forEach(action => {
-          const btn = document.createElement('button');
-          btn.className = `flex-1 px-4 py-2.5 font-semibold rounded-lg transition ${action.primary ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`;
-          btn.textContent = action.text;
-          btn.onclick = () => { closeCustomModal(); if (action.onClick) action.onClick(); };
-          modalActions.appendChild(btn);
-        });
-      }
-      modal.classList.remove('hidden');
-    }
-    
-    function closeCustomModal() { document.getElementById('customModal').classList.add('hidden'); }
-    function showSuccess(title, message) { showModal('success', title, message); }
-    function showError(title, message) { showModal('error', title, message); }
-    function showWarning(title, message) { showModal('warning', title, message); }
-    function showInfo(title, message) { showModal('info', title, message); }
-    function showConfirm(title, message, onConfirm, onCancel) {
-      showModal('confirm', title, message, [
-        { text: 'Cancel', primary: false, onClick: onCancel },
-        { text: 'Confirm', primary: true, onClick: onConfirm }
-      ]);
-    }
+// 🎨 UNIVERSAL MODAL SYSTEM (FIXED)
+// ==========================================
+function showModal(type, title, message, actions = []) {
+  const modal = document.getElementById('customModal');
+  const modalHeader = document.getElementById('modalHeader');
+  const modalIcon = document.getElementById('modalIcon');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalMessage = document.getElementById('modalMessage');
+  const modalActions = document.getElementById('modalActions');
+  
+  modalTitle.textContent = title;
+  modalMessage.innerHTML = message.replace(/\n/g, '<br>');
+  
+  const icons = {
+    success: { bg: 'bg-green-100', icon: '✅', text: 'text-green-700' },
+    error: { bg: 'bg-red-100', icon: '❌', text: 'text-red-700' },
+    warning: { bg: 'bg-yellow-100', icon: '️', text: 'text-yellow-700' },
+    info: { bg: 'bg-blue-100', icon: 'ℹ️', text: 'text-blue-700' },
+    confirm: { bg: 'bg-indigo-100', icon: '❓', text: 'text-indigo-700' }
+  };
+  const style = icons[type] || icons.info;
+  modalHeader.className = `px-6 py-4 border-b border-gray-100 flex items-center gap-3`;
+  modalIcon.className = `w-10 h-10 rounded-full flex items-center justify-center ${style.bg}`;
+  modalIcon.innerHTML = `<span class="text-2xl">${style.icon}</span>`;
+  modalTitle.className = `text-lg font-bold ${style.text}`;
+  modalActions.innerHTML = '';
+  
+  if (actions.length === 0) {
+    modalActions.innerHTML = `<button onclick="closeCustomModal()" class="flex-1 px-4 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition">OK</button>`;
+  } else {
+    actions.forEach(action => {
+      const btn = document.createElement('button');
+      btn.className = `flex-1 px-4 py-2.5 font-semibold rounded-lg transition ${action.primary ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`;
+      btn.textContent = action.text;
+      btn.onclick = () => { closeCustomModal(); if (action.onClick) action.onClick(); };
+      modalActions.appendChild(btn);
+    });
+  }
+  modal.classList.remove('hidden');
+}
+
+function closeCustomModal() { document.getElementById('customModal').classList.add('hidden'); }
+function showSuccess(title, message) { showModal('success', title, message); }
+function showError(title, message) { showModal('error', title, message); }
+function showWarning(title, message) { showModal('warning', title, message); }
+function showInfo(title, message) { showModal('info', title, message); }
+function showConfirm(title, message, onConfirm, onCancel) {
+  showModal('confirm', title, message, [
+    { text: 'Cancel', primary: false, onClick: onCancel },
+    { text: 'Confirm', primary: true, onClick: onConfirm }
+  ]);
+}
 
     async function loadDashboard() {
   try {
