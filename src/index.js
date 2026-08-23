@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const path = require('path'); // 🚨 ADD THIS LINE!
 const http = require('http');
 const { WebSocketServer } = require('ws');
 const { PrismaClient } = require('@prisma/client');
@@ -20,7 +21,6 @@ const Tesseract = require('tesseract.js');
 const { fromPath } = require('pdf2pic');
 const pdf = require('pdf-parse');
 const fs = require('fs');
-
 const currencyRoutes = require('./routes/currency');
 
 
