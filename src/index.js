@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const path = require('path'); // 🚨 ADD THIS LINE!
+const path = require('path');
 const http = require('http');
 const { WebSocketServer } = require('ws');
 const { PrismaClient } = require('@prisma/client');
@@ -1281,11 +1281,6 @@ app.post('/api/connect', async (req, res) => {
   }
 });
 
-
-// ... (keep all your existing routes) ...
-
-
-// 🚀 ENTERPRISE-GRADE WEBSITE SCRAPER (Using Custom Apify Actor)
 // 🚀 ENTERPRISE-GRADE WEBSITE SCRAPER (Using YOUR Custom Apify Actor)
 app.post('/api/dashboard/scrape-website', authenticateToken, async (req, res) => {
   try {
@@ -1307,9 +1302,10 @@ app.post('/api/dashboard/scrape-website', authenticateToken, async (req, res) =>
     // 🚨 CRITICAL: Use YOUR custom actor name here!
     const actorId = "roomratecompare/whatsapp-saas-scraper";
 
-    // Input must match your custom actor's INPUT_SCHEMA.json exactly
+    // 🚨 SEND BOTH to satisfy any Apify schema
     const input = {
-      startUrl: baseUrl 
+      startUrl: baseUrl,
+      url: baseUrl 
     };
 
     // Run YOUR custom Actor and wait for it to finish
