@@ -2149,107 +2149,79 @@ async function saveSettings() {
     } else {
       showError('No Leads', '❌ No leads available to download.');
     }
-  } catch (err) {
-    console.error('Download error:', err);
-    showError('Download Failed', '❌ Failed to download leads. Please try again.');
-  }
-}
+   } catch (err) {
+     console.error('Download error:', err);
+     showError('Download Failed', '❌ Failed to download leads. Please try again.');
+   }
+   }
+   </script> <!-- 🚨 THIS WAS MISSING! -->
 
-</script> <!-- 🚨 THIS WAS MISSING! -->
-
-<script>
-// ==========================================
-// 🌍 GLOBAL CURRENCY DETECTION (Backend Proxy - NO CORS ERRORS)
-// ==========================================
-window.detectedCurrency = { code: 'GBP', symbol: '£', rate: 1 };
-
-async function detectAndSetCurrency() {
-  try {
-    // Call OUR backend endpoint (no CORS issues!)
-    const res = await fetch('/api/currency/detect');
-    const data = await res.json();
-    
-    if (data.success) {
-      window.detectedCurrency = {
-        code: data.currency,
-        symbol: data.currency === 'GBP' ? '£' : data.currency + ' ',
-        rate: data.exchangeRate
-      };
-
-      // Update prices if not GBP
-      if (data.currency !== 'GBP') {
-        document.querySelectorAll('.price-amount').forEach(el => {
-          const gbpPrice = parseFloat(el.dataset.gbp);
-          if (gbpPrice) {
-            const localPrice = Math.round(gbpPrice * data.exchangeRate);
-            el.innerHTML = `${window.detectedCurrency.symbol}${localPrice.toLocaleString()}<span class="text-sm text-gray-500">/mo</span>`;
-          }
-        });
-        console.log(`💱 Global Pricing Active: ${data.currency} (Rate: ${data.exchangeRate})`);
-      }
-    }
-  } catch (error) {
-    console.log('Currency detection failed, using GBP');
-    window.detectedCurrency = { code: 'GBP', symbol: '£', rate: 1 };
-  }
-}
-
-// ==========================================
-// 💳 UPDATED REQUEST UPGRADE (Uses Detected Currency)
-// ==========================================
-async function requestUpgrade(plan) {
-  const currency = window.detectedCurrency || { code: 'GBP', symbol: '£', rate: 1 };
-  
-  const basePrices = { 'starter': 49.99, 'growth': 66.99, 'business': 72.99 };
-  const localPrice = Math.round(basePrices[plan] * currency.rate);
-  
-  const planNames = {
-    'starter': `Starter (${currency.symbol}${localPrice}/mo)`,
-    'growth': `Growth (${currency.symbol}${localPrice}/mo)`,
-    'business': `Business (${currency.symbol}${localPrice}/mo)`
-  };
-
-  showConfirm('Confirm Upgrade', `You are about to subscribe to the <strong>${planNames[plan]}</strong> plan.<br><br>You will be charged in <strong>${currency.code}</strong> (Local Currency). Stripe will handle the conversion.`, async () => {
-    try {
-      showInfo('Redirecting...', '🔄 Taking you to secure payment...');
-      
-      const res = await fetch('/api/billing/create-checkout-session', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json', 
-          'Authorization': `Bearer ${token}` 
-        },
-        body: JSON.stringify({ 
-          plan: plan,
-          currency: currency.code // Send detected currency to backend
-        })
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.url) {
-        window.location.href = data.url;
-      } else {
-        showError('Error', '❌ ' + (data.error || 'Failed to start payment.'));
-      }
-    } catch (err) {
-      console.error('Upgrade error:', err);
-      showError('Network Error', '❌ Failed to connect to payment server.');
-    }
-  });
-}
-
-// Run currency detection immediately
-detectAndSetCurrency();
-
-// ==========================================
-// 🚀 INITIALIZE DASHBOARD (CRITICAL - DO NOT REMOVE)
-// ==========================================
-document.addEventListener('DOMContentLoaded', async () => {
-  await loadDashboard();
-  showSection('dashboard');
-});
-</script>
+   <script>
+   // ==========================================
+   // 🌍 GLOBAL CURRENCY DETECTION (Backend Proxy - NO CORS ERRORS)
+   // ==========================================
+   window.detectedCurrency = { code: 'GBP', symbol: '£', rate: 1 };
+   async function detectAndSetCurrency() {
+     try {
+       const res = await fetch('/api/currency/detect');
+       const data = await res.json();
+       if (data.success) {
+         window.detectedCurrency = {
+           code: data.currency,
+           symbol: data.currency === 'GBP' ? '£' : data.currency + ' ',
+           rate: data.exchangeRate
+         };
+         if (data.currency !== 'GBP') {
+           document.querySelectorAll('.price-amount').forEach(el => {
+             const gbpPrice = parseFloat(el.dataset.gbp);
+             if (gbpPrice) {
+               const localPrice = Math.round(gbpPrice * data.exchangeRate);
+               el.innerHTML = `${window.detectedCurrency.symbol}${localPrice.toLocaleString()}<span class="text-sm text-gray-500">/mo</span>`;
+             }
+           });
+           console.log(`💱 Global Pricing Active: ${data.currency} (Rate: ${data.exchangeRate})`);
+         }
+       }
+     } catch (error) {
+       console.log('Currency detection failed, using GBP');
+       window.detectedCurrency = { code: 'GBP', symbol: '£', rate: 1 };
+     }
+   }
+   async function requestUpgrade(plan) {
+     const currency = window.detectedCurrency || { code: 'GBP', symbol: '£', rate: 1 };
+     const basePrices = { 'starter': 49.99, 'growth': 66.99, 'business': 72.99 };
+     const localPrice = Math.round(basePrices[plan] * currency.rate);
+     const planNames = {
+       'starter': `Starter (${currency.symbol}${localPrice}/mo)`,
+       'growth': `Growth (${currency.symbol}${localPrice}/mo)`,
+       'business': `Business (${currency.symbol}${localPrice}/mo)`
+     };
+     showConfirm('Confirm Upgrade', `You are about to subscribe to the <strong>${planNames[plan]}</strong> plan.<br><br>You will be charged in <strong>${currency.code}</strong> (Local Currency). Stripe will handle the conversion.`, async () => {
+       try {
+         showInfo('Redirecting...', '🔄 Taking you to secure payment...');
+         const res = await fetch('/api/billing/create-checkout-session', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+           body: JSON.stringify({ plan: plan, currency: currency.code })
+         });
+         const data = await res.json();
+         if (res.ok && data.url) {
+           window.location.href = data.url;
+         } else {
+           showError('Error', '❌ ' + (data.error || 'Failed to start payment.'));
+         }
+       } catch (err) {
+         console.error('Upgrade error:', err);
+         showError('Network Error', '❌ Failed to connect to payment server.');
+       }
+     });
+   }
+   detectAndSetCurrency();
+   document.addEventListener('DOMContentLoaded', async () => {
+     await loadDashboard();
+     showSection('dashboard');
+   });
+   </script>
 
 <!-- 🚨 DELETE ACCOUNT CUSTOM MODAL -->
 <div id="deleteAccountModal" class="fixed inset-0 z-[100] hidden">
