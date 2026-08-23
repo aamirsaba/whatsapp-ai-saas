@@ -20,7 +20,7 @@ const Tesseract = require('tesseract.js');
 const { fromPath } = require('pdf2pic');
 const pdf = require('pdf-parse');
 const fs = require('fs');
-const path = require('path');const axios = require('axios');
+
 const currencyRoutes = require('./routes/currency');
 
 
