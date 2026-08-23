@@ -790,8 +790,7 @@ function showModal(type, title, message, actions = []) {
   
   modalTitle.textContent = title;
   // ✅ CORRECT: \n is properly escaped on a single line
-  modalMessage.innerHTML = message.replace(/\n/g, '<br>');
-  
+modalMessage.innerHTML = message.replace(/\n/g, '<br>');  
   const icons = {
     success: { bg: 'bg-green-100', icon: '✅', text: 'text-green-700' },
     error: { bg: 'bg-red-100', icon: '❌', text: 'text-red-700' },
@@ -1379,9 +1378,8 @@ if (tenantModel && tenantModel.trim() !== '') {
   const textarea = document.getElementById('manualReplyText');
   const selectedText = select.value;
   if (selectedText) {
-    if (textarea.value.trim().length > 0) { 
-      // ✅ CORRECT: \n is properly escaped on a single line
-      textarea.value = textarea.value + '\n' + selectedText; 
+    if (textarea.value.trim().length > 0) {
+textarea.value = textarea.value + '\n' + selectedText; 
     } else { 
       textarea.value = selectedText; 
     }
