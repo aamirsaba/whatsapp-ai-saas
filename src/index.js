@@ -20,7 +20,7 @@ const Tesseract = require('tesseract.js');
 const { fromPath } = require('pdf2pic');
 const pdf = require('pdf-parse');
 const fs = require('fs');
-const path = require('path');
+const path = require('path');const axios = require('axios');
 const currencyRoutes = require('./routes/currency');
 
 
@@ -1286,6 +1286,7 @@ app.post('/api/connect', async (req, res) => {
 
 
 // 🚀 ENTERPRISE-GRADE WEBSITE SCRAPER (Using Custom Apify Actor)
+// 🚀 ENTERPRISE-GRADE WEBSITE SCRAPER (Using YOUR Custom Apify Actor)
 app.post('/api/dashboard/scrape-website', authenticateToken, async (req, res) => {
   try {
     const { websiteUrl } = req.body;
@@ -1303,15 +1304,15 @@ app.post('/api/dashboard/scrape-website', authenticateToken, async (req, res) =>
       token: process.env.APIFY_API_TOKEN,
     });
 
-    //  USE YOUR CUSTOM ACTOR
+    // 🚨 CRITICAL: Use YOUR custom actor name here!
     const actorId = "roomratecompare/whatsapp-saas-scraper";
 
-    // Input for the Custom Actor (Matches your INPUT_SCHEMA.json)
+    // Input must match your custom actor's INPUT_SCHEMA.json exactly
     const input = {
-      startUrl: baseUrl, 
+      startUrl: baseUrl 
     };
 
-    // Run the Actor and wait for it to finish
+    // Run YOUR custom Actor and wait for it to finish
     const run = await client.actor(actorId).call(input);
     
     // Fetch the results
@@ -1343,14 +1344,14 @@ app.post('/api/dashboard/scrape-website', authenticateToken, async (req, res) =>
     }
 
     // 🌐 UNIVERSAL DYNAMIC PROMPT
-    const generatedContext = ` COMPREHENSIVE WEBSITE INFORMATION
+    const generatedContext = `🌐 COMPREHENSIVE WEBSITE INFORMATION
 
 This is the COMPLETE information deep-scraped from the business website: ${baseUrl} 
 (Total meaningful pages crawled: ${pagesCrawled})
 
 Use this detailed information to answer ALL customer questions accurately and professionally:
 
-${totalCollectedText.substring(0, 12000)} // Hard limit to prevent LLM token overflow
+${totalCollectedText.substring(0, 12000)}
 
 ---
 🤖 STRICT INSTRUCTIONS FOR THE AI AGENT:
