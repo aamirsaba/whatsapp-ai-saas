@@ -2218,12 +2218,13 @@ async function saveSettings() {
      });
    }
    detectAndSetCurrency();
-   document.addEventListener('DOMContentLoaded', async () => {
-     await loadDashboard();
-     showSection('dashboard');
-   });
-   </script>
-
+   
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadDashboard();
+  showSection('dashboard');
+});
+</script>
 <!-- 🚨 DELETE ACCOUNT CUSTOM MODAL -->
 <div id="deleteAccountModal" class="fixed inset-0 z-[100] hidden">
   <div class="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm transition-opacity" onclick="closeDeleteModal()"></div>
