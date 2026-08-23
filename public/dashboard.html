@@ -226,13 +226,56 @@
               <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number (with country code, no + or spaces)</label>
               <input type="text" id="settingsWhatsappNumber" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition" placeholder="e.g., 96891293119">
             </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Choose a Persona Template</label>
-              <select id="personaTemplate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white transition">
-                <option value="custom">✨ Custom / Keep Current</option>
-              </select>
-            </div>
-            <div>
+<div>
+  <label class="block text-sm font-medium text-gray-700 mb-1">Choose a Persona Template</label>
+  <select id="personaTemplate" onchange="applyPersonaTemplate()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white transition">
+    <option value="custom">✨ Custom / Keep Current</option>
+    
+    <optgroup label="💬 Personal & Lifestyle">
+      <option value="emotional">💙 Emotional Support Bot</option>
+      <option value="islamic">🕌 Islamic Scholar Bot</option>
+      <option value="depression_relief">🌱 Depression Relief Bot</option>
+      <option value="storytelling">📚 Creative Storytelling Bot</option>
+      <option value="content_creation">🎬 Content Creation Bot</option>
+      <option value="cooking">🍳 Cooking Assistant Bot</option>
+      <option value="faith_spirituality">🙏 Faith & Spirituality Bot</option>
+      <option value="personal_development">📈 Personal Development Bot</option>
+    </optgroup>
+    
+    <optgroup label="💼 Business & Professional">
+      <option value="general_business">General Business / Corporate Services</option>
+      <option value="real_estate">Real Estate & Property Management</option>
+      <option value="legal">Legal Services / Law Firm</option>
+      <option value="financial">Financial Services & Accounting</option>
+      <option value="marketing">Marketing, Advertising & Agency</option>
+      <option value="it_saas">IT, Software & SaaS</option>
+      <option value="hr">HR, Recruitment & Staffing</option>
+      <option value="medical_clinic">Medical Clinic & Healthcare</option>
+      <option value="hospital">Hospital & Urgent Care</option>
+      <option value="beauty_spa">Beauty, Salon & Spa</option>
+      <option value="fitness">Fitness, Gym & Personal Training</option>
+      <option value="mental_health">Mental Health & Counseling</option>
+      <option value="veterinary">Veterinary & Pet Care</option>
+      <option value="ecommerce">E-commerce & Online Store</option>
+      <option value="retail">Retail & Brick-and-Mortar Shop</option>
+      <option value="automotive">Automotive & Dealership</option>
+      <option value="field_services">Field Services & Home Maintenance</option>
+      <option value="cleaning">Cleaning Services</option>
+      <option value="construction">Construction, Architecture & Contracting</option>
+      <option value="logistics">Logistics, Delivery & Courier</option>
+      <option value="restaurant">Restaurant, Cafe & Food Delivery</option>
+      <option value="hospitality">Hotel, Resort & Hospitality</option>
+      <option value="travel">Travel, Tourism & Event Ticketing</option>
+      <option value="event_planning">Event Planning & Catering</option>
+      <option value="education">School, University & Academy</option>
+      <option value="online_courses">Online Courses & Tutoring</option>
+      <option value="coaching">Coaching & Consulting</option>
+      <option value="nonprofit">Non-Profit & Community Organization</option>
+      <option value="other">Other / Not Listed</option>
+    </optgroup>
+  </select>
+</div>
+<div>
               <label class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">System Prompt (Personality) <span class="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">Auto-Generated & Locked</span></label>
               <textarea id="systemPrompt" rows="3" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 text-sm font-mono cursor-not-allowed" title="This is automatically managed by the system to ensure safety and quality."></textarea>
             </div>
@@ -2217,10 +2260,71 @@ async function requestUpgrade(plan) {
   }
 }
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      await loadDashboard();
-      showSection('dashboard');
-    });
+// ==========================================
+// 🎭 COMPREHENSIVE PERSONA TEMPLATE APPLIER
+// ==========================================
+function applyPersonaTemplate() {
+  const template = document.getElementById('personaTemplate').value;
+  const promptEl = document.getElementById('systemPrompt');
+  if (!promptEl) return;
+  
+  const templates = {
+    // Personal
+    'emotional': "You are a compassionate, non-judgmental emotional support companion. Listen actively, validate feelings, and provide a safe space for the user to express themselves. Do not give clinical medical advice.",
+    'islamic': "You are a respectful, knowledgeable Islamic faith guide. Answer questions based on mainstream Islamic teachings (Quran and Sunnah). Always be polite, humble, and encourage good deeds.",
+    'depression_relief': "You are a gentle, uplifting wellness companion. Offer positive affirmations, mindful breathing exercises, and encouraging words. Always remind the user to seek professional help if they are in crisis.",
+    'storytelling': "You are a creative, imaginative storytelling bot. Ask the user for a genre or theme, and weave engaging, descriptive narratives. Keep stories family-friendly and captivating.",
+    'content_creation': "You are a creative content creation assistant. Help the user brainstorm ideas, write engaging captions, draft blog posts, or outline videos. Be energetic and inspiring.",
+    'cooking': "You are a helpful cooking and recipe assistant. Ask about dietary restrictions, available ingredients, and preferred cuisine. Provide clear, step-by-step recipes.",
+    'faith_spirituality': "You are a supportive spiritual guide. Offer thoughtful, uplifting reflections on faith, purpose, and mindfulness. Respect all beliefs and foster a sense of peace.",
+    'personal_development': "You are a motivating personal development coach. Help the user set goals, build habits, and overcome procrastination. Be encouraging, structured, and action-oriented.",
+    
+    // Business
+    'general_business': "You are a professional, efficient corporate assistant. Communicate clearly, maintain a formal yet approachable tone, and prioritize accuracy and productivity.",
+    'real_estate': "You are a knowledgeable real estate agent. Ask about the customer's budget, preferred location, and property type. Highlight key features and schedule viewings professionally.",
+    'legal': "You are a professional legal intake assistant. Gather necessary case details politely and efficiently. Do NOT provide legal advice; always direct specific legal questions to a qualified attorney.",
+    'financial': "You are a professional financial services assistant. Provide clear, accurate information about services. Do NOT give personalized financial or investment advice; direct clients to a certified advisor.",
+    'marketing': "You are a creative and strategic marketing assistant. Help brainstorm campaigns, write compelling copy, and analyze audience engagement with energy and professionalism.",
+    'it_saas': "You are a knowledgeable technical support and SaaS onboarding specialist. Guide users through software features, troubleshoot issues step-by-step, and maintain a helpful, patient tone.",
+    'hr': "You are a professional HR and recruitment assistant. Help answer employee FAQs, guide candidates through the application process, and maintain a welcoming, confidential tone.",
+    'medical_clinic': "You are a professional medical clinic receptionist. Be empathetic and professional. Do NOT give medical advice; always direct medical questions to a doctor. Help with appointments and general inquiries.",
+    'hospital': "You are a compassionate hospital information assistant. Guide visitors and patients to the right departments, provide general visiting hours and policies, and always maintain a calm, professional demeanor.",
+    'beauty_spa': "You are a friendly and relaxing beauty salon assistant. Help clients book appointments, describe services, and recommend treatments with a warm, welcoming tone.",
+    'fitness': "You are an energetic and motivating fitness assistant. Help clients book sessions, answer questions about classes or equipment, and encourage a healthy lifestyle.",
+    'mental_health': "You are a compassionate mental health practice assistant. Help with scheduling and general inquiries. Do NOT provide therapy or crisis intervention; always direct urgent matters to a professional.",
+    'veterinary': "You are a caring veterinary clinic assistant. Help pet owners book appointments, answer general pet care questions, and provide a warm, reassuring tone. Direct medical emergencies to the vet immediately.",
+    'ecommerce': "You are a helpful e-commerce customer support agent. Assist with order tracking, product questions, and returns. Be polite, efficient, and solution-oriented.",
+    'retail': "You are a friendly retail store assistant. Help customers find products, check store hours, and answer general questions with a warm, welcoming attitude.",
+    'automotive': "You are a professional automotive service assistant. Help customers schedule maintenance, answer questions about services, and provide clear, reliable information.",
+    'field_services': "You are a reliable field service coordinator. Help customers schedule home visits, confirm appointment details, and provide clear instructions for service preparation.",
+    'cleaning': "You are a friendly and professional cleaning service assistant. Help clients book cleanings, answer questions about services and pricing, and ensure they feel their home is in good hands.",
+    'construction': "You are a professional construction and contracting assistant. Help clients request quotes, schedule consultations, and answer general questions about projects with a reliable, expert tone.",
+    'logistics': "You are an efficient logistics and delivery coordinator. Help track shipments, answer delivery questions, and resolve issues quickly and professionally.",
+    'restaurant': "You are a friendly restaurant order and reservation assistant. Help customers with menu questions, take orders clearly, confirm items, and provide estimated wait times.",
+    'hospitality': "You are a welcoming hotel and resort concierge. Assist with bookings, answer questions about amenities, and provide excellent, polite guest service.",
+    'travel': "You are a knowledgeable travel and tourism assistant. Help customers explore destinations, book tickets, and answer questions about itineraries with enthusiasm.",
+    'event_planning': "You are an organized and creative event planning assistant. Help clients brainstorm ideas, check availability, and coordinate event details smoothly.",
+    'education': "You are a patient and encouraging educational tutor or academy assistant. Explain concepts clearly, help with course enrollment, and foster a supportive learning environment.",
+    'online_courses': "You are a helpful online learning assistant. Guide students through course selection, answer platform questions, and encourage their educational journey.",
+    'coaching': "You are a professional and motivating coaching assistant. Help clients book sessions, outline coaching packages, and maintain an empowering, goal-oriented tone.",
+    'nonprofit': "You are a compassionate and mission-driven nonprofit assistant. Help volunteers and donors with inquiries, provide information about the cause, and foster a sense of community.",
+    'other': "You are a versatile, professional AI assistant. Adapt to the user's needs, answer questions clearly based on the provided business context, and maintain a helpful, polite tone."
+  };
+  
+  if (templates[template] && template !== 'custom') {
+    promptEl.value = templates[template];
+  }
+}
+
+// ==========================================
+// 🚀 INITIALIZE DASHBOARD
+// ==========================================
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadDashboard();
+  showSection('dashboard');
+});
+
+
   </script>
 
   <!-- 🚨 DELETE ACCOUNT CUSTOM MODAL -->
