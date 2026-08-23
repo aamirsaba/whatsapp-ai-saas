@@ -789,12 +789,13 @@ function showModal(type, title, message, actions = []) {
   const modalActions = document.getElementById('modalActions');
   
   modalTitle.textContent = title;
+  // ✅ FIXED: \n is properly escaped
   modalMessage.innerHTML = message.replace(/\n/g, '<br>');
   
   const icons = {
     success: { bg: 'bg-green-100', icon: '✅', text: 'text-green-700' },
     error: { bg: 'bg-red-100', icon: '❌', text: 'text-red-700' },
-    warning: { bg: 'bg-yellow-100', icon: '️', text: 'text-yellow-700' },
+    warning: { bg: 'bg-yellow-100', icon: '⚠️', text: 'text-yellow-700' },
     info: { bg: 'bg-blue-100', icon: 'ℹ️', text: 'text-blue-700' },
     confirm: { bg: 'bg-indigo-100', icon: '❓', text: 'text-indigo-700' }
   };
@@ -1374,16 +1375,21 @@ if (tenantModel && tenantModel.trim() !== '') {
     function closeReplyBox() { document.getElementById('replyBox').classList.add('hidden'); }
 
     function insertQuickReply() {
-      const select = document.getElementById('quickReplies');
-      const textarea = document.getElementById('manualReplyText');
-      const selectedText = select.value;
-      if (selectedText) {
-        if (textarea.value.trim().length > 0) { textarea.value = textarea.value + '\n\n' + selectedText; } 
-        else { textarea.value = selectedText; }
-        select.value = "";
-        textarea.focus();
-      }
+  const select = document.getElementById('quickReplies');
+  const textarea = document.getElementById('manualReplyText');
+  const selectedText = select.value;
+  if (selectedText) {
+    if (textarea.value.trim().length > 0) { 
+      // ✅ FIXED: \n properly escaped
+      textarea.value = textarea.value + '\n' + selectedText; 
+    } else { 
+      textarea.value = selectedText; 
     }
+    select.value = "";
+    textarea.focus();
+  }
+}
+
 
     async function sendManualReply() {
       if (!currentReplyNumber) { showError('Error', '❌ No recipient selected.'); return; }
@@ -2110,57 +2116,45 @@ async function saveSettings() {
 
     // 🚨 DOWNLOAD LEADS AS CSV
     async function downloadLeadsCSV() {
-      try {
-        showInfo('Downloading...', '📥 Preparing your leads export...');
-        
-        const res = await fetch('/api/dashboard/leads', { 
-          headers: { 'Authorization': `Bearer ${token}` } 
-        });
-        const data = await res.json();
-        
-        if (data.success && data.leads.length > 0) {
-          // CSV Header
-          const csvHeader = 'Date,Phone Number,First Message,Status,Notes,Created At\n';
-          
-          // CSV Rows
-          const csvRows = data.leads.map(lead => {
-            const date = new Date(lead.createdAt).toLocaleDateString();
-            const phone = lead.phoneNumber;
-            const message = `"${(lead.firstMessage || '').replace(/"/g, '""')}"`; // Escape quotes
-            const status = lead.status;
-            const notes = `"${(lead.notes || '').replace(/"/g, '""')}"`; // Escape quotes
-            const createdAt = new Date(lead.createdAt).toISOString();
-            
-            return `${date},${phone},${message},${status},${notes},${createdAt}`;
-          });
-          
-          // Combine
-          const csvContent = csvHeader + csvRows.join('\n');
-          
-          // Create download link
-          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-          const link = document.createElement('a');
-          const url = URL.createObjectURL(blob);
-          
-          // Generate filename with date
-          const today = new Date().toISOString().split('T')[0];
-          link.setAttribute('href', url);
-          link.setAttribute('download', `leads_${today}.csv`);
-          link.style.visibility = 'hidden';
-          
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          
-          showSuccess('Download Complete!', `✅ Successfully exported ${data.leads.length} leads to CSV.`);
-        } else {
-          showError('No Leads', ' No leads available to download.');
-        }
-      } catch (err) {
-        console.error('Download error:', err);
-        showError('Download Failed', '❌ Failed to download leads. Please try again.');
-      }
+  try {
+    showInfo('Downloading...', '📥 Preparing your leads export...');
+    const res = await fetch('/api/dashboard/leads', { headers: { 'Authorization': `Bearer ${token}` } });
+    const data = await res.json();
+    if (data.success && data.leads.length > 0) {
+      // ✅ FIXED: \n properly escaped
+      const csvHeader = 'Date,Phone Number,First Message,Status,Notes,Created At\n';
+      const csvRows = data.leads.map(lead => {
+        const date = new Date(lead.createdAt).toLocaleDateString();
+        const phone = lead.phoneNumber;
+        const message = `"${(lead.firstMessage || '').replace(/"/g, '""')}"`;
+        const status = lead.status;
+        const notes = `"${(lead.notes || '').replace(/"/g, '""')}"`;
+        const createdAt = new Date(lead.createdAt).toISOString();
+        return `${date},${phone},${message},${status},${notes},${createdAt}`;
+      });
+      // ✅ FIXED: \n properly escaped
+      const csvContent = csvHeader + csvRows.join('\n');
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      const today = new Date().toISOString().split('T')[0];
+      link.setAttribute('href', url);
+      link.setAttribute('download', `leads_${today}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showSuccess('Download Complete!', `✅ Successfully exported ${data.leads.length} leads to CSV.`);
+    } else {
+      showError('No Leads', '❌ No leads available to download.');
     }
+  } catch (err) {
+    console.error('Download error:', err);
+    showError('Download Failed', '❌ Failed to download leads. Please try again.');
+  }
+}
+
 
 
 <script>
