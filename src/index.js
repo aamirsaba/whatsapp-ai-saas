@@ -9,6 +9,7 @@ const { registerUser, loginUser } = require('./auth');
 const { authenticateToken } = require('./middleware'); // 🚀 NEW: Auth Middleware
 const { getAIResponse, translateText } = require('./ai'); // 🚨 ADDED translateText
 const { chromium } = require('playwright');
+const { ApifyClient } = require('apify-client');
 
 const axios = require('axios');
 const cheerio = require('cheerio');
@@ -1202,7 +1203,7 @@ const { scrapeWebsiteContext } = require('./scraper'); // Add this at the top wi
 // ... (keep all your existing routes) ...
 
 
-// 🚀 UNIVERSAL FULL WEBSITE SCRAPER (Crawls ALL pages for ANY business)
+// 🚀 ENTERPRISE-GRADE WEBSITE SCRAPER (Using Custom Apify Playwright Actor)
 app.post('/api/dashboard/scrape-website', authenticateToken, async (req, res) => {
   try {
     const { websiteUrl } = req.body;
@@ -1213,100 +1214,59 @@ app.post('/api/dashboard/scrape-website', authenticateToken, async (req, res) =>
       baseUrl = 'https://' + baseUrl;
     }
 
-    console.log(`🕷️ Starting Playwright scrape of: ${baseUrl}`);
+    console.log(`🕷️ Starting Custom Apify Crawl of: ${baseUrl}`);
 
-    // Launch a real, headless browser
-    const browser = await chromium.launch({ 
-      headless: true, 
-      args: ['--no-sandbox', '--disable-setuid-sandbox'] 
+    // Initialize Apify Client
+    const client = new ApifyClient({
+      token: process.env.APIFY_API_TOKEN,
     });
+
+    // 🚨 USE YOUR CUSTOM ACTOR
+    const actorId = "roomratecompare/whatsapp-saas-scraper";
+
+    // Input must match your custom actor's INPUT_SCHEMA.json exactly
+    const input = {
+      url: baseUrl 
+    };
+
+    // Run YOUR custom Actor and wait for it to finish
+    const run = await client.actor(actorId).call(input);
     
-    const crawledPages = new Set();
-    const pagesToCrawl = [baseUrl];
-    const maxPages = 5; // Reduced for Playwright to prevent timeouts (5 pages is plenty for core context)
-    const maxTotalChars = 12000; // Prevent LLM token overflow
+    // Fetch the results
+    const { items } = await client.dataset(run.defaultDatasetId).listItems();
+
+    if (!items || items.length === 0) {
+      return res.status(400).json({ error: 'Apify could not extract any text from this website. It may be heavily protected or blank.' });
+    }
+
+    // Format the scraped data into a clean, LLM-friendly context
     let totalCollectedText = '';
+    let pagesCrawled = 0;
 
-    while (pagesToCrawl.length > 0 && crawledPages.size < maxPages && totalCollectedText.length < maxTotalChars) {
-      const currentPage = pagesToCrawl.shift();
-      if (crawledPages.has(currentPage)) continue;
-      
-      try {
-        const page = await browser.newPage();
-        await page.setDefaultTimeout(10000); // 10 second timeout per page
+    items.forEach((item) => {
+      if (item.text && item.text.trim().length > 100) {
+        pagesCrawled++;
+        const title = item.title || 'Unknown Title';
+        const url = item.url || '';
+        const contentSnippet = item.text.trim().substring(0, 3000); 
         
-        // Go to page and wait for ALL JavaScript to finish rendering
-        await page.goto(currentPage, { waitUntil: 'networkidle', timeout: 10000 });
-        
-        // Extract ONLY the visible text, ignoring code, scripts, and hidden elements
-        const pageContent = await page.evaluate(() => {
-          // Remove non-content elements that clutter the text
-          document.querySelectorAll('script, style, nav, footer, header, iframe, noscript, svg, button, form').forEach(el => el.remove());
-          
-          const title = document.title || 'Unknown Title';
-          const headings = Array.from(document.querySelectorAll('h1, h2, h3, h4')).map(el => el.innerText.trim()).filter(t => t).join('. ');
-          
-          // Get all visible text, clean up excessive whitespace
-          const rawText = document.body.innerText;
-          const cleanText = rawText.replace(/\s+/g, ' ').trim();
-          
-          // Take a snippet to avoid massive bloat per page
-          const contentSnippet = cleanText.substring(0, 4000);
-          
-          return `PAGE: ${title}\nHeadings: ${headings}\nContent: ${contentSnippet}`;
-        });
-
-        totalCollectedText += `\n\n---\n${pageContent}`;
-        crawledPages.add(currentPage);
-        console.log(`✅ Crawled ${crawledPages.size} pages so far...`);
-
-        // Find internal links to crawl next (limit to first 5 valid links to keep it fast)
-        const links = await page.evaluate((currentBaseUrl) => {
-          const baseDomain = new URL(currentBaseUrl).hostname;
-          const foundLinks = [];
-          document.querySelectorAll('a').forEach(a => {
-            const href = a.getAttribute('href');
-            if (href && !href.startsWith('http') && !href.startsWith('#') && !href.includes('javascript:') && !href.match(/\.(pdf|jpg|png|zip)$/i)) {
-              try {
-                const absoluteUrl = new URL(href, currentBaseUrl).toString();
-                const linkDomain = new URL(absoluteUrl).hostname;
-                if (linkDomain === baseDomain && !foundLinks.includes(absoluteUrl)) {
-                  foundLinks.push(absoluteUrl);
-                }
-              } catch (e) {}
-            }
-          });
-          return foundLinks.slice(0, 5); 
-        });
-
-        links.forEach(link => {
-          if (!crawledPages.has(link) && !pagesToCrawl.includes(link)) {
-            pagesToCrawl.push(link);
-          }
-        });
-
-        await page.close();
-
-      } catch (err) {
-        console.log(`⚠️ Skipped ${currentPage}: ${err.message}`);
+        totalCollectedText += `\n\n---\nPAGE TITLE: ${title}\nURL: ${url}\nCONTENT:\n${contentSnippet}\n`;
       }
+    });
+
+    if (totalCollectedText.length < 200) {
+      return res.status(400).json({ error: 'Not enough meaningful text was found on the website.' });
     }
 
-    await browser.close();
-
-    if (totalCollectedText.length < 100) {
-      return res.status(400).json({ error: 'Could not extract enough text. The website might be heavily protected, require a login, or be blank.' });
-    }
-
-    // 🌐 UNIVERSAL DYNAMIC PROMPT
+    //  UNIVERSAL DYNAMIC PROMPT
     const generatedContext = `🌐 COMPREHENSIVE WEBSITE INFORMATION
 
-This is the COMPLETE information scraped from the business website: ${baseUrl} 
-(Total pages crawled: ${crawledPages.size})
+This is the COMPLETE information deep-scraped from the business website: ${baseUrl} 
+(Total meaningful pages crawled: ${pagesCrawled})
 
 Use this detailed information to answer ALL customer questions accurately and professionally:
 
-${totalCollectedText.substring(0, maxTotalChars)}
+${totalCollectedText.substring(0, 12000)}
 
 ---
 🤖 STRICT INSTRUCTIONS FOR THE AI AGENT:
@@ -1319,12 +1279,12 @@ ${totalCollectedText.substring(0, maxTotalChars)}
     res.json({ 
       success: true, 
       generatedContext,
-      message: `✅ Successfully crawled ${crawledPages.size} pages from ${baseUrl} using Playwright!`
+      message: `✅ Successfully deep-crawled ${pagesCrawled} pages using your custom Apify scraper!`
     });
 
   } catch (error) {
-    console.error('❌ Full scrape error:', error);
-    res.status(500).json({ error: 'Failed to scrape website. Please check the URL and ensure it is accessible.' });
+    console.error('❌ Apify scrape error:', error.message);
+    res.status(500).json({ error: 'Failed to scrape website via Apify. Please check the URL, ensure it is publicly accessible, and verify your Apify API token.' });
   }
 });
 

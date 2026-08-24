@@ -97,8 +97,16 @@
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
           <span>🤖 AI Configuration</span>
         </button>
+<button onclick="showSection('ai-training-guide')" id="nav-ai-training-guide" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+<span>📚 How to Train AI</span>
+</button>
+
         <button onclick="showSection('agents')" id="nav-agents" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+
+
+
           <span>👨‍💼 Agents</span>
         </button>
         <button onclick="showSection('live-chat')" id="nav-live-chat" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
@@ -398,6 +406,111 @@
           <p id="settingsMsg" class="mt-3 text-center text-sm font-medium min-h-[20px]"></p>
         </div>
       </section>
+<!-- 📚 HOW TO TRAIN YOUR AI - NEW SECTION -->
+<section id="section-ai-training-guide" class="section-content hidden">
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">📚 How to Train Your AI Agent</h2>
+        <p class="text-gray-600">Follow these simple steps to set up and train your AI agent in minutes!</p>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Step 1 -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">1</div>
+                <h3 class="text-lg font-bold text-gray-800">Add Your Business Info</h3>
+            </div>
+            <p class="text-sm text-gray-600 mb-3">Go to <strong>Settings</strong> and fill in your business details:</p>
+            <ul class="text-sm text-gray-600 space-y-2 list-disc list-inside">
+                <li>Business Name</li>
+                <li>Contact Information</li>
+                <li>Official Email & Phone</li>
+                <li>Website URL</li>
+            </ul>
+        </div>
+        
+        <!-- Step 2 -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center font-bold">2</div>
+                <h3 class="text-lg font-bold text-gray-800">Auto-Generate Context</h3>
+            </div>
+            <p class="text-sm text-gray-600 mb-3">In <strong>AI Configuration</strong>:</p>
+            <ul class="text-sm text-gray-600 space-y-2 list-disc list-inside">
+                <li>Enter your website URL</li>
+                <li>Click "✨ Auto-Generate"</li>
+                <li>Wait 30-60 seconds</li>
+                <li>Review & edit the content</li>
+            </ul>
+        </div>
+        
+        <!-- Step 3 -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-purple-500 text-white rounded-full flex items-center justify-center font-bold">3</div>
+                <h3 class="text-lg font-bold text-gray-800">Choose a Persona</h3>
+            </div>
+            <p class="text-sm text-gray-600 mb-3">Select a personality template that matches your business:</p>
+            <ul class="text-sm text-gray-600 space-y-2 list-disc list-inside">
+                <li>Restaurant, Retail, Medical</li>
+                <li>Real Estate, Legal, IT Services</li>
+                <li>Or create custom personality</li>
+            </ul>
+        </div>
+        
+        <!-- Step 4 -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold">4</div>
+                <h3 class="text-lg font-bold text-gray-800">Connect WhatsApp</h3>
+            </div>
+            <p class="text-sm text-gray-600 mb-3">Link your WhatsApp number:</p>
+            <ul class="text-sm text-gray-600 space-y-2 list-disc list-inside">
+                <li>Click "📱 WhatsApp" in sidebar</li>
+                <li>Scan the QR code</li>
+                <li>Your AI is now live!</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Quick Tips -->
+    <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-xl border border-indigo-200 mb-6">
+        <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+            <span>💡</span> Pro Tips for Best Results:
+        </h3>
+        <ul class="text-sm text-gray-700 space-y-2 list-disc list-inside">
+            <li><strong>Be Specific:</strong> The more details you provide about your business, the better your AI will perform</li>
+            <li><strong>Review Auto-Generated Content:</strong> Always review the scraped website content and edit if needed</li>
+            <li><strong>Upload Documents:</strong> Use the Knowledge Base to upload PDFs with FAQs, pricing, policies</li>
+            <li><strong>Test Your AI:</strong> Send test messages to see how it responds before going live</li>
+            <li><strong>Monitor Conversations:</strong> Check "All Conversations" regularly to see what customers are asking</li>
+        </ul>
+    </div>
+    
+    <!-- Video Tutorial Placeholder -->
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <h3 class="text-lg font-bold text-gray-800 mb-3">📹 Video Tutorials</h3>
+        <p class="text-sm text-gray-600 mb-4">Watch our step-by-step video guides:</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div class="text-3xl mb-2"></div>
+                <p class="font-semibold text-sm text-gray-800">Getting Started</p>
+                <p class="text-xs text-gray-600 mt-1">Complete setup walkthrough</p>
+            </div>
+            <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div class="text-3xl mb-2"></div>
+                <p class="font-semibold text-sm text-gray-800">Training Your AI</p>
+                <p class="text-xs text-gray-600 mt-1">How to create perfect context</p>
+            </div>
+            <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div class="text-3xl mb-2"></div>
+                <p class="font-semibold text-sm text-gray-800">Advanced Features</p>
+                <p class="text-xs text-gray-600 mt-1">Customization & optimization</p>
+            </div>
+        </div>
+        <p class="text-xs text-gray-500 mt-4 text-center">🚧 Video tutorials coming soon!</p>
+    </div>
+</section>
 
       <!-- AGENTS SECTION -->
       <section id="section-agents" class="section-content hidden">
@@ -1167,18 +1280,63 @@ if (tenantModel && tenantModel.trim() !== '') {
       } catch (err) { console.error('Failed to load analytics', err); }
     }
 
-    async function autoGenerateContext() {
-      const url = document.getElementById('websiteUrl').value;
-      const msg = document.getElementById('settingsMsg');
-      if (!url) { msg.textContent = '⚠️ Please enter a Website URL first.'; msg.className = 'mt-3 text-center text-sm text-yellow-600 font-bold'; return; }
-      msg.textContent = '⏳ Reading website...'; msg.className = 'mt-3 text-center text-sm text-indigo-600 font-bold';
-      try {
-        const res = await fetch('/api/dashboard/scrape-website', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ websiteUrl: url }) });
-        const data = await res.json();
-        if (data.success) { document.getElementById('businessContext').value = data.generatedContext; msg.textContent = '✅ Context generated! Review and click Save.'; msg.className = 'mt-3 text-center text-sm text-green-600 font-bold'; } 
-        else { msg.textContent = '❌ ' + (data.error || 'Failed.'); msg.className = 'mt-3 text-center text-sm text-red-600 font-bold'; }
-      } catch (err) { msg.textContent = '❌ Server error.'; msg.className = 'mt-3 text-center text-sm text-red-600 font-bold'; }
+async function autoGenerateContext() {
+    const url = document.getElementById('websiteUrl').value;
+    
+    if (!url) { 
+        showError('Missing URL', '️ Please enter your website URL first (e.g., https://yourbusiness.com)'); 
+        return; 
     }
+    
+    // Show loading modal
+    showModal('info', '️ Scraping Website', 
+        ' Reading your website... This may take 30-60 seconds.<br><br>Please wait while we extract your business information.',
+        [] // No buttons - just loading
+    );
+    
+    try {
+        const res = await fetch('/api/dashboard/scrape-website', { 
+            method: 'POST', 
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': `Bearer ${token}` 
+            }, 
+            body: JSON.stringify({ websiteUrl: url }) 
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) { 
+            // Close loading modal
+            closeCustomModal();
+            
+            // Update textarea with scraped content
+            document.getElementById('businessContext').value = data.generatedContext; 
+            
+            // Show success modal with guidance
+            showConfirm('✅ Website Scraped Successfully!', 
+                `🎉 Successfully scraped ${data.pagesCrawled || 5} pages from your website!<br><br>` +
+                `📝 The scraped content has been loaded into the "Business Context" field.<br><br>` +
+                `💡 Click "Full-Screen Editor" to review and edit the content before saving.`,
+                () => {
+                    // On OK - open the editor
+                    openContextEditor();
+                },
+                () => {
+                    // On Cancel - just close
+                }
+            );
+        } else { 
+            // Close loading modal and show error
+            closeCustomModal();
+            showError('Scraping Failed', '❌ ' + (data.error || 'Failed to scrape website. Make sure the URL is correct and publicly accessible.')); 
+        }
+    } catch (err) { 
+        console.error('Scraping error:', err);
+        closeCustomModal();
+        showError('Network Error', '❌ Failed to connect to server. Please check your internet connection and try again.');
+    }
+}
 
     async function loadAvailableModels() {
   const btn = document.getElementById('loadModelsBtn');
@@ -1854,31 +2012,35 @@ async function saveSettings() {
   showInfo('Saving Settings', '💾 Please wait while we save your settings...');      
   
   try {
+    // 1. Fetch current settings to use as safe fallbacks
     const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
     const data = await res.json();
     if (!data.success) { showError('Error', '❌ Failed to load current settings.'); return; }
     
+    // 2. Helper functions to safely get values
     const getVal = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
     const getCheck = (id) => { const el = document.getElementById(id); return el ? el.checked : false; };
     
+    // 3. Format contact info cleanly
     const contactInfo = `Contact Person: ${getVal('contactPerson') || 'Not provided'}\nEmail: ${getVal('contactEmail') || 'Not provided'}\nPhone/WhatsApp: ${getVal('contactPhone') || 'Not provided'}\nWebsite: ${getVal('contactWebsite') || 'Not provided'}\nNotes: ${getVal('contactNotes') || 'None'}`.trim();
     
-    // 🚨 FORCE QWEN PROVIDER AND MODEL
+    // 4. Send ALL settings to the backend
     const saveRes = await fetch('/api/dashboard/settings', { 
       method: 'PUT', 
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, 
       body: JSON.stringify({ 
         businessName: getVal('settingsBusinessName') || data.tenant.businessName,
+        websiteUrl: getVal('websiteUrl') || data.tenant.websiteUrl || '', // 🚨 ADDED: Prevents "missing URL" errors
         whatsappNumber: (getVal('settingsWhatsappNumber') || data.tenant.whatsappNumber || '').replace(/\D/g, ''),
         contactInfo: contactInfo,
         systemPrompt: getVal('systemPrompt') || data.tenant.systemPrompt,
         businessContext: getVal('businessContext') || data.tenant.businessContext,
         
-        // 🚨 ALWAYS USE QWEN (Ignore user input, use database value for API key)
-        llmApiKey: data.tenant.llmApiKey, // Always use the pre-configured key from DB
-        llmProvider: 'QWEN', // Force Qwen
-        llmModel: getVal('llmModelSelect') || data.tenant.llmModel || 'qwen-plus', // Use the Qwen model dropdown
-        llmBaseUrl: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1', // Force Qwen URL
+        // 🚨 ALWAYS USE QWEN (Secure & Pre-configured)
+        llmApiKey: data.tenant.llmApiKey, 
+        llmProvider: 'QWEN', 
+        llmModel: getVal('llmModelSelect') || data.tenant.llmModel || 'qwen-plus', 
+        llmBaseUrl: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1', 
         
         aiAgentName: getVal('aiAgentName') || data.tenant.aiAgentName,
         isHumanMode: getCheck('humanModeToggle')
@@ -1887,9 +2049,11 @@ async function saveSettings() {
     
     const saveData = await saveRes.json();
     
+    // 5. Handle Success or Error
     if (saveRes.ok) {
       await loadDashboard();
       if (typeof loadWhatsAppStatus === 'function') loadWhatsAppStatus();
+      
       showSuccess('Settings Saved!', '✅ Your settings have been saved successfully.\n\nAll changes have been applied to your account.');          
       
       const msg = document.getElementById('settingsMsg');
@@ -1916,6 +2080,7 @@ async function saveSettings() {
     }
   }
 }
+
 
     document.getElementById('humanModeToggle').addEventListener('change', async function() {
   const isChecked = this.checked;
@@ -2412,20 +2577,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 <script>
 // Show tour on first login
 function showTourModal() {
-  const hasSeenTour = localStorage.getItem('hasSeenTour');
-  if (!hasSeenTour) {
-    document.getElementById('tourModal').classList.remove('hidden');
-    localStorage.setItem('hasSeenTour', 'true');
-  }
+    const hasSeenTour = localStorage.getItem('hasSeenTour');
+    if (!hasSeenTour) {
+        document.getElementById('tourModal').classList.remove('hidden');
+        localStorage.setItem('hasSeenTour', 'true');
+    }
 }
+
 function closeTourModal() {
-  document.getElementById('tourModal').classList.add('hidden');
+    document.getElementById('tourModal').classList.add('hidden');
 }
+
 // Trigger when dashboard loads
 window.addEventListener('load', () => {
-  if (window.location.pathname.includes('dashboard')) {
-    showTourModal();
-  }
+    if (window.location.pathname.includes('dashboard')) {
+        showTourModal();
+    }
 });
 </script>
 
