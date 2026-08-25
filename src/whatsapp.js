@@ -1,4 +1,4 @@
-const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
+const { makeWASocket, useMultiFileAuthState, DisconnectReason, downloadMediaMessage } = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
 const qrcodeTerminal = require('qrcode-terminal');
 const { toDataURL } = require('qrcode');
@@ -31,7 +31,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
-      console.log(`\n SCAN THIS QR CODE WITH WHATSAPP FOR: ${phoneNumber}`);
+      console.log(`\n📱 SCAN THIS QR CODE WITH WHATSAPP FOR: ${phoneNumber}`);
       qrcodeTerminal.generate(qr, { small: true });
       try {
         const qrDataUrl = await toDataURL(qr);
@@ -89,7 +89,34 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       const fileName = msg.message.documentMessage.fileName || "unknown_file";
       mediaInfo = `📎 Document: ${fileName}`;
     } else if (msg.message.audioMessage) {
-      mediaInfo = msg.message.audioMessage.ptt ? "🎤 Voice Note" : "🎵 Audio File";
+      // 🚨 NEW: PROPERLY DOWNLOAD VOICE NOTES
+      const isPtt = msg.message.audioMessage.ptt || false;
+      
+      if (isPtt) {
+        console.log(`🎤 Voice note received from ${fromNumber}, downloading...`);
+        try {
+          const media = await downloadMediaMessage(msg, 'buffer', {}, { logger: pino({ level: 'silent' }) });
+          
+          const uploadDir = path.join(__dirname, '..', 'uploads', 'voice_notes');
+          if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+          }
+          
+          const fileName = `voice_${fromNumber}_${Date.now()}.ogg`;
+          const filePath = path.join(uploadDir, fileName);
+          await fs.promises.writeFile(filePath, media);
+          
+          extractedText = `[Voice Note: ${fileName}]`;
+          mediaInfo = "🎤 Voice Note";
+          console.log(`✅ Voice note saved: ${fileName}`);
+        } catch (error) {
+          console.error('❌ Error downloading voice note:', error);
+          extractedText = "🎤 Voice Note (failed to download)";
+          mediaInfo = "";
+        }
+      } else {
+        mediaInfo = "🎵 Audio File";
+      }
     } else if (msg.message.videoMessage) {
       extractedText = msg.message.videoMessage.caption || "";
       mediaInfo = "🎥 Video";
@@ -100,8 +127,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
     
     if (!text) return; // Ignore completely empty messages
 
-
-    console.log(`\n [SUCCESS] New Message from ${fromNumber}: ${text}`);
+    console.log(`\n📩 [SUCCESS] New Message from ${fromNumber}: ${text}`);
 
     try {
       const tenant = await prisma.tenant.findUnique({ where: { whatsappNumber: phoneNumber } });
@@ -121,7 +147,6 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         return; // 🚨 THIS STOPS THE CODE HERE. NO AI WILL REPLY.
       }
 
-
       // ==========================================
       // 1. PER-USER CONVERSATION CONTROL & WELCOME
       // ==========================================
@@ -139,7 +164,6 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       const wantsAI = aiKeywords.some(kw => lowerText.includes(kw));
 
       if (!conversation) {
-        // Create new conversation (default: AI mode)
         conversation = await prisma.conversation.create({
           data: {
             tenantId: tenant.id,
@@ -150,7 +174,6 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
         });
         console.log(`💬 New conversation created for ${fromNumber} (AI Mode)`);
 
-        // 🚨 Send Welcome Message for new users ONLY
         const agentName = tenant.aiAgentName || 'AI Assistant';
         const welcomeMsg = `Hi there! 👋 I'm *${agentName}*, your personal assistant. I'm here to help you 24/7!\n\n💡 *Need a human?* Anytime you want to speak with a real person, just type */human* or *talk to human*, and I'll connect you right away.\n\nHow can I help you today?`;
 
@@ -166,11 +189,9 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
           }
         });
         
-        // 🚨 CRITICAL FIX: STOP HERE. Do not generate a second AI response for the first message.
         return; 
       }
 
-      // Update last message time for existing conversations
       await prisma.conversation.update({
         where: { id: conversation.id },
         data: { lastMessageAt: new Date() }
@@ -198,21 +219,18 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       // 3. HANDLE "TALK TO HUMAN" REQUEST (SMART ROUTING)
       // ==========================================
       if (wantsHuman && conversation.mode === 'AI') {
-        // 1. Get ALL agents for this tenant
         const allAgents = await prisma.agent.findMany({
           where: { tenantId: tenant.id }
         });
 
         if (allAgents.length === 0) {
-          const noAgentMsg = `👨‍ I understand you'd like to speak with a human. Unfortunately, we don't have any human agents set up yet. Please say "talk to AI" and I'll be happy to help you!`;
+          const noAgentMsg = `👨‍💼 I understand you'd like to speak with a human. Unfortunately, we don't have any human agents set up yet. Please say "talk to AI" and I'll be happy to help you!`;
           await sock.sendMessage(msg.key.remoteJid, { text: noAgentMsg });
           await prisma.message.create({ data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: noAgentMsg, isAiReply: true } });
           return;
         }
 
-        // 2. Check if ANY agent is online (isAvailable: true)
         const onlineAgents = allAgents.filter(a => a.isAvailable);
-        
         if (onlineAgents.length === 0) {
           const offlineMsg = `👨‍💼 I understand you'd like to speak with a human. Unfortunately, all our agents are currently offline. Please try again during business hours, or say "talk to AI" and I'll be happy to help you!`;
           await sock.sendMessage(msg.key.remoteJid, { text: offlineMsg });
@@ -220,9 +238,7 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
           return;
         }
 
-        // 3. Filter out manually busy agents
         const notManuallyBusy = onlineAgents.filter(a => !a.isBusy);
-        
         if (notManuallyBusy.length === 0) {
           const busyMsg = `👨‍💼 I understand you'd like to speak with a human. Unfortunately, all our agents are currently busy. Please try again in a few minutes, or say "talk to AI" and I'll be happy to help you!`;
           await sock.sendMessage(msg.key.remoteJid, { text: busyMsg });
@@ -230,7 +246,6 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
           return;
         }
 
-        // 4. Check which agents are currently IN CHAT (assigned to other active HUMAN conversations)
         const activeHumanConversations = await prisma.conversation.findMany({
           where: { 
             tenantId: tenant.id, 
@@ -239,8 +254,6 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
           }
         });
         const inChatAgentIds = activeHumanConversations.map(c => c.assignedAgentId);
-
-        // 5. Find an agent who is online, not manually busy, and not in another chat
         const availableAgent = notManuallyBusy.find(a => !inChatAgentIds.includes(a.id));
 
         if (availableAgent) {
@@ -251,12 +264,11 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
           });
           
           const languages = JSON.parse(availableAgent.languages || '["English"]');
-          const handoffMsg = `‍💼 Perfect! I'm connecting you with our specialist *${availableAgent.name}* now. They speak ${languages.join(', ')} and will reply shortly!\n\n(Your chat is now with a human. Say "talk to AI" anytime to switch back.)`;
+          const handoffMsg = `👨‍💼 Perfect! I'm connecting you with our specialist *${availableAgent.name}* now. They speak ${languages.join(', ')} and will reply shortly!\n\n(Your chat is now with a human. Say "talk to AI" anytime to switch back.)`;
           
           await sock.sendMessage(msg.key.remoteJid, { text: handoffMsg });
           await prisma.message.create({ data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: handoffMsg, isAiReply: true } });
 
-          // Send INSTANT ALERT to the AGENT via WhatsApp
           if (availableAgent.whatsappNumber) {
             const agentJid = availableAgent.whatsappNumber.replace(/\D/g, '') + '@s.whatsapp.net';
             const alertMsg = `🚨 *URGENT: Human Handoff Required!*\n\n👤 *Customer:* +${fromNumber}\n💬 *Customer just said:* "${text}"\n\n🔗 *Login to reply:* https://bot.aamirsaba.com/agent-dashboard\n\nPlease log in to your Agent Dashboard immediately to assist this customer.`;            
@@ -269,10 +281,9 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
           }
 
           console.log(`🔄 Auto-handoff: ${fromNumber} → Agent ${availableAgent.name}`);
-          return; // Stop here, don't call AI
+          return;
         } else {
-          // All online agents are currently in other chats
-          const busyMsg = `👨‍ I understand you'd like to speak with a human. Unfortunately, all our available agents are currently busy with other customers. Please try again in a few minutes, or say "talk to AI" and I'll be happy to help you!`;
+          const busyMsg = `👨‍💼 I understand you'd like to speak with a human. Unfortunately, all our available agents are currently busy with other customers. Please try again in a few minutes, or say "talk to AI" and I'll be happy to help you!`;
           await sock.sendMessage(msg.key.remoteJid, { text: busyMsg });
           await prisma.message.create({ data: { tenantId: tenant.id, fromNumber: phoneNumber, toNumber: fromNumber, direction: 'outbound', content: busyMsg, isAiReply: true } });
           return;
@@ -282,23 +293,21 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
       // ==========================================
       // 4. CHECK IF MODE IS HUMAN (Stop AI)
       // ==========================================
-      //  CHECK: If mode is HUMAN, save message and STOP (don't call AI)
-if (conversation.mode === 'HUMAN') {
-  //  SAVE THE INBOUND MESSAGE TO DATABASE
-  await prisma.message.create({
-    data: { 
-      tenantId: tenant.id, 
-      fromNumber, 
-      toNumber: phoneNumber, 
-      direction: 'inbound', 
-      content: text, 
-      isAiReply: false 
-    }
-  });
-  
-  console.log(`👨‍💻 HUMAN MODE: Message from ${fromNumber} saved. Agent: ${conversation.assignedAgent?.name || 'Unassigned'}`);
-  return; // Exit early - AI does NOT reply
-}
+      if (conversation.mode === 'HUMAN') {
+        await prisma.message.create({
+          data: { 
+            tenantId: tenant.id, 
+            fromNumber, 
+            toNumber: phoneNumber, 
+            direction: 'inbound', 
+            content: text, 
+            isAiReply: false 
+          }
+        });
+        
+        console.log(`👨‍💻 HUMAN MODE: Message from ${fromNumber} saved. Agent: ${conversation.assignedAgent?.name || 'Unassigned'}`);
+        return;
+      }
 
       // ==========================================
       // 5. SAVE INBOUND MESSAGE & LEAD
@@ -316,7 +325,7 @@ if (conversation.mode === 'HUMAN') {
       });
 
       if (tenant.isHumanMode) {
-        console.log(` Human Mode Active: AI paused globally. Message from ${fromNumber} saved for manual reply.`);
+        console.log(`🛑 Human Mode Active: AI paused globally. Message from ${fromNumber} saved for manual reply.`);
         return;
       }
 
@@ -330,24 +339,21 @@ if (conversation.mode === 'HUMAN') {
 1. You MUST use ONLY the information provided in your BUSINESS CONTEXT and KNOWLEDGE BASE below.
 2. When asked about courses, prices, or durations, you MUST search the knowledge base and provide EXACT details.
 3. DO NOT make up prices or course names. If you cannot find specific information, say "Let me check our latest course catalog and get back to you with exact details."
-4. 🚨 CRITICAL FORMATTING: NEVER output raw markdown tables (like "| Course | Fee | Duration |"). Instead, format all lists and pricing in a clean, WhatsApp-friendly way using:
+4. 🚨 CRITICAL FORMATTING: NEVER output raw markdown tables. Instead, format all lists and pricing in a clean, WhatsApp-friendly way using:
    - Bullet points (• or ✅) for each item
    - Bold text (*text*) for course names
    - Clear line breaks between items
    - Example format:
      ✅ *Course Name* - Price OMR (Duration)
-     ✅ *Another Course* - Price OMR (Duration)
 5. Keep responses concise, professional, and easy to read on mobile.`;
 
-      // 🚨 1. FETCH KNOWLEDGE BASE CONTENT (Not just filenames!)
       const knowledgeDocs = await prisma.knowledgeDocument.findMany({ 
         where: { tenantId: tenant.id },
-        select: { fileName: true, content: true, fileSize: true } // 🚨 ADDED: content and fileSize
+        select: { fileName: true, content: true, fileSize: true }
       });
       
       const pdfFileList = knowledgeDocs.map(doc => doc.fileName).join(', ');
       
-      // 🚨 2. FORMAT THE KNOWLEDGE BASE TEXT FOR THE AI
       let knowledgeBaseText = '';
       if (knowledgeDocs.length > 0) {
         knowledgeBaseText = '\n\n📚 UPLOADED KNOWLEDGE BASE DOCUMENTS (USE THIS FOR PRICING, COURSES, AND DETAILS):\n' + 
@@ -360,11 +366,10 @@ if (conversation.mode === 'HUMAN') {
 
       const basePrompt = (tenant.systemPrompt || "You are a helpful, professional AI assistant.") + identityRule + knowledgeRule + strictPdfRule;
       
-      // 🚨 3. APPEND THE KNOWLEDGE BASE TEXT TO THE FINAL PROMPT
       const finalSystemPrompt = basePrompt + 
         (tenant.businessContext ? `\n\nBUSINESS CONTEXT:\n${tenant.businessContext}` : '') + 
         (tenant.contactInfo ? `\n\nCONTACT INFO:\n${tenant.contactInfo}` : '') +
-        knowledgeBaseText; // <--- THIS IS THE MISSING LINK!
+        knowledgeBaseText;
 
       console.log("🔍 DEBUG: Final System Prompt length:", finalSystemPrompt.length, "characters");
       console.log("🔍 DEBUG: Knowledge docs loaded:", knowledgeDocs.length);
@@ -388,19 +393,16 @@ if (conversation.mode === 'HUMAN') {
       const aiReply = await getAIResponse(chatHistory, finalSystemPrompt, tenant);
       console.log(`🗣️ AI Reply: ${aiReply}`);
 
-      // 🚨 DEDUCT TOKENS
-      const tokensUsed = 150; // Estimated per reply
+      const tokensUsed = 150;
       const updatedTenant = await prisma.tenant.update({
         where: { id: tenant.id },
         data: { tokenBalance: { decrement: tokensUsed } }
       });
       console.log(`💰 Tokens deducted: ${tokensUsed}. New balance: ${updatedTenant.tokenBalance}`);
 
-      // Check if balance is critically low (less than 10,000)
       if (updatedTenant.tokenBalance < 10000 && updatedTenant.tokenBalance >= 0) {
         console.log(`⚠️ LOW TOKEN WARNING: ${tenant.businessName} has only ${updatedTenant.tokenBalance} tokens left!`);
         
-        // 1. Create Super Admin Alert
         await prisma.alert.create({
           data: {
             type: 'warning',
@@ -410,7 +412,6 @@ if (conversation.mode === 'HUMAN') {
           }
         });
 
-        // 2. Send WhatsApp Warning to the Tenant Owner
         try {
           const ownerJid = tenant.whatsappNumber + '@s.whatsapp.net';
           const warningMsg = `⚠️ *Low Token Alert for ${tenant.businessName}*\n\nYour AI assistant is running low on tokens!\n\n💰 *Remaining Balance:* ${updatedTenant.tokenBalance.toLocaleString()} tokens\n\nTo avoid service interruption, please contact your account manager to purchase a Top-Up Pack.\n\nReply "STOP" to disable these alerts.`;
@@ -422,7 +423,6 @@ if (conversation.mode === 'HUMAN') {
         }
       }
 
-
       // ==========================================
       // 7. HANDLE AI REPLY & PDF SENDING (SEND ONLY ONCE)
       // ==========================================
@@ -432,7 +432,7 @@ if (conversation.mode === 'HUMAN') {
       if (pdfMatch) {
         const fileName = pdfMatch[1].trim();
         const filePath = path.join(__dirname, '..', 'uploads', 'knowledge', fileName);
-        const dirPath = path.join(__dirname, '..', 'uploads', 'knowledge'); // 🚨 FIX: Define dirPath
+        const dirPath = path.join(__dirname, '..', 'uploads', 'knowledge');
         
         console.log(`\n🔍 ========== PDF DEBUG START ==========`);
         console.log(`🔍 AI requested fileName: "${fileName}"`);
@@ -471,7 +471,6 @@ if (conversation.mode === 'HUMAN') {
         }
         console.log(`🔍 ========== PDF DEBUG END ==========\n`);
       } else {
-        // Standard text reply (ONLY SEND ONCE)
         const aiReplyWithDisclaimer = aiReply + disclaimer;
         await sock.sendMessage(msg.key.remoteJid, { text: aiReplyWithDisclaimer });
         await prisma.message.create({

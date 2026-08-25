@@ -46,7 +46,7 @@ const path = require('path');
 // Configure Multer for file uploads
 const upload = multer({ 
   dest: 'uploads/',
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+  limits: { fileSize: 100 * 1024 * 1024 } // 100MB limit
 });
 
 const app = express();
@@ -167,14 +167,15 @@ app.post('/api/admin/tenants/:id/add-tokens', authenticateSuperAdmin, async (req
     const tenant = await prisma.tenant.findUnique({ where: { id } });
     if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
 
-    // Add tokens to their wallet
-    const updatedTenant = await prisma.tenant.update({
-      where: { id },
-      data: { 
-        tokenBalance: { increment: amount },
-        isSuspended: false // Auto-unsuspend if they pay
-      }
-    });
+// Add tokens to their wallet
+const updatedTenant = await prisma.tenant.update({
+  where: { id },
+  data: { 
+    tokenBalance: { increment: amount },
+    isSuspended: false // 🚨 THIS AUTO-ACTIVATES THEM
+  }
+});
+
 
 // After successfully adding tokens:
 await prisma.alert.create({
@@ -2143,6 +2144,118 @@ app.post('/api/agent/send-message', authenticateToken, async (req, res) => {
   }
 });
 
+// ==========================================
+// 🚨 AGENT: SEND FILE (PDF, IMAGE, ETC.) - FIXED TO SAVE PERMANENTLY
+// ==========================================
+app.post('/api/agent/send-file', upload.single('file'), authenticateToken, async (req, res) => {
+  try {
+    const { phoneNumber, messageText } = req.body;
+    const file = req.file;
+
+    if (!file) return res.status(400).json({ error: 'No file uploaded' });
+    if (!phoneNumber) {
+      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+      return res.status(400).json({ error: 'Phone number is required' });
+    }
+
+    const agent = await prisma.agent.findFirst({ 
+      where: { email: req.user.email },
+      include: { tenant: true }
+    });
+    if (!agent || !agent.tenant) {
+      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+      return res.status(404).json({ error: 'Agent or Tenant not found.' });
+    }
+
+    const sock = activeSockets.get(agent.tenant.whatsappNumber);
+    if (!sock) {
+      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+      return res.status(500).json({ error: 'WhatsApp is not connected.' });
+    }
+
+    const cleanNumber = phoneNumber.replace(/\D/g, '');
+    const customerJid = `${cleanNumber}@s.whatsapp.net`;
+
+    // Save file permanently
+    const permanentDir = path.join(__dirname, '..', 'uploads', 'knowledge');
+    if (!fs.existsSync(permanentDir)) {
+      fs.mkdirSync(permanentDir, { recursive: true });
+    }
+    
+    // Sanitize filename
+    const safeFileName = file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+    let finalPath = path.join(permanentDir, safeFileName);
+    
+    // Handle duplicate filenames
+    let counter = 1;
+    while (fs.existsSync(finalPath)) {
+      const ext = path.extname(safeFileName);
+      const name = path.basename(safeFileName, ext);
+      finalPath = path.join(permanentDir, `${name}_${counter}${ext}`);
+      counter++;
+    }
+    
+    // Move the file from temp to permanent location (ASYNC)
+    await fs.promises.rename(file.path, finalPath);
+    const finalFileName = path.basename(finalPath);
+
+    // Read file buffer (ASYNC)
+    const fileBuffer = await fs.promises.readFile(finalPath);
+    const fileExt = path.extname(finalFileName).toLowerCase();
+    let messagePayload = {};
+
+    if (['.jpg', '.jpeg', '.png', '.webp'].includes(fileExt)) {
+      messagePayload = {
+        image: fileBuffer,
+        mimetype: `image/${fileExt === '.jpg' ? 'jpeg' : fileExt.replace('.', '')}`,
+        caption: messageText || ''
+      };
+    } else {
+      const mimeTypes = {
+        '.pdf': 'application/pdf', '.txt': 'text/plain', '.csv': 'text/csv',
+        '.doc': 'application/msword', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        '.xls': 'application/vnd.ms-excel', '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg', '.webm': 'audio/webm',
+        '.zip': 'application/zip', '.rar': 'application/x-rar-compressed'
+      };
+      const mimeType = mimeTypes[fileExt] || 'application/octet-stream';
+      
+      messagePayload = {
+        document: fileBuffer,
+        mimetype: mimeType,
+        fileName: finalFileName,
+        caption: messageText || `📎 ${finalFileName}`
+      };
+    }
+
+    // Send via WhatsApp
+    await sock.sendMessage(customerJid, messagePayload);
+    console.log('✅ File sent successfully to', customerJid);
+
+    // Save to Database
+    await prisma.message.create({
+      data: {
+        tenantId: agent.tenant.id,
+        fromNumber: agent.tenant.whatsappNumber,
+        toNumber: cleanNumber,
+        direction: 'outbound',
+        content: `[Sent File: ${finalFileName}]` + (messageText ? `\n${messageText}` : ''),
+        isAiReply: false
+      }
+    });
+
+    res.json({ success: true, message: 'File sent and saved successfully!' });
+
+  } catch (error) {
+    console.error('❌ Error sending file from agent:', error);
+    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+      try { fs.unlinkSync(req.file.path); } catch (e) {}
+    }
+    res.status(500).json({ error: 'Failed to send file: ' + error.message });
+  }
+});
+
+
 // 🚨 GET CHAT HISTORY FOR AGENT (WITH UNIVERSAL TRANSLATION)
 app.get('/api/agent/chat-history/:number', authenticateToken, async (req, res) => {
   try {
@@ -3355,6 +3468,72 @@ cron.schedule('0 * * * *', async () => {
     console.error('❌ Trial expiration check failed:', error);
   }
 });
+
+
+//  SERVE VOICE NOTE FILES TO AGENT DASHBOARD
+app.get('/api/voice-notes/:filename', async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, '..', 'uploads', 'voice_notes', filename);
+    
+    console.log(`🎵 Serving voice note: ${filePath}`);
+    
+    if (!fs.existsSync(filePath)) {
+      console.error(`❌ Voice note file not found: ${filePath}`);
+      return res.status(404).json({ error: 'Voice note not found' });
+    }
+    
+    res.setHeader('Content-Type', 'audio/ogg');
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+    
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+    
+  } catch (error) {
+    console.error('❌ Error serving voice note:', error);
+    res.status(500).json({ error: 'Failed to serve voice note' });
+  }
+});
+
+
+// Serve uploaded files for download/viewing
+app.get('/uploads/knowledge/:filename', async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    // 🚨 FIX: Use '..' to go up from 'src' to the main project folder
+    const filePath = path.join(__dirname, '..', 'uploads', 'knowledge', filename);
+    
+    console.log(`📎 Serving file: ${filePath}`);
+    
+    if (!fs.existsSync(filePath)) {
+      console.error(`❌ File not found: ${filePath}`);
+      return res.status(404).send('File not found');
+    }
+    
+    const fileExt = path.extname(filename).toLowerCase();
+    const mimeTypes = {
+      '.pdf': 'application/pdf', '.txt': 'text/plain', '.csv': 'text/csv',
+      '.doc': 'application/msword', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      '.xls': 'application/vnd.ms-excel', '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp',
+      '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg', '.webm': 'audio/webm',
+      '.zip': 'application/zip', '.rar': 'application/x-rar-compressed'
+    };
+    
+    const mimeType = mimeTypes[fileExt] || 'application/octet-stream';
+    const viewableTypes = ['.pdf', '.txt', '.csv', '.jpg', '.jpeg', '.png', '.webp'];
+    const contentDisposition = viewableTypes.includes(fileExt) ? 'inline' : `attachment; filename="${filename}"`;
+    
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Disposition', contentDisposition);
+    res.sendFile(filePath);
+    
+  } catch (error) {
+    console.error('❌ Error serving file:', error);
+    res.status(500).send('Error serving file');
+  }
+});
+
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

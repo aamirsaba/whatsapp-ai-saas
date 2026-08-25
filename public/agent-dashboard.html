@@ -35,45 +35,33 @@
       </p>
     </div>
 
-    <!-- 🚨 NEW: Agent Availability Status Toggle -->
+    <!-- Agent Availability Status Toggle -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
       <h3 class="text-lg font-semibold text-gray-800 mb-4">👤 Your Availability Status</h3>
       <div class="flex flex-col sm:flex-row gap-3">
-        <button onclick="setAgentStatus(true, false)" id="btnAvailable" class="flex-1 px-4 py-3 rounded-lg font-semibold transition bg-gray-200 text-gray-700 hover:bg-green-100">
-          ✅ Available
-        </button>
-        <button onclick="setAgentStatus(true, true)" id="btnBusy" class="flex-1 px-4 py-3 rounded-lg font-semibold transition bg-gray-200 text-gray-700 hover:bg-yellow-100">
-          🚫 Busy (On Break/Call)
-        </button>
-        <button onclick="setAgentStatus(false, false)" id="btnOffline" class="flex-1 px-4 py-3 rounded-lg font-semibold transition bg-gray-200 text-gray-700 hover:bg-red-100">
-          🔴 Offline
-        </button>
+        <button onclick="setAgentStatus(true, false)" id="btnAvailable" class="flex-1 px-4 py-3 rounded-lg font-semibold transition bg-gray-200 text-gray-700 hover:bg-green-100">✅ Available</button>
+        <button onclick="setAgentStatus(true, true)" id="btnBusy" class="flex-1 px-4 py-3 rounded-lg font-semibold transition bg-gray-200 text-gray-700 hover:bg-yellow-100">🚫 Busy</button>
+        <button onclick="setAgentStatus(false, false)" id="btnOffline" class="flex-1 px-4 py-3 rounded-lg font-semibold transition bg-gray-200 text-gray-700 hover:bg-red-100">🔴 Offline</button>
       </div>
-      <p class="text-xs text-gray-500 mt-3">
-        <strong>Available:</strong> Ready to receive chats | 
-        <strong>Busy:</strong> Temporarily unavailable | 
-        <strong>Offline:</strong> Not taking any chats
-      </p>
     </div>
 
     <!-- Live Inbox -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <h3 class="text-lg font-semibold text-gray-800 mb-4">💬 Team Inbox (Manual Reply)</h3>
-      <p class="text-xs text-gray-500 mb-4">Select a customer to reply manually.</p>
       
       <!-- Recent Chats as Cards -->
       <div id="recentChats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6 max-h-96 overflow-y-auto p-1">
         <div class="text-center text-gray-400 py-8 col-span-full">Loading conversations...</div>
       </div>
 
-      <!-- Reply Box with Quick Replies -->
+      <!-- Reply Box -->
       <div id="replyBox" class="hidden bg-white border-2 border-indigo-100 rounded-xl p-5 shadow-sm">
         
-        <!-- 🚨 NEW: Agent Language Preference Dropdown -->
+        <!-- Language Preference -->
         <div class="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100 flex items-center justify-between">
           <div>
             <label class="block text-xs font-semibold text-blue-800 mb-1">🌍 My Preferred Language:</label>
-            <p class="text-[10px] text-blue-600">All customer messages will be translated to this language.</p>
+            <p class="text-[10px] text-blue-600">Customer messages will be translated to this.</p>
           </div>
           <select id="agentPreferredLang" onchange="updatePreferredLanguage()" class="px-3 py-1.5 border border-blue-200 rounded-md text-sm font-medium text-blue-900 bg-white focus:ring-2 focus:ring-blue-500 outline-none">
             <option value="English">English</option>
@@ -97,22 +85,59 @@
           </button>
         </div>
         
-        <!-- Rest of the reply box (Quick Replies, Textarea, Send Button) remains the same... -->
-        
-        <!-- Quick Replies Dropdown -->
+        <!-- Quick Replies -->
         <div class="mb-3">
           <label class="block text-xs font-medium text-gray-600 mb-1">⚡ Quick Reply:</label>
           <select id="quickReplies" onchange="insertQuickReply()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
             <option value="">-- Select a template --</option>
             <option value="Hello! Thank you for contacting us. How can I assist you today?">👋 Standard Greeting</option>
             <option value="Could you please provide a few more details so I can assist you better?">ℹ️ Request More Info</option>
-            <option value="You can reach our official support team at [Insert Email/Phone] for further assistance.">📞 Share Contact Info</option>
             <option value="Thank you for your inquiry. We will get back to you shortly.">⏳ Holding Response</option>
             <option value="Thank you for contacting us! Have a great day.">✅ Closing / Thank You</option>
           </select>
         </div>
 
-        <textarea id="manualReplyText" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none mb-3" placeholder="Type your manual reply..."></textarea>
+        <!-- 📎 File Attachment Section (FIXED STRUCTURE) -->
+        <div class="mb-3 flex flex-wrap items-center gap-2">
+          <div class="relative group">
+  <button type="button" onclick="document.getElementById('fileInput').click()" class="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition flex items-center gap-1 text-sm font-medium">
+    📎 Attach File
+  </button>
+  <!-- Tooltip showing accepted types -->
+  <div class="absolute bottom-full left-0 mb-2 hidden group-hover:block w-64 bg-gray-800 text-white text-xs rounded-lg p-3 shadow-lg z-10">
+    <p class="font-semibold mb-1">Accepted files:</p>
+    <div class="grid grid-cols-2 gap-1">
+      <span>📄 PDF, DOC, DOCX</span>
+      <span>📊 XLS, XLSX, CSV</span>
+      <span>🖼️ JPG, PNG, WEBP</span>
+      <span>🎵 MP3, WAV, WEBM</span>
+      <span>📦 ZIP, RAR</span>
+      <span>📃 TXT</span>
+    </div>
+    <p class="mt-2 text-gray-300">Max: 100MB</p>
+    <div class="absolute bottom-0 left-4 transform translate-y-1/2 rotate-45 w-2 h-2 bg-gray-800"></div>
+  </div>
+</div>
+
+          <input type="file" id="fileInput" class="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.mp3,.wav,.webm,.zip" onchange="handleFileSelect(this)">
+          <span id="fileNameDisplay" class="text-xs text-gray-500 truncate max-w-[200px]"></span>
+          <button type="button" id="clearFileBtn" onclick="clearFile()" class="hidden text-red-500 hover:text-red-700 text-xs font-medium">✕ Remove</button>
+        </div>
+
+        <!-- 🎤 Voice Recording Section (FIXED STRUCTURE) -->
+        <div class="mb-3 flex items-center gap-2">
+          <button type="button" id="recordBtn" onclick="toggleRecording()" class="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition flex items-center gap-1 text-sm font-medium">
+             🎤 <span id="recordBtnText">Record Voice</span>
+          </button>
+          <audio id="voicePreview" controls class="hidden flex-1 h-8"></audio>
+          <button type="button" id="sendVoiceBtn" onclick="sendVoiceMessage()" class="hidden px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium">
+            📤 Send Voice
+          </button>
+        </div>
+        <p id="recordingStatus" class="text-xs text-red-500 mb-2 hidden">⏺️ Recording... <span id="recordingTime">0:00</span></p>
+
+        <textarea id="manualReplyText" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none mb-3" placeholder="Type your manual reply (optional if attaching a file)..."></textarea>
+        
         <button onclick="sendAgentReply()" class="w-full bg-green-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition flex items-center justify-center gap-2">
           <span>📤</span> Send via WhatsApp
         </button>
@@ -120,66 +145,90 @@
     </div>
   </div>
 
-    <script>
+  <!-- 🚨 CUSTOM MODAL (Replaces ugly alert boxes) -->
+  <div id="customModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4 transform transition-all scale-100">
+      <div class="text-center">
+        <div id="modalIcon" class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+          <span id="modalEmoji" class="text-2xl">✅</span>
+        </div>
+        <h3 id="modalTitle" class="text-lg font-semibold text-gray-900 mb-2">Success</h3>
+        <p id="modalMessage" class="text-sm text-gray-600 mb-6">Operation completed successfully.</p>
+        <button onclick="closeModal()" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium hover:bg-indigo-700 transition">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
     // Check authentication
     const token = localStorage.getItem('token');
-    if (!token) {
-      window.location.href = '/login';
-    }
+    if (!token) { window.location.href = '/login'; }
 
     let currentReplyNumber = null;
     let chatHistoryInterval = null;
+    let selectedFile = null;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let recordedBlob = null;
+    let recordingStartTime = null;
+    let recordingTimer = null;
+    let currentAgentId = null;
+    let currentPreferredLang = localStorage.getItem('agentPreferredLang') || 'English';
 
-    // Decode token to get email
+    // Decode token
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       document.getElementById('userEmail').textContent = payload.email;
-    } catch (e) {
-      console.error('Invalid token');
+    } catch (e) { console.error('Invalid token'); }
+
+    // 🚨 CUSTOM MODAL FUNCTIONS
+    function showModal(title, message, type = 'success') {
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalMessage').textContent = message;
+      
+      const iconDiv = document.getElementById('modalIcon');
+      const emoji = document.getElementById('modalEmoji');
+      
+      if (type === 'error') {
+        iconDiv.className = 'mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4';
+        emoji.textContent = '❌';
+      } else if (type === 'warning') {
+        iconDiv.className = 'mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4';
+        emoji.textContent = '⚠️';
+      } else {
+        iconDiv.className = 'mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4';
+        emoji.textContent = '✅';
+      }
+      
+      document.getElementById('customModal').classList.remove('hidden');
+      document.getElementById('customModal').classList.add('flex');
     }
 
+    function closeModal() {
+      document.getElementById('customModal').classList.add('hidden');
+      document.getElementById('customModal').classList.remove('flex');
+    }
 
-
-    // Load team info and agent name
+    // Load team info
     async function loadAgentInfo() {
       try {
-        const res = await fetch('/api/agent/info', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await fetch('/api/agent/info', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
-        
-        console.log(' Agent info response:', data);
-        
         if (res.ok && data.agent) {
-          //  UPDATE AGENT NAME
-          const agentNameDisplay = document.getElementById('agentNameDisplay');
-          if (agentNameDisplay) {
-            agentNameDisplay.textContent = data.agent.name || 'Agent';
-          }
-          
-          // Update team info
+          document.getElementById('agentNameDisplay').textContent = data.agent.name || 'Agent';
           if (data.team) {
             document.getElementById('teamName').textContent = `Team: ${data.team.businessName}`;
             document.getElementById('businessName').textContent = data.team.businessName;
           }
-          
-          console.log('✅ Agent name loaded:', data.agent.name);
-        } else {
-          console.error(' Agent info not found in response');
         }
-      } catch (error) {
-        console.error('Load agent info error:', error);
-      }
+      } catch (error) { console.error('Load agent info error:', error); }
     }
 
     // Load recent chats
     async function loadRecentChats() {
       try {
-        const res = await fetch('/api/agent/chats', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await fetch('/api/agent/chats', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
-        
         if (res.ok && data.chats && data.chats.length > 0) {
           document.getElementById('recentChats').innerHTML = data.chats.map(chat => `
             <div onclick="openReplyBox('${chat.phoneNumber}')" class="p-4 border border-gray-200 rounded-lg hover:border-indigo-300 cursor-pointer transition bg-gray-50 hover:bg-white">
@@ -193,241 +242,376 @@
         } else {
           document.getElementById('recentChats').innerHTML = '<div class="text-center text-gray-400 py-8 col-span-full">No recent conversations</div>';
         }
-      } catch (error) {
-        console.error('Load chats error:', error);
-      }
+      } catch (error) { console.error('Load chats error:', error); }
     }
 
-
-    // 🚨 NEW: Handle Language Preference
-    let currentPreferredLang = localStorage.getItem('agentPreferredLang') || 'English';
-    
-    // Set dropdown to saved preference on load
+    // Language Preference
     document.addEventListener('DOMContentLoaded', () => {
       const langSelect = document.getElementById('agentPreferredLang');
       if (langSelect) langSelect.value = currentPreferredLang;
     });
 
     async function updatePreferredLanguage() {
-      const langSelect = document.getElementById('agentPreferredLang');
-      currentPreferredLang = langSelect.value;
+      currentPreferredLang = document.getElementById('agentPreferredLang').value;
       localStorage.setItem('agentPreferredLang', currentPreferredLang);
-      
-      // Save to backend so it persists
       try {
         await fetch('/api/agent/update-preference', {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` 
-          },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({ preferredLanguage: currentPreferredLang })
         });
       } catch (e) { console.error('Failed to save preference', e); }
-
-      // Reload chat history with new translation
-      if (currentReplyNumber) {
-        await loadChatHistory(currentReplyNumber);
-      }
+      if (currentReplyNumber) await loadChatHistory(currentReplyNumber);
     }
 
-    // Update loadChatHistory to use currentPreferredLang
-    async function loadChatHistory(number) {
-      // ... (keep existing code until the fetch) ...
-      try {
-        const res = await fetch(`/api/agent/chat-history/${number}?lang=${encodeURIComponent(currentPreferredLang)}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        // ... (keep existing mapping code) ...
+// Add this at the top of your script section
+let chatCache = {};
 
-
-       const data = await res.json();
+async function loadChatHistory(number, scrollToBottom = false) {
+  try {
+    console.log(`🔄 Loading chat history for: ${number}`);
+    const res = await fetch(`/api/agent/chat-history/${number}?lang=${encodeURIComponent(currentPreferredLang)}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    const data = await res.json();
+    console.log('📊 Chat history response:', data);
+    
+    if (res.ok && data.messages && data.messages.length > 0) {
+      const historyContainer = document.getElementById('chatHistoryContainer');
+      const wasHidden = historyContainer.classList.contains('hidden');
+      historyContainer.classList.remove('hidden');
+      
+      // Save current scroll position
+      const currentScrollTop = historyContainer.scrollTop;
+      const scrollHeight = historyContainer.scrollHeight;
+      
+      historyContainer.innerHTML = data.messages.map(msg => {
+        const isOutbound = msg.direction === 'outbound';
+        const alignClass = isOutbound ? 'text-right' : 'text-left';
+        const bgClass = isOutbound ? 'bg-green-100 text-green-900 ml-auto' : 'bg-white text-gray-800 border border-gray-200';
+        const label = isOutbound ? '👨‍💼 You' : '👤 Customer';
         
-        if (res.ok && data.messages && data.messages.length > 0) {
-          const historyContainer = document.getElementById('chatHistoryContainer');
-          historyContainer.classList.remove('hidden');
-          
-          historyContainer.innerHTML = data.messages.map(msg => {
-            const isOutbound = msg.direction === 'outbound';
-            const alignClass = isOutbound ? 'text-right' : 'text-left';
-            const bgClass = isOutbound ? 'bg-green-100 text-green-900 ml-auto' : 'bg-white text-gray-800 border border-gray-200';
-            const label = isOutbound ? '👨‍💼 You' : '👤 Customer';
-            
-            // 🚨 NEW: Show translated text with a small "Translated" badge
-            const contentToShow = msg.displayContent || msg.content;
-            const translationBadge = msg.isTranslated 
-              ? `<span class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded ml-2">Translated from original</span>` 
-              : '';
-
-            return `
-              <div class="mb-3 ${alignClass}">
-                <div class="inline-block max-w-xs lg:max-w-md px-3 py-2 rounded-lg ${bgClass} shadow-sm">
-                  <div class="flex items-center justify-between mb-1">
-                    <p class="text-xs font-semibold opacity-75">${label}</p>
-                    ${translationBadge}
-                  </div>
-                  <p class="text-sm whitespace-pre-wrap">${contentToShow}</p>
-                  ${msg.isTranslated ? `<p class="text-xs opacity-50 mt-1 italic border-t border-gray-200 pt-1">Original: ${msg.originalContent}</p>` : ''}
-                  <p class="text-xs opacity-60 mt-1 text-right">${new Date(msg.createdAt).toLocaleString()}</p>
-                </div>
+        // Check for voice note
+        const voiceNoteMatch = msg.content.match(/\[Voice Note: (.*?)\]/);
+        const isVoiceNote = voiceNoteMatch !== null;
+        
+        // Check for file attachment (both formats)
+        const fileMatch = msg.content.match(/\[Sent File: (.*?)\]/);
+        const isFile = fileMatch !== null;
+        
+        const translationBadge = msg.isTranslated 
+          ? '<span class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded ml-2">Translated</span>' 
+          : '';
+        
+        let messageContent = '';
+        
+        if (isVoiceNote) {
+          const fileName = voiceNoteMatch[1];
+          messageContent = `
+            <div onclick="openVoiceModal('${fileName}')" class="flex items-center gap-2 p-3 bg-indigo-50 hover:bg-indigo-100 rounded-lg cursor-pointer transition border border-indigo-200">
+              <div class="bg-indigo-600 text-white rounded-full p-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                </svg>
               </div>
-            `;
-          }).join('');
+              <div class="flex-1">
+                <p class="text-sm font-medium text-indigo-900">Voice Message</p>
+                <p class="text-xs text-indigo-600">Click to play ▶️</p>
+              </div>
+              <span class="text-2xl">🎧</span>
+            </div>
+          `;
+        } else if (isFile) {
+          const fileName = fileMatch[1].trim();
+          const fileExt = fileName.split('.').pop().toLowerCase();
           
-          // Scroll to bottom
-          historyContainer.scrollTop = historyContainer.scrollHeight;
+          // File type icons and colors
+          const fileTypes = {
+            'pdf': { icon: '', color: 'red', label: 'PDF Document' },
+            'doc': { icon: '📝', color: 'blue', label: 'Word Document' },
+            'docx': { icon: '📝', color: 'blue', label: 'Word Document' },
+            'xls': { icon: '', color: 'green', label: 'Excel Spreadsheet' },
+            'xlsx': { icon: '', color: 'green', label: 'Excel Spreadsheet' },
+            'txt': { icon: '📃', color: 'gray', label: 'Text File' },
+            'zip': { icon: '📦', color: 'yellow', label: 'Archive' },
+            'rar': { icon: '📦', color: 'yellow', label: 'Archive' },
+            'jpg': { icon: '🖼️', color: 'purple', label: 'Image' },
+            'jpeg': { icon: '️', color: 'purple', label: 'Image' },
+            'png': { icon: '️', color: 'purple', label: 'Image' },
+            'webp': { icon: '🖼️', color: 'purple', label: 'Image' },
+            'mp3': { icon: '🎵', color: 'pink', label: 'Audio' },
+            'wav': { icon: '🎵', color: 'pink', label: 'Audio' },
+            'webm': { icon: '🎥', color: 'pink', label: 'Video/Audio' },
+            'csv': { icon: '📊', color: 'green', label: 'CSV File' }
+          };
+          
+          const fileType = fileTypes[fileExt] || { icon: '📎', color: 'gray', label: 'File' };
+          const colorClasses = {
+            'red': 'bg-red-50 border-red-200 text-red-900',
+            'blue': 'bg-blue-50 border-blue-200 text-blue-900',
+            'green': 'bg-green-50 border-green-200 text-green-900',
+            'yellow': 'bg-yellow-50 border-yellow-200 text-yellow-900',
+            'purple': 'bg-purple-50 border-purple-200 text-purple-900',
+            'pink': 'bg-pink-50 border-pink-200 text-pink-900',
+            'gray': 'bg-gray-50 border-gray-200 text-gray-900'
+          };
+          
+          messageContent = `
+            <div class="flex items-center gap-2 p-3 rounded-lg border cursor-pointer hover:shadow-md transition ${colorClasses[fileType.color]}" onclick="handleFileAction('${fileName}')">
+              <span class="text-3xl">${fileType.icon}</span>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold truncate">${fileName}</p>
+                <p class="text-xs opacity-75">${fileType.label} • Click to download</p>
+              </div>
+              <svg class="w-5 h-5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+              </svg>
+            </div>
+          `;
+        } else {
+          const contentToShow = msg.displayContent || msg.content;
+          messageContent = `
+            <p class="text-sm whitespace-pre-wrap">${contentToShow}</p>
+            ${msg.isTranslated ? '<p class="text-xs opacity-50 mt-1 italic border-t border-gray-200 pt-1">Original: ' + msg.originalContent + '</p>' : ''}
+          `;
         }
-      } catch (error) {
-        console.error('Load chat history error:', error);
-      }
-    }
 
-    //  Quick Reply Function
+        return `
+          <div class="mb-3 ${alignClass}">
+            <div class="inline-block max-w-xs lg:max-w-md px-3 py-2 rounded-lg ${bgClass} shadow-sm">
+              <div class="flex items-center justify-between mb-1">
+                <p class="text-xs font-semibold opacity-75">${label}</p>
+                ${!isVoiceNote && !isFile && msg.isTranslated ? translationBadge : ''}
+              </div>
+              ${messageContent}
+              <p class="text-xs opacity-60 mt-1 text-right">${new Date(msg.createdAt).toLocaleString()}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      // Only scroll to bottom if first load or new message
+      if (wasHidden || scrollToBottom) {
+        historyContainer.scrollTop = historyContainer.scrollHeight;
+      } else {
+        const newScrollHeight = historyContainer.scrollHeight;
+        historyContainer.scrollTop = newScrollHeight - scrollHeight + currentScrollTop;
+      }
+    } else {
+      console.log('⚠️ No messages found');
+    }
+  } catch (error) {
+    console.error('❌ Load chat history error:', error);
+  }
+}
+
+// Download file function
+function handleFileAction(fileName) {
+  const fileExt = fileName.split('.').pop().toLowerCase();
+  const fileUrl = `/uploads/knowledge/${fileName}`;
+  
+  // Audio files - open in modal
+  const audioTypes = ['mp3', 'wav', 'ogg', 'webm'];
+  
+  // Files that open inline in browser
+  const inlineTypes = ['pdf', 'txt', 'csv', 'jpg', 'jpeg', 'png', 'webp', 'gif'];
+  
+  // Office files (download for localhost, viewer for production)
+  const officeTypes = ['doc', 'docx', 'xls', 'xlsx'];
+  
+  if (audioTypes.includes(fileExt)) {
+    // Open audio in modal
+    openAudioModal(fileUrl, fileName);
+  } else if (officeTypes.includes(fileExt)) {
+    // For localhost, just download Word/Excel files
+    // (Office Viewer can't access localhost URLs)
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } else if (inlineTypes.includes(fileExt)) {
+    // Open PDFs, images, text directly in browser
+    window.open(fileUrl, '_blank');
+  } else {
+    // Download everything else (zip, rar, etc.)
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+}
+
+
+// Audio player modal for audio files
+function openAudioModal(fileUrl, fileName) {
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+  modal.innerHTML = `
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">🎵 Playing: ${fileName}</h3>
+        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <audio controls autoplay class="w-full">
+        <source src="${fileUrl}" type="audio/${fileName.split('.').pop()}">
+        Your browser does not support audio playback
+      </audio>
+      <div class="mt-4 flex gap-2">
+        <a href="${fileUrl}" download class="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg text-center hover:bg-indigo-700">
+          ️ Download
+        </a>
+        <button onclick="this.closest('.fixed').remove()" class="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">
+          Close
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
     function insertQuickReply() {
       const select = document.getElementById('quickReplies');
       const textarea = document.getElementById('manualReplyText');
-      const selectedText = select.value;
-
-      if (selectedText) {
-        if (textarea.value.trim().length > 0) {
-          textarea.value = textarea.value + '\n\n' + selectedText;
-        } else {
-          textarea.value = selectedText;
-        }
+      if (select.value) {
+        textarea.value = textarea.value ? textarea.value + '\n\n' + select.value : select.value;
         select.value = "";
         textarea.focus();
       }
     }
 
     async function openReplyBox(number) {
-      currentReplyNumber = number;
-      document.getElementById('replyToNumber').textContent = '+' + number;
-      document.getElementById('replyBox').classList.remove('hidden');
-      document.getElementById('manualReplyText').value = '';
-      document.getElementById('manualReplyText').focus();
-      
-      // Load chat history when opening the reply box
-      await loadChatHistory(number);
-      
-      //  Set up auto-refresh every 5 seconds to get new messages
-      if (chatHistoryInterval) {
-        clearInterval(chatHistoryInterval);
-      }
-      chatHistoryInterval = setInterval(() => {
-        loadChatHistory(number);
-        loadRecentChats();
-      }, 5000);
-      
-      // Smooth scroll to reply box
-      setTimeout(() => { 
-        document.getElementById('replyBox').scrollIntoView({ behavior: 'smooth', block: 'center' }); 
-      }, 100);
-    }
+  currentReplyNumber = number;
+  document.getElementById('replyToNumber').textContent = '+' + number;
+  document.getElementById('replyBox').classList.remove('hidden');
+  document.getElementById('manualReplyText').value = '';
+  document.getElementById('manualReplyText').focus();
+  
+  // Load immediately
+  await loadChatHistory(number, true);
+  
+  //  CHANGE: Increase interval from 5 seconds to 10 seconds to reduce lag
+  if (chatHistoryInterval) {
+    clearInterval(chatHistoryInterval);
+  }
+  chatHistoryInterval = setInterval(() => {
+    loadChatHistory(number, false); // Don't scroll on auto-refresh
+    loadRecentChats();
+  }, 10000); // 10 seconds instead of 5
+  
+  setTimeout(() => { 
+    document.getElementById('replyBox').scrollIntoView({ behavior: 'smooth', block: 'center' }); 
+  }, 100);
+}
+
 
     function closeReplyBox() {
       currentReplyNumber = null;
       document.getElementById('replyBox').classList.add('hidden');
-      
-      // Clear the auto-refresh interval
-      if (chatHistoryInterval) {
-        clearInterval(chatHistoryInterval);
-        chatHistoryInterval = null;
+      if (chatHistoryInterval) { clearInterval(chatHistoryInterval); chatHistoryInterval = null; }
+    }
+
+    function handleFileSelect(input) {
+      if (input.files && input.files[0]) {
+        selectedFile = input.files[0];
+        document.getElementById('fileNameDisplay').textContent = selectedFile.name;
+        document.getElementById('clearFileBtn').classList.remove('hidden');
       }
     }
 
+    function clearFile() {
+      selectedFile = null;
+      document.getElementById('fileInput').value = '';
+      document.getElementById('fileNameDisplay').textContent = '';
+      document.getElementById('clearFileBtn').classList.add('hidden');
+    }
+
     async function sendAgentReply() {
-      const number = document.getElementById('replyToNumber').textContent.replace('+', '');
-      const text = document.getElementById('manualReplyText').value;
+      const replyElement = document.getElementById('replyToNumber');
+      if (!replyElement) { showModal('Error', 'Reply box not initialized. Please reopen the chat.', 'error'); return; }
       
-      if (!text.trim()) {
-        alert('Please type a message first.');
+      let number = replyElement.textContent.replace('+', '').trim();
+      const text = document.getElementById('manualReplyText').value;
+
+      if (selectedFile) {
+        const maxSize = 100 * 1024 * 1024;
+        if (selectedFile.size > maxSize) { showModal('Error', 'File is too large. Max 100MB.', 'error'); return; }
+
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('phoneNumber', number);
+        if (text.trim()) formData.append('messageText', text);
+
+        try {
+          const res = await fetch('/api/agent/send-file', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData });
+          const data = await res.json();
+          if (res.ok) {
+            clearFile();
+            document.getElementById('manualReplyText').value = '';
+            await loadChatHistory(number);
+            loadRecentChats();
+            showModal('Success', 'File sent successfully!');
+          } else {
+            showModal('Error', 'Failed to send file: ' + (data.error || 'Unknown error'), 'error');
+          }
+        } catch (error) {
+          showModal('Error', 'Network error. Please try again.', 'error');
+        }
         return;
       }
+
+      if (!text.trim()) { showModal('Warning', 'Please type a message or attach a file first.', 'warning'); return; }
 
       try {
         const res = await fetch('/api/agent/send-message', {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({ phoneNumber: number, message: text })
         });
-
+        const data = await res.json();
         if (res.ok) {
-          // Immediately reload chat history to show the sent message
           await loadChatHistory(number);
           document.getElementById('manualReplyText').value = '';
+          showModal('Success', 'Message sent!');
         } else {
-          const data = await res.json();
-          alert('❌ Failed to send: ' + data.error);
+          showModal('Error', 'Failed to send: ' + data.error, 'error');
         }
       } catch (error) {
-        alert('❌ Network error. Please try again.');
+        showModal('Error', 'Network error. Please try again.', 'error');
       }
     }
 
-    // ==========================================
-    // 🚨 AGENT STATUS MANAGEMENT (BULLETPROOF VERSION)
-    // ==========================================
-    let currentAgentId = null;
-
     async function loadAgentStatus() {
       try {
-        console.log('🔍 Loading agent status...');
-        
-        // 1. Try the dedicated agent info endpoint first
-        const res = await fetch('/api/agent/info', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await fetch('/api/agent/info', { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
-        
-        console.log('📊 /api/agent/info response:', data);
-        
         if (res.ok && data.agent) {
           currentAgentId = data.agent.id;
-          console.log('✅ Agent found via /api/agent/info:', currentAgentId);
           updateStatusButtons(data.agent.isAvailable, data.agent.isBusy || false);
-          return; // Success!
+          return;
         }
-
-        // 2. FALLBACK: If data.agent is null, find agent by matching email from token
-        console.warn('️ Agent not found in /api/agent/info, trying fallback...');
         const payload = JSON.parse(atob(token.split('.')[1]));
-        const userEmail = payload.email;
-        console.log(' Searching for agent with email:', userEmail);
-
-        const agentsRes = await fetch('/api/dashboard/agents', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const agentsRes = await fetch('/api/dashboard/agents', { headers: { 'Authorization': `Bearer ${token}` } });
         const agentsData = await agentsRes.json();
-        
-        console.log(' /api/dashboard/agents response:', agentsData);
-        
         if (agentsData.success && agentsData.agents) {
-          const matchedAgent = agentsData.agents.find(a => a.email.toLowerCase() === userEmail.toLowerCase());
-          
+          const matchedAgent = agentsData.agents.find(a => a.email.toLowerCase() === payload.email.toLowerCase());
           if (matchedAgent) {
             currentAgentId = matchedAgent.id;
-            console.log('✅ Fallback successful: Found agent ID', currentAgentId);
             updateStatusButtons(matchedAgent.isAvailable, matchedAgent.isBusy || false);
             return;
-          } else {
-            console.error('❌ No agent found matching email:', userEmail);
-            console.log('Available agents:', agentsData.agents.map(a => a.email));
           }
-        } else {
-          console.error('❌ /api/dashboard/agents failed or returned no agents');
         }
-
-        // 3. If all else fails - show helpful error
-        const errorMsg = `❌ Could not find agent record for email: ${userEmail}\n\nPlease contact your admin to ensure you were added as an agent.`;
-        console.error(errorMsg);
-        alert(errorMsg);
-        
+        showModal('Error', `Could not find agent record for: ${payload.email}`, 'error');
       } catch (error) {
-        console.error('❌ Load agent status error:', error);
-        alert('❌ Error loading agent status: ' + error.message);
+        showModal('Error', 'Error loading agent status: ' + error.message, 'error');
       }
     }
 
@@ -435,68 +619,296 @@
       const btnAvailable = document.getElementById('btnAvailable');
       const btnBusy = document.getElementById('btnBusy');
       const btnOffline = document.getElementById('btnOffline');
-
-      if (!btnAvailable || !btnBusy || !btnOffline) return; // Safety check
-
-      // Reset all to default gray
       const defaultClass = "flex-1 px-4 py-3 rounded-lg font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300";
       btnAvailable.className = defaultClass;
       btnBusy.className = defaultClass;
       btnOffline.className = defaultClass;
 
-      // Apply active colored class based on state
-      if (isAvailable && !isBusy) {
-        btnAvailable.className = "flex-1 px-4 py-3 rounded-lg font-semibold transition bg-green-500 text-white shadow-md";
-      } else if (isAvailable && isBusy) {
-        btnBusy.className = "flex-1 px-4 py-3 rounded-lg font-semibold transition bg-yellow-500 text-white shadow-md";
-      } else {
-        btnOffline.className = "flex-1 px-4 py-3 rounded-lg font-semibold transition bg-red-500 text-white shadow-md";
-      }
+      if (isAvailable && !isBusy) btnAvailable.className = "flex-1 px-4 py-3 rounded-lg font-semibold transition bg-green-500 text-white shadow-md";
+      else if (isAvailable && isBusy) btnBusy.className = "flex-1 px-4 py-3 rounded-lg font-semibold transition bg-yellow-500 text-white shadow-md";
+      else btnOffline.className = "flex-1 px-4 py-3 rounded-lg font-semibold transition bg-red-500 text-white shadow-md";
     }
 
     async function setAgentStatus(isAvailable, isBusy) {
-      if (!currentAgentId) {
-        alert('❌ Agent ID not found. Please refresh the page or ensure you were added as an agent by the admin.');
-        return;
-      }
-
+      if (!currentAgentId) { showModal('Error', 'Agent ID not found. Refresh the page.', 'error'); return; }
       try {
         const res = await fetch(`/api/dashboard/agents/${currentAgentId}`, {
           method: 'PUT',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({ isAvailable, isBusy })
         });
-
         const data = await res.json();
         if (res.ok) {
           updateStatusButtons(isAvailable, isBusy);
-          console.log(`✅ Status updated: Available=${isAvailable}, Busy=${isBusy}`);
+          showModal('Success', `Status updated to ${isAvailable ? (isBusy ? 'Busy' : 'Available') : 'Offline'}`);
         } else {
-          alert('❌ Failed to update status: ' + (data.error || 'Unknown error'));
+          showModal('Error', 'Failed to update status: ' + (data.error || 'Unknown error'), 'error');
         }
       } catch (error) {
-        console.error('Status update error:', error);
-        alert('❌ Network error. Please try again.');
+        showModal('Error', 'Network error. Please try again.', 'error');
       }
     }
 
+    async function toggleRecording() {
+      if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+          mediaRecorder.ondataavailable = (event) => { if (event.data.size > 0) audioChunks.push(event.data); };
+          mediaRecorder.onstop = () => {
+            recordedBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            document.getElementById('voicePreview').src = URL.createObjectURL(recordedBlob);
+            document.getElementById('voicePreview').classList.remove('hidden');
+            document.getElementById('sendVoiceBtn').classList.remove('hidden');
+            document.getElementById('recordingStatus').classList.add('hidden');
+            clearInterval(recordingTimer);
+          };
+          mediaRecorder.start();
+          recordingStartTime = Date.now();
+          document.getElementById('recordBtnText').textContent = 'Stop';
+          document.getElementById('recordBtn').classList.replace('bg-red-100', 'bg-red-600');
+          document.getElementById('recordBtn').classList.replace('text-red-600', 'text-white');
+          document.getElementById('recordingStatus').classList.remove('hidden');
+          recordingTimer = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+            document.getElementById('recordingTime').textContent = `${Math.floor(elapsed/60)}:${(elapsed%60).toString().padStart(2,'0')}`;
+          }, 1000);
+        } catch (err) {
+          showModal('Error', 'Please allow microphone access.', 'error');
+        }
+      } else {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        document.getElementById('recordBtnText').textContent = 'Record Voice';
+        document.getElementById('recordBtn').classList.replace('bg-red-600', 'bg-red-100');
+        document.getElementById('recordBtn').classList.replace('text-white', 'text-red-600');
+      }
+    }
 
+    async function sendVoiceMessage() {
+      if (!recordedBlob || !currentReplyNumber) return;
+      const formData = new FormData();
+      formData.append('file', recordedBlob, `voice_${Date.now()}.webm`);
+      formData.append('phoneNumber', currentReplyNumber);
+      formData.append('messageText', '🎤 Voice message');
 
-    // Load on page load
-    loadAgentInfo();
-    loadAgentStatus();
-    loadRecentChats();
-    
-    // Auto-refresh recent chats every 10 seconds
-    setInterval(loadRecentChats, 10000);
+      try {
+        const res = await fetch('/api/agent/send-file', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData });
+        if (res.ok) {
+          recordedBlob = null;
+          document.getElementById('voicePreview').classList.add('hidden');
+          document.getElementById('sendVoiceBtn').classList.add('hidden');
+          await loadChatHistory(currentReplyNumber);
+          loadRecentChats();
+          showModal('Success', 'Voice message sent!');
+        } else {
+          showModal('Error', 'Failed to send voice.', 'error');
+        }
+      } catch (error) {
+        showModal('Error', 'Network error.', 'error');
+      }
+    }
 
     function logout() {
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
+
+    //  VOICE NOTE MODAL FUNCTIONS
+    let currentVoiceFileName = null;
+
+    function openVoiceModal(fileName) {
+      currentVoiceFileName = fileName;
+      const modal = document.getElementById('voiceModal');
+      const player = document.getElementById('voiceModalPlayer');
+      
+      // Set the audio source
+      player.src = `/api/voice-notes/${fileName}?t=${Date.now()}`; // Add timestamp to prevent caching
+      
+      // Show modal
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      
+      // Auto-play
+      player.play().catch(err => console.log('Auto-play prevented:', err));
+    }
+
+    function closeVoiceModal() {
+      const modal = document.getElementById('voiceModal');
+      const player = document.getElementById('voiceModalPlayer');
+      
+      player.pause();
+      player.src = '';
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      currentVoiceFileName = null;
+    }
+
+    function downloadVoiceNote() {
+      if (!currentVoiceFileName) return;
+      
+      // Create a temporary link to download
+      const link = document.createElement('a');
+      link.href = `/api/voice-notes/${currentVoiceFileName}`;
+      link.download = currentVoiceFileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('voiceModal')?.addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeVoiceModal();
+      }
+    });
+
+
+// Training Modal Functions
+function showTrainingModal() {
+  const hasSeenTraining = localStorage.getItem('hasSeenTraining');
+  if (!hasSeenTraining) {
+    document.getElementById('trainingModal').classList.remove('hidden');
+    document.getElementById('trainingModal').classList.add('flex');
+  }
+}
+
+function closeTrainingModal() {
+  document.getElementById('trainingModal').classList.add('hidden');
+  document.getElementById('trainingModal').classList.remove('flex');
+  localStorage.setItem('hasSeenTraining', 'true');
+}
+
+
+// Show training on first load
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(showTrainingModal, 500);
+});
+
+// WebSocket for real-time updates
+let ws = null;
+
+function connectWebSocket() {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${protocol}//${window.location.host}`);
+  
+  ws.onopen = () => {
+    console.log('✅ WebSocket connected for real-time updates');
+  };
+  
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.type === 'new_message' && currentReplyNumber) {
+      // Clear cache and reload immediately
+      const cacheKey = `${currentReplyNumber}_${currentPreferredLang}`;
+      delete chatCache[cacheKey];
+      loadChatHistory(currentReplyNumber, true);
+    }
+  };
+  
+  ws.onclose = () => {
+    console.log('⚠️ WebSocket disconnected. Reconnecting in 5 seconds...');
+    setTimeout(connectWebSocket, 5000);
+  };
+}
+
+// Connect on page load
+document.addEventListener('DOMContentLoaded', connectWebSocket);
+
+
+    // Initialize
+    loadAgentInfo();
+    loadAgentStatus();
+    loadRecentChats();
+    setInterval(loadRecentChats, 10000);
   </script>
+
+  <!-- 🎤 VOICE NOTE MODAL PLAYER -->
+  <div id="voiceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">🎤 Voice Note</h3>
+        <button onclick="closeVoiceModal()" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="bg-gray-50 rounded-lg p-4 mb-4">
+        <audio id="voiceModalPlayer" controls class="w-full">
+          <source src="" type="audio/ogg">
+          Your browser does not support audio playback
+        </audio>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="downloadVoiceNote()" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-medium">
+          ⬇️ Download
+        </button>
+        <button onclick="closeVoiceModal()" class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm font-medium">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+<!-- 📚 AGENT TRAINING MODAL -->
+<div id="trainingModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 overflow-y-auto">
+  <div class="bg-white rounded-xl shadow-2xl p-8 max-w-2xl w-full mx-4 my-8">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-2xl font-bold text-gray-800">👋 Welcome to Agent Dashboard!</h2>
+      <button onclick="closeTrainingModal()" class="text-gray-400 hover:text-gray-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="space-y-4 text-gray-700">
+      <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+        <h3 class="font-semibold text-blue-900 mb-2">📋 Your Role</h3>
+        <p>You are responding to customer inquiries on behalf of your team. Customers may be chatting with our AI, and you can take over when needed.</p>
+      </div>
+      
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-green-50 p-4 rounded-lg">
+          <h4 class="font-semibold text-green-900 mb-2">✅ Set Your Status</h4>
+          <p class="text-sm">Mark yourself as Available, Busy, or Offline so the system knows when to assign chats to you.</p>
+        </div>
+        
+        <div class="bg-purple-50 p-4 rounded-lg">
+          <h4 class="font-semibold text-purple-900 mb-2"> Language Settings</h4>
+          <p class="text-sm">Choose your preferred language. Customer messages will be automatically translated for you.</p>
+        </div>
+        
+        <div class="bg-indigo-50 p-4 rounded-lg">
+          <h4 class="font-semibold text-indigo-900 mb-2"> Voice Messages</h4>
+          <p class="text-sm">Click on voice note cards to play customer voice messages. You can also record and send voice replies.</p>
+        </div>
+        
+        <div class="bg-yellow-50 p-4 rounded-lg">
+          <h4 class="font-semibold text-yellow-900 mb-2">📎 File Attachments</h4>
+          <p class="text-sm">Attach PDFs, documents, images, and other files to help customers. Max file size: 100MB.</p>
+        </div>
+      </div>
+      
+      <div class="bg-gray-50 p-4 rounded-lg">
+        <h4 class="font-semibold text-gray-900 mb-2">⚡ Quick Tips</h4>
+        <ul class="text-sm space-y-1 list-disc list-inside">
+          <li>Use <strong>Quick Replies</strong> for common responses</li>
+          <li>Chat history auto-refreshes every 5 seconds</li>
+          <li>Click on any customer in the inbox to start replying</li>
+          <li>All messages are saved automatically</li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="mt-6 flex gap-3">
+      <button onclick="closeTrainingModal()" class="flex-1 bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition">
+        Got it! Let's Start 🚀
+      </button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
