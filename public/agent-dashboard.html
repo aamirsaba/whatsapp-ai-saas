@@ -408,30 +408,21 @@ async function loadChatHistory(number, scrollToBottom = false) {
 
 // Download file function
 function handleFileAction(fileName) {
-  const fileExt = fileName.split('.').pop().toLowerCase();
+  // .trim() ensures no hidden spaces break the extension check
+  const fileExt = fileName.split('.').pop().toLowerCase().trim();
   const fileUrl = `/uploads/knowledge/${fileName}`;
   
-  // Audio files - open in modal
   const audioTypes = ['mp3', 'wav', 'ogg', 'webm'];
-  
-  // Files that open inline in browser
   const inlineTypes = ['pdf', 'txt', 'csv', 'jpg', 'jpeg', 'png', 'webp', 'gif'];
-  
-  // Office files (download for localhost, viewer for production)
-  const officeTypes = ['doc', 'docx', 'xls', 'xlsx'];
+  const officeTypes = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
   
   if (audioTypes.includes(fileExt)) {
-    // Open audio in modal
+    // Open audio in custom modal
     openAudioModal(fileUrl, fileName);
   } else if (officeTypes.includes(fileExt)) {
-    // For localhost, just download Word/Excel files
-    // (Office Viewer can't access localhost URLs)
-    const link = document.createElement('a');
-    link.href = fileUrl;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Use Microsoft Office Online Viewer (Works perfectly on production domains!)
+    const fullUrl = encodeURIComponent(window.location.origin + fileUrl);
+    window.open(`https://view.officeapps.live.com/op/view.aspx?src=${fullUrl}`, '_blank');
   } else if (inlineTypes.includes(fileExt)) {
     // Open PDFs, images, text directly in browser
     window.open(fileUrl, '_blank');
