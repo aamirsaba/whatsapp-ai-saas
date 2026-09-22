@@ -43,20 +43,48 @@ async function startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConn
     }
 
     if (connection === 'close') {
-      const shouldReconnect = (lastDisconnect.error instanceof Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
-      console.log('⚠️ Connection closed. Reconnecting:', shouldReconnect);
-      if (!shouldReconnect) {
+      // 🚨 CRITICAL FIX 1: If it's not in activeSockets, it was intentionally disconnected/deleted. DO NOT RECONNECT.
+      if (!activeSockets.has(phoneNumber)) {
+        console.log(`🛑 Intentional disconnect/deletion. Preventing auto-reconnect for ${phoneNumber}.`);
+        qrCodes.delete(phoneNumber);
+        return; // 🚨 STOP HERE!
+      }
+
+      const statusCode = (lastDisconnect.error instanceof Boom)?.output?.statusCode;
+      const isLoggedOut = statusCode === DisconnectReason.loggedOut;
+      
+      console.log('⚠️ Connection closed. Status Code:', statusCode, 'Is Logged Out:', isLoggedOut);
+
+      // 🚨 CRITICAL FIX 2: If explicitly logged out, clean up and DO NOT reconnect
+      if (isLoggedOut) {
+        console.log(` Logged out intentionally. Cleaning up session for ${phoneNumber}`);
         qrCodes.delete(phoneNumber);
         activeSockets.delete(phoneNumber);
         await prisma.tenant.updateMany({ where: { whatsappNumber: phoneNumber }, data: { isActive: false } }).catch(() => {});
+        return; // 🚨 STOP HERE!
       }
-      if (shouldReconnect) {
-        startWhatsAppSession(tenantId, phoneNumber, onQrGenerated, onConnected);
+
+      // 🚨 CRITICAL FIX 3: Check if tenant still exists at all (Deleted)
+      const tenant = await prisma.tenant.findFirst({ where: { whatsappNumber: phoneNumber } });
+      
+      if (!tenant) {
+        console.log(`🛑 Tenant ${phoneNumber} is DELETED. Preventing auto-reconnect.`);
+        qrCodes.delete(phoneNumber);
+        activeSockets.delete(phoneNumber);
+        return; // 🚨 STOP HERE!
       }
+
+      // 🚨 CRITICAL FIX 4: DO NOT check isActive here! New users have isActive: false until they scan.
+      // If we reach here, it's a normal drop (like QR expiring), so we MUST reconnect.
+      console.log('🔄 Attempting to reconnect...');
+      startWhatsAppSession(tenant.id, phoneNumber, onQrGenerated, onConnected);
+      
     } else if (connection === 'open') {
       console.log(`✅ SUCCESS! WhatsApp is connected and ready for: ${phoneNumber}`);
       qrCodes.delete(phoneNumber);
       if (onConnected) onConnected(phoneNumber);
+      
+      // Mark as active only upon successful scan/connection
       await prisma.tenant.updateMany({ where: { id: tenantId }, data: { isActive: true } }).catch(() => {});
     }
   });

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terms of Service - Universal AI SaaS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+<nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+<div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+<a href="/" class="text-xl font-bold text-green-600">Universal AI SaaS</a>
+<a id="backToHomeLink" href="/" class="text-sm text-gray-600 hover:text-gray-900">← Back to Home</a>
+</div>
+</nav>
+
+<main class="max-w-4xl mx-auto px-4 py-12">
+<div class="bg-white rounded-2xl shadow-lg p-8 md:p-12">
+<div class="mb-8">
+<h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Terms of Service</h1>
+<p class="text-gray-500">Last Updated: August 30, 2026</p>
+</div>
+
+<section class="mb-8">
+<h2 class="text-2xl font-bold text-gray-800 mb-4">1. Acceptance of Terms</h2>
+<div class="prose text-gray-700 space-y-3">
+<p>These Terms of Service constitute a legally binding agreement between you and <strong>AAMIRSABA LTD</strong> (Company Number: 13117115, registered in England and Wales), operating the Universal AI SaaS platform at bot.aamirsaba.com.</p>
+</div>
+</section>
+
+<section class="mb-8">
+<h2 class="text-2xl font-bold text-gray-800 mb-4">2. Subscription & Payment Terms</h2>
+<div class="prose text-gray-700 space-y-3">
+<ul class="list-disc list-inside ml-4 space-y-2">
+<li><strong>Currency:</strong> All prices are in British Pounds (GBP / £).</li>
+<li><strong>Plans:</strong> Starter (£25/month), Growth (£35/month), and Business (£50/month).</li>
+<li><strong>Billing:</strong> Subscriptions are billed monthly in advance via Stripe.</li>
+<li><strong>Free Trial:</strong> We offer a 7-day free trial with 10,000 tokens (expires whichever comes first). No payment is required for the trial.</li>
+<li><strong>Refunds:</strong> All sales are final. No refunds are provided after payment, as the free trial serves as the testing period.</li>
+</ul>
+</div>
+</section>
+
+<section class="mb-8">
+<h2 class="text-2xl font-bold text-gray-800 mb-4">3. Acceptable Use</h2>
+<div class="prose text-gray-700 space-y-3">
+<p>You agree NOT to use our services to send spam, violate WhatsApp's Terms of Service, transmit malware, or engage in any illegal activities. Violation will result in immediate termination without refund.</p>
+</div>
+</section>
+
+<section class="mb-8">
+<h2 class="text-2xl font-bold text-gray-800 mb-4">4. Governing Law</h2>
+<div class="prose text-gray-700 space-y-3">
+<p>These Terms are governed by and construed in accordance with the laws of <strong>England and Wales</strong>. Any disputes shall be subject to the exclusive jurisdiction of the courts of England and Wales.</p>
+</div>
+</section>
+
+<section class="mb-8">
+<h2 class="text-2xl font-bold text-gray-800 mb-4">5. Contact Information</h2>
+<div class="bg-gray-50 rounded-lg p-6">
+<ul class="space-y-2 text-sm">
+<li><strong>🏢 Company:</strong> AAMIRSABA LTD</li>
+<li><strong>📝 Company Number:</strong> 13117115</li>
+<li><strong>📧 Email:</strong> <a href="mailto:info@aamirsaba.com" class="text-green-600 underline">inof@aamirsaba.com</a></li>
+<li><strong>📱 WhatsApp:</strong> <a href="https://wa.me/447362046611" class="text-green-600 underline">+447362046611</a></li>
+</ul>
+</div>
+</section>
+
+<div class="mt-12 pt-8 border-t border-gray-200 text-center text-sm text-gray-500">
+<p>© 2026 AAMIRSABA LTD. All rights reserved. Registered in England and Wales. Company Number: 13117115.</p>
+</div>
+</div>
+</main>
+<script>
+  // Smart "Back to Home" link based on login status
+  document.addEventListener('DOMContentLoaded', () => {
+    const backLink = document.getElementById('backToHomeLink');
+    if (backLink) {
+      const token = localStorage.getItem('token');
+      if (token) {
+        // User is logged in, send them to the dashboard
+        backLink.href = '/dashboard';
+        backLink.textContent = '← Back to Dashboard';
+      } else {
+        // User is not logged in, send them to the public home page
+        backLink.href = '/';
+        backLink.textContent = '← Back to Home';
+      }
+    }
+  });
+</script>
+</body>
+</html>

@@ -30,7 +30,7 @@
     "playwright": "^1.62.1",
     "qrcode": "^1.5.4",
     "qrcode-terminal": "^0.12.0",
-    "stripe": "^22.5.0",
+    "stripe": "^22.6.2",
     "tesseract.js": "^7.0.0",
     "ws": "^8.21.3"
   },

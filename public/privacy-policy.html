@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy - Universal AI SaaS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+<nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+<div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+<a href="/" class="text-xl font-bold text-green-600">Universal AI SaaS</a>
+<a id="backToHomeLink" href="/" class="text-sm text-gray-600 hover:text-gray-900">← Back to Home</a>
+</div>
+</nav>
+
+<main class="max-w-4xl mx-auto px-4 py-12">
+<div class="bg-white rounded-2xl shadow-lg p-8 md:p-12">
+<div class="mb-8">
+<h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Privacy Policy</h1>
+<p class="text-gray-500">Last Updated: August 30, 2026</p>
+<div class="mt-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+<p class="text-sm text-blue-900"><strong>📌 Our Commitment:</strong> We comply with the UK General Data Protection Regulation (UK GDPR) and the Data Protection Act 2018.</p>
+</div>
+</div>
+
+<section class="mb-8">
+<h2 class="text-2xl font-bold text-gray-800 mb-4">1. Data Controller</h2>
+<div class="prose text-gray-700 space-y-3">
+<p>The data controller responsible for your personal data is <strong>AAMIRSABA LTD</strong> (Company Number: 13117115), registered in England and Wales.</p>
+</div>
+</section>
+
+<section class="mb-8">
+<h2 class="text-2xl font-bold text-gray-800 mb-4">2. Information We Collect</h2>
+<div class="prose text-gray-700 space-y-3">
+<ul class="list-disc list-inside ml-4 space-y-2">
+<li><strong>Account Information:</strong> Name, email address, business name, WhatsApp number.</li>
+<li><strong>Payment Information:</strong> Processed securely through Stripe. We do not store credit card numbers.</li>
+<li><strong>Customer Data:</strong> Phone numbers and message content exchanged via WhatsApp (processed solely to provide our services to you).</li>
+</ul>
+</div>
+</section>
+
+<section class="mb-8">
+<h2 class="text-2xl font-bold text-gray-800 mb-4">3. Data Sharing</h2>
+<div class="prose text-gray-700 space-y-3">
+<p>We share data only with necessary third parties: Stripe (payment processing), AI/LLM providers (for generating responses), and WhatsApp (Meta Platforms) for message delivery. We do not sell your personal data.</p>
+</div>
+</section>
+
+<section class="mb-8">
+<h2 class="text-2xl font-bold text-gray-800 mb-4">4. Your Rights (UK GDPR)</h2>
+<div class="prose text-gray-700 space-y-3">
+<p>Under UK GDPR, you have the right to access, rectify, erase, or restrict the processing of your personal data. To exercise these rights, contact us at accounts@aamirsaba.com.</p>
+</div>
+</section>
+
+<section class="mb-8">
+<h2 class="text-2xl font-bold text-gray-800 mb-4">5. Contact Us</h2>
+<div class="bg-gray-50 rounded-lg p-6">
+<ul class="space-y-2 text-sm">
+<li><strong>🏢 Company:</strong> AAMIRSABA LTD</li>
+<li><strong>📝 Company Number:</strong> 13117115</li>
+<li><strong>📧 Email:</strong> <a href="mailto:info@aamirsaba.com" class="text-green-600 underline">info@aamirsaba.com</a></li>
+<li><strong>📱 WhatsApp:</strong> <a href="https://wa.me/447362046611" class="text-green-600 underline">+44 7362046611</a></li>
+</ul>
+</div>
+</section>
+
+<div class="mt-12 pt-8 border-t border-gray-200 text-center text-sm text-gray-500">
+<p>© 2026 AAMIRSABA LTD. All rights reserved. Registered in England and Wales. Company Number: 13117115.</p>
+</div>
+</div>
+</main>
+<script>
+  // Smart "Back to Home" link based on login status
+  document.addEventListener('DOMContentLoaded', () => {
+    const backLink = document.getElementById('backToHomeLink');
+    if (backLink) {
+      const token = localStorage.getItem('token');
+      if (token) {
+        // User is logged in, send them to the dashboard
+        backLink.href = '/dashboard';
+        backLink.textContent = '← Back to Dashboard';
+      } else {
+        // User is not logged in, send them to the public home page
+        backLink.href = '/';
+        backLink.textContent = '← Back to Home';
+      }
+    }
+  });
+</script>
+</body>
+</html>

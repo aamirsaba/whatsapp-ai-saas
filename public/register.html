@@ -456,6 +456,11 @@
 
                 const data = await res.json();
                 if (data.success) {
+                    // 🚨 CRITICAL FIX: Save the token to localStorage so the /connect route works
+                    if (data.token) {
+                        localStorage.setItem('token', data.token);
+                    }
+
                     // Show success message
                     showSuccess('Account Created!', '✅ Account created successfully!<br><br>Please connect your WhatsApp number now.');
                     
@@ -463,7 +468,7 @@
                         // 🚨 REDIRECT TO WHATSAPP CONNECTION PAGE, NOT LOGIN
                         window.location.href = `/connect/${whatsappRaw.replace(/\D/g, '')}`;
                     }, 2500);
-                } else {
+       } else {
                     showError('Registration Failed', data.error || 'Failed to create account.');
                     btn.innerHTML = originalText;
                     btn.disabled = false;
@@ -477,5 +482,6 @@
             }
         }
     </script>
+
 </body>
 </html>

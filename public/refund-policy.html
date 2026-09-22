@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Refund Policy - Universal AI SaaS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+<nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+<div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+<a href="/" class="text-xl font-bold text-green-600">Universal AI SaaS</a>
+<a id="backToHomeLink" href="/" class="text-sm text-gray-600 hover:text-gray-900">← Back to Home</a>
+</div>
+</nav>
+
+<main class="max-w-4xl mx-auto px-4 py-12">
+<div class="bg-white rounded-2xl shadow-lg p-8 md:p-12">
+<div class="mb-8">
+<h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Refund Policy</h1>
+<p class="text-gray-500">Last Updated: August 30, 2026</p>
+<div class="mt-4 p-4 bg-red-50 border-l-4 border-red-500 rounded">
+<p class="text-sm text-red-900"><strong>📌 Important:</strong> We offer a 7-day free trial to test our service. Because of this, <strong>all sales are final and no refunds are provided</strong> once a paid subscription begins.</p>
+</div>
+</div>
+
+<section class="mb-8">
+<h2 class="text-2xl font-bold text-gray-800 mb-4">1. 7-Day Free Trial</h2>
+<div class="prose text-gray-700 space-y-3">
+<p>We offer a <strong>7-day free trial</strong> that includes <strong>10,000 free tokens</strong> to allow you to fully test the Universal AI SaaS platform, including WhatsApp integration and AI responses.</p>
+<p>The free trial expires <strong>whichever comes first</strong>: after 7 calendar days, or when the 10,000 token limit is reached. No payment information is required to start the trial.</p>
+</div>
+</section>
+
+<section class="mb-8">
+<h2 class="text-2xl font-bold text-gray-800 mb-4">2. No Refunds After Payment</h2>
+<div class="prose text-gray-700 space-y-3">
+<p>Because we provide a comprehensive free trial, <strong>we do not offer refunds, returns, or exchanges for any paid subscriptions or token top-ups</strong> once a charge has been processed.</p>
+<p>By upgrading to a paid plan, you acknowledge that you have had sufficient opportunity to test the service and agree that all charges are non-refundable.</p>
+</div>
+</section>
+
+<section class="mb-8">
+<h2 class="text-2xl font-bold text-gray-800 mb-4">3. Cancellation</h2>
+<div class="prose text-gray-700 space-y-3">
+<p>You may cancel your subscription at any time to prevent future billing. However, cancellation does not entitle you to a refund for the current billing cycle. You will retain access to the service until the end of the period you have already paid for.</p>
+</div>
+</section>
+
+<section class="mb-8">
+<h2 class="text-2xl font-bold text-gray-800 mb-4">4. Chargebacks</h2>
+<div class="prose text-gray-700 space-y-3">
+<p>Initiating a chargeback with your bank or credit card provider for a valid, non-refundable charge will result in the immediate and permanent termination of your account and access to our services.</p>
+</div>
+</section>
+
+<section class="mb-8">
+<h2 class="text-2xl font-bold text-gray-800 mb-4">5. Contact Us</h2>
+<div class="bg-gray-50 rounded-lg p-6">
+<p class="text-gray-700 mb-3">For billing questions, please contact us:</p>
+<ul class="space-y-2 text-sm">
+<li><strong>🏢 Company:</strong> AAMIRSABA LTD (Company No. 13117115)</li>
+<li><strong>📧 Email:</strong> <a href="mailto:info@aamirsaba.com" class="text-green-600 underline">info@aamirsaba.com</a></li>
+<li><strong>📱 WhatsApp:</strong> <a href="https://wa.me/447362046611" class="text-green-600 underline">+44 7362046611</a></li>
+<li><strong>🌐 Website:</strong> <a href="https://bot.aamirsaba.com" class="text-green-600 underline">bot.aamirsaba.com</a></li>
+</ul>
+</div>
+</section>
+
+<div class="mt-12 pt-8 border-t border-gray-200 text-center text-sm text-gray-500">
+<p>© 2026 AAMIRSABA LTD. All rights reserved.</p>
+<p class="mt-2">Registered in England and Wales. Company Number: 13117115.</p>
+</div>
+</div>
+</main>
+<script>
+  // Smart "Back to Home" link based on login status
+  document.addEventListener('DOMContentLoaded', () => {
+    const backLink = document.getElementById('backToHomeLink');
+    if (backLink) {
+      const token = localStorage.getItem('token');
+      if (token) {
+        // User is logged in, send them to the dashboard
+        backLink.href = '/dashboard';
+        backLink.textContent = '← Back to Dashboard';
+      } else {
+        // User is not logged in, send them to the public home page
+        backLink.href = '/';
+        backLink.textContent = '← Back to Home';
+      }
+    }
+  });
+</script>
+</body>
+</html>

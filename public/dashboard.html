@@ -212,9 +212,9 @@
   <p class="text-xs text-indigo-200 mt-1">Remaining Tokens</p>
   
   <!-- Low Token Warning Banner (Hidden by default) -->
-  <div id="lowTokenWarning" class="hidden mt-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-2">
-    <span>⚠️</span> Low Balance! <a href="/pricing" class="underline hover:text-yellow-900">Recharge Now</a>
-  </div>
+<div id="lowTokenWarning" class="hidden mt-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-2">
+  <span>⚠️</span> Low Balance! 
+  <a href="javascript:showSection('billing')" class="underline hover:text-yellow-900 cursor-pointer">Recharge Now</a>
 </div>
       </section>
 
@@ -574,28 +574,51 @@
           </div>
         </div>
         <div id="replyBox" class="hidden bg-white border-2 border-indigo-100 rounded-xl p-5 shadow-sm">
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-sm font-bold text-gray-800">Replying to: <span id="replyToNumber" class="text-indigo-600"></span></p>
-            <button onclick="closeReplyBox()" class="text-gray-400 hover:text-gray-600">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
-          </div>
-          <div class="mb-3">
-            <label class="block text-xs font-medium text-gray-600 mb-1">⚡ Quick Reply:</label>
-            <select id="quickReplies" onchange="insertQuickReply()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
-              <option value="">-- Select a template --</option>
-              <option value="Hello! Thank you for contacting us. How can I assist you today?">👋 Standard Greeting</option>
-              <option value="Could you please provide a few more details so I can assist you better?">ℹ️ Request More Info</option>
-              <option value="You can reach our official support team at [Insert Email/Phone] for further assistance.">📞 Share Contact Info</option>
-              <option value="Thank you for your inquiry. We will get back to you shortly.">⏳ Holding Response</option>
-              <option value="Thank you for contacting us! Have a great day.">✅ Closing / Thank You</option>
-            </select>
-          </div>
-          <textarea id="manualReplyText" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none mb-3" placeholder="Type your manual reply..."></textarea>
-          <button onclick="sendManualReply()" class="w-full bg-green-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition flex items-center justify-center gap-2">
-            <span>📤</span> Send via WhatsApp
-          </button>
-        </div>
+<div class="flex items-center justify-between mb-3">
+<p class="text-sm font-bold text-gray-800">Replying to: <span id="replyToNumber" class="text-indigo-600"></span></p>
+<button onclick="closeReplyBox()" class="text-gray-400 hover:text-gray-600">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+</button>
+</div>
+<div class="mb-3">
+<label class="block text-xs font-medium text-gray-600 mb-1">⚡ Quick Reply:</label>
+<select id="quickReplies" onchange="insertQuickReply()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+<option value="">-- Select a template --</option>
+<option value="Hello! Thank you for contacting us. How can I assist you today?">👋 Standard Greeting</option>
+<option value="Could you please provide a few more details so I can assist you better?">ℹ️ Request More Info</option>
+<option value="You can reach our official support team at [Insert Email/Phone] for further assistance.">📞 Share Contact Info</option>
+<option value="Thank you for your inquiry. We will get back to you shortly."> Holding Response</option>
+<option value="Thank you for contacting us! Have a great day.">✅ Closing / Thank You</option>
+</select>
+</div>
+
+<!-- 📎 File Attachment Section -->
+<div class="mb-3 flex flex-wrap items-center gap-2">
+<button type="button" onclick="document.getElementById('tenantFileInput').click()" class="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition flex items-center gap-1 text-sm font-medium">
+📎 Attach File
+</button>
+<input type="file" id="tenantFileInput" class="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.mp3,.wav,.webm,.zip,.jpg,.jpeg,.png" onchange="handleTenantFileSelect(this)">
+<span id="tenantFileNameDisplay" class="text-xs text-gray-500 truncate max-w-[200px]"></span>
+<button type="button" id="tenantClearFileBtn" onclick="clearTenantFile()" class="hidden text-red-500 hover:text-red-700 text-xs font-medium">✕ Remove</button>
+</div>
+
+<!-- 🎤 Voice Recording Section -->
+<div class="mb-3 flex items-center gap-2">
+<button type="button" id="tenantRecordBtn" onclick="toggleTenantRecording()" class="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition flex items-center gap-1 text-sm font-medium">
+🎤 <span id="tenantRecordBtnText">Record Voice</span>
+</button>
+<audio id="tenantVoicePreview" controls class="hidden flex-1 h-8"></audio>
+<button type="button" id="tenantSendVoiceBtn" onclick="sendTenantVoiceMessage()" class="hidden px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium">
+📤 Send Voice
+</button>
+</div>
+<p id="tenantRecordingStatus" class="text-xs text-red-500 mb-2 hidden">️ Recording... <span id="tenantRecordingTime">0:00</span></p>
+
+<textarea id="manualReplyText" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none mb-3" placeholder="Type your manual reply (optional if attaching a file)..."></textarea>
+<button onclick="sendManualReply()" class="w-full bg-green-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition flex items-center justify-center gap-2">
+<span>📤</span> Send via WhatsApp
+</button>
+</div>
       </section>
 
       <!-- ALL CONVERSATIONS SECTION -->
@@ -775,71 +798,104 @@
           </button>
         </div>
       </section>
+
 <!-- BILLING SECTION -->
 <section id="section-billing" class="section-content hidden">
   <div class="mb-8">
     <h2 class="text-2xl font-bold text-gray-800 mb-2">💳 Billing & Subscription</h2>
     <p class="text-gray-600">Manage your plan, view usage, and upgrade your account.</p>
   </div>
-
   <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
     <h3 class="text-lg font-semibold text-gray-800 mb-4">Current Plan & Usage</h3>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      
-      <!-- Current Plan -->
       <div class="p-4 bg-gray-50 rounded-lg">
         <p class="text-sm text-gray-500 mb-1">Current Plan</p>
         <p class="text-2xl font-bold text-indigo-600" id="currentPlanDisplay">Loading...</p>
       </div>
-      
-      <!-- Status -->
       <div class="p-4 bg-gray-50 rounded-lg">
         <p class="text-sm text-gray-500 mb-1">Status</p>
         <span id="subscriptionStatusDisplay" class="px-3 py-1 bg-green-100 text-green-700 text-sm font-bold rounded-full">Active</span>
       </div>
-      
-      <!-- Token Balance (ADDED THIS) -->
       <div class="p-4 bg-indigo-50 rounded-lg border border-indigo-100">
         <p class="text-sm text-indigo-600 mb-1 font-medium">Remaining Tokens</p>
-        <p class="text-2xl font-bold text-indigo-700" id="tokenBalanceDisplay">0</p>
-        <div id="lowTokenWarning" class="hidden mt-2 bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded inline-flex items-center gap-1">
-          <span>⚠️</span> Low Balance! <a href="#upgrade" class="underline">Upgrade Now</a>
-        </div>
+        <p class="text-2xl font-bold text-indigo-700" id="billingTokenBalanceDisplay">0</p>
       </div>
-      
     </div>
   </div>
 
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-    <h3 class="text-lg font-semibold text-gray-800 mb-4">Upgrade Your Plan</h3>
-    <p class="text-sm text-gray-600 mb-6">Choose a plan that fits your business needs. After payment, your account will be activated within 24 hours.</p>
+  <!-- 💰 UPGRADE YOUR PLAN -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
+    <h2 class="text-2xl font-bold text-gray-900 mb-2">Upgrade Your Plan</h2>
+    <p class="text-gray-600 mb-6">Choose a plan that fits your business needs. Secure payment powered by Stripe.</p>
     
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <button onclick="requestUpgrade('starter')" class="p-4 border-2 border-gray-200 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition text-left">
-        <p class="font-bold text-gray-800">Starter</p>
-        <p class="text-2xl font-bold text-indigo-600">25 OMR<span class="text-sm text-gray-500">/mo</span></p>
-        <p class="text-xs text-gray-500 mt-2">150,000 tokens</p>
-      </button>
-      
-      <button onclick="requestUpgrade('growth')" class="p-4 border-2 border-indigo-500 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition text-left">
-        <div class="text-xs font-bold text-indigo-600 mb-1">MOST POPULAR</div>
-        <p class="font-bold text-gray-800">Growth</p>
-        <p class="text-2xl font-bold text-indigo-600">35 OMR<span class="text-sm text-gray-500">/mo</span></p>
-        <p class="text-xs text-gray-500 mt-2">300,000 tokens</p>
-      </button>
-      
-      <button onclick="requestUpgrade('business')" class="p-4 border-2 border-gray-200 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition text-left">
-        <p class="font-bold text-gray-800">Business</p>
-        <p class="text-2xl font-bold text-indigo-600">50 OMR<span class="text-sm text-gray-500">/mo</span></p>
-        <p class="text-xs text-gray-500 mt-2">500,000 tokens</p>
-      </button>
+    <div class="flex flex-col items-center mb-8">
+      <div class="bg-white p-1.5 rounded-full shadow-md border border-gray-200 inline-flex mb-4">
+        <button onclick="setBilling('monthly')" id="btn-monthly" class="px-6 py-2 rounded-full font-semibold text-sm transition bg-green-600 text-white">Monthly</button>
+        <button onclick="setBilling('quarterly')" id="btn-quarterly" class="px-6 py-2 rounded-full font-semibold text-sm transition text-gray-600 hover:text-gray-900 relative">Quarterly<span class="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 text-[9px] font-bold px-1.5 py-0.5 rounded-full">SAVE 5%</span></button>
+        <button onclick="setBilling('yearly')" id="btn-yearly" class="px-6 py-2 rounded-full font-semibold text-sm transition text-gray-600 hover:text-gray-900 relative">Yearly<span class="absolute -top-2 -right-2 bg-green-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">SAVE 10%</span></button>
+      </div>
+      <div class="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 text-center max-w-lg">
+        <p class="text-blue-800 text-sm font-medium">🌍 All prices are in <strong>British Pounds (GBP £)</strong>. Your bank will automatically handle any local currency conversion at checkout.</p>
+      </div>
     </div>
 
-    <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-      <p class="text-sm text-blue-900 font-semibold mb-2">📋 How to Upgrade:</p>
-      <p class="text-xs text-blue-700"><strong>We will Contact you ASAP</p>
-      <p class="text-xs text-blue-700"><strong>WhatsApp:</strong> +96891293119</p>
-      <p class="text-xs text-blue-700 mt-2">Click a plan above to submit your upgrade request.</p>
+    <div id="dash-savingsBanner" class="bg-green-50 border border-green-200 rounded-xl p-3 mb-6 hidden">
+      <p class="text-green-800 text-sm font-medium text-center">🎉 <span id="dash-savingsText">Switch to yearly and save!</span></p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="border-2 border-gray-200 rounded-xl p-5 hover:border-green-400 transition">
+        <h3 class="text-lg font-bold text-gray-900">Starter</h3>
+        <div class="mt-2 mb-1"><span class="text-3xl font-extrabold text-gray-900" data-dash-plan="starter">£49.99</span><span class="text-gray-500 text-sm" data-dash-period="starter">/mo</span></div>
+        <p class="text-xs text-gray-400 mb-4" data-dash-billed="starter">Billed monthly</p>
+        <p class="text-sm text-gray-600 mb-4" data-dash-tokens="starter">150,000 tokens</p>
+        <button onclick="dashSelectPlan('starter')" class="w-full bg-gray-900 text-white font-semibold py-2.5 rounded-lg hover:bg-gray-800 transition">Choose Starter</button>
+      </div>
+      <div class="border-2 border-indigo-500 bg-indigo-50 rounded-xl p-5 relative">
+        <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full">MOST POPULAR</div>
+        <h3 class="text-lg font-bold text-indigo-900">Growth</h3>
+        <div class="mt-2 mb-1"><span class="text-3xl font-extrabold text-indigo-700" data-dash-plan="growth">£66.99</span><span class="text-indigo-500 text-sm" data-dash-period="growth">/mo</span></div>
+        <p class="text-xs text-indigo-400 mb-4" data-dash-billed="growth">Billed monthly</p>
+        <p class="text-sm text-indigo-700 mb-4" data-dash-tokens="growth">300,000 tokens</p>
+        <button onclick="dashSelectPlan('growth')" class="w-full bg-indigo-600 text-white font-semibold py-2.5 rounded-lg hover:bg-indigo-700 transition">Choose Growth</button>
+      </div>
+      <div class="border-2 border-gray-200 rounded-xl p-5 hover:border-green-400 transition">
+        <h3 class="text-lg font-bold text-gray-900">Business</h3>
+        <div class="mt-2 mb-1"><span class="text-3xl font-extrabold text-gray-900" data-dash-plan="business">£72.99</span><span class="text-gray-500 text-sm" data-dash-period="business">/mo</span></div>
+        <p class="text-xs text-gray-400 mb-4" data-dash-billed="business">Billed monthly</p>
+        <p class="text-sm text-gray-600 mb-4" data-dash-tokens="business">500,000 tokens</p>
+        <button onclick="dashSelectPlan('business')" class="w-full bg-gray-900 text-white font-semibold py-2.5 rounded-lg hover:bg-gray-800 transition">Choose Business</button>
+      </div>
+    </div>
+
+    <!-- 💳 TOKEN TOP-UP PACKS -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8 mt-8">
+      <h2 class="text-2xl font-bold text-gray-900 mb-2">⚡ Need More Tokens? Buy a Top-Up Pack</h2>
+      <p class="text-gray-600 mb-6">Running low on tokens? Purchase a one-time token pack instantly. No subscription required.</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="border-2 border-gray-200 rounded-xl p-5 hover:border-blue-400 transition bg-blue-50">
+          <h3 class="text-lg font-bold text-gray-900 mb-2">50,000 Tokens</h3>
+          <div class="mb-3"><span class="text-3xl font-extrabold text-blue-600">£10.00</span><span class="text-gray-500 text-sm"> one-time</span></div>
+          <p class="text-sm text-gray-600 mb-4">Perfect for small businesses</p>
+          <button onclick="buyTokenPack('50k')" class="w-full bg-blue-600 text-white font-semibold py-2.5 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2">🛒 Buy Now</button>
+        </div>
+        <div class="border-2 border-indigo-500 rounded-xl p-5 relative bg-indigo-50">
+          <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full">BEST VALUE</div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">100,000 Tokens</h3>
+          <div class="mb-3"><span class="text-3xl font-extrabold text-indigo-600">£18.00</span><span class="text-gray-500 text-sm"> one-time</span></div>
+          <p class="text-sm text-gray-600 mb-4">Save 10% vs 50k pack</p>
+          <button onclick="buyTokenPack('100k')" class="w-full bg-indigo-600 text-white font-semibold py-2.5 rounded-lg hover:bg-indigo-700 transition flex items-center justify-center gap-2"> Buy Now</button>
+        </div>
+        <div class="border-2 border-gray-200 rounded-xl p-5 hover:border-purple-400 transition bg-purple-50">
+          <h3 class="text-lg font-bold text-gray-900 mb-2">250,000 Tokens</h3>
+          <div class="mb-3"><span class="text-3xl font-extrabold text-purple-600">£40.00</span><span class="text-gray-500 text-sm"> one-time</span></div>
+          <p class="text-sm text-gray-600 mb-4">Best for high-volume usage</p>
+          <button onclick="buyTokenPack('250k')" class="w-full bg-purple-600 text-white font-semibold py-2.5 rounded-lg hover:bg-purple-700 transition flex items-center justify-center gap-2">🚀 Buy Now</button>
+        </div>
+      </div>
+      <div class="mt-6 bg-green-50 border border-green-200 rounded-xl p-4">
+        <p class="text-green-900 text-sm font-medium"><strong>Instant Delivery:</strong> Tokens will be added to your account immediately after payment.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -1143,6 +1199,13 @@ if (tenantModel && tenantModel.trim() !== '') {
 }
 
       
+      // 🚨 LOAD AI AGENT NAME
+      const aiAgentNameEl = document.getElementById('aiAgentName');
+      if (aiAgentNameEl) {
+        aiAgentNameEl.value = data.tenant.aiAgentName || '';
+      }
+
+
       // 5. Update Contact Info
       if (data.tenant.contactInfo) {
         const lines = data.tenant.contactInfo.split('\n');
@@ -1187,18 +1250,28 @@ if (tenantModel && tenantModel.trim() !== '') {
         }
       }
 
-      // 7. UPDATE BILLING & TOKEN WALLET
-      const tokenBalanceEl = document.getElementById('tokenBalanceDisplay');
-      if (tokenBalanceEl) {
-        const balance = data.tenant.tokenBalance || 0;
-        tokenBalanceEl.textContent = balance.toLocaleString();
-        
-        const warningBanner = document.getElementById('lowTokenWarning');
-        if (warningBanner) {
-          if (balance < 10000) warningBanner.classList.remove('hidden');
-          else warningBanner.classList.add('hidden');
-        }
-      }
+      // 7. UPDATE BILLING & TOKEN WALLET (FIXED DUPLICATE ID)
+const balance = data.tenant.tokenBalance || 0;
+
+// A. Update Dashboard Wallet
+const tokenBalanceEl = document.getElementById('tokenBalanceDisplay');
+if (tokenBalanceEl) {
+    tokenBalanceEl.textContent = balance.toLocaleString();
+}
+
+// B. Update Billing Page Card (New ID)
+const billingTokenBalanceEl = document.getElementById('billingTokenBalanceDisplay');
+if (billingTokenBalanceEl) {
+    billingTokenBalanceEl.textContent = balance.toLocaleString();
+}
+
+// C. Low Token Warning Logic
+const warningBanner = document.getElementById('lowTokenWarning');
+if (warningBanner) {
+    if (balance < 10000) warningBanner.classList.remove('hidden');
+    else warningBanner.classList.add('hidden');
+}
+
 
       const currentPlanEl = document.getElementById('currentPlanDisplay');
       if (currentPlanEl) {
@@ -1281,63 +1354,109 @@ if (tenantModel && tenantModel.trim() !== '') {
     }
 
 async function autoGenerateContext() {
-    const url = document.getElementById('websiteUrl').value;
-    
-    if (!url) { 
-        showError('Missing URL', '️ Please enter your website URL first (e.g., https://yourbusiness.com)'); 
-        return; 
+  const urlInput = document.getElementById('websiteUrl');
+  const url = urlInput.value.trim();
+  
+  if (!url) {
+    showError('Missing URL', '⚠️ Please enter your website URL first (e.g., https://yourbusiness.com)');
+    return;
+  }
+  
+  // 🚨 AUTO-PREPEND HTTPS:// IF MISSING
+  let finalUrl = url;
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    finalUrl = 'https://' + url;
+    urlInput.value = finalUrl; // Update the input field
+  }
+  
+  // Show loading modal with progress
+  showModal('info', '🕷️ Scraping Website',
+    'Reading your website... This may take 30-60 seconds.<br><br>Please wait while we extract your business information.',
+    [] // No buttons - just loading
+  );
+  
+  // Add dynamic status updates
+  const statusMessages = [
+    '🔍 Connecting to website...',
+    '🕷️ Crawling pages...',
+    '📄 Extracting content from homepage...',
+    '✅ Found: Services Page',
+    '✅ Found: Contact Page',
+    '💾 Processing and analyzing data...'
+  ];
+  
+  let msgIndex = 0;
+  const statusInterval = setInterval(() => {
+    if (msgIndex < statusMessages.length) {
+      const modalMessage = document.getElementById('modalMessage');
+      if (modalMessage) {
+        modalMessage.innerHTML = `
+          Reading your website... This may take 30-60 seconds.<br><br>
+          <div class="mt-4 space-y-2">
+            <div class="flex items-center gap-2">
+              <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              <p class="text-sm text-blue-700 font-medium">${statusMessages[msgIndex]}</p>
+            </div>
+            <div class="bg-blue-50 rounded-lg p-3 mt-2">
+              <p class="text-xs text-blue-600">Pages found so far: ${msgIndex + 1}/5</p>
+              <div class="w-full bg-blue-200 rounded-full h-2 mt-1">
+                <div class="bg-blue-600 h-2 rounded-full transition-all duration-500" style="width: ${((msgIndex + 1) / 5) * 100}%"></div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      msgIndex++;
     }
+  }, 4000); // Update every 4 seconds
+  
+  try {
+    const res = await fetch('/api/dashboard/scrape-website', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ websiteUrl: finalUrl })
+    });
     
-    // Show loading modal
-    showModal('info', '️ Scraping Website', 
-        ' Reading your website... This may take 30-60 seconds.<br><br>Please wait while we extract your business information.',
-        [] // No buttons - just loading
-    );
+    // Clear the interval once we get a response
+    clearInterval(statusInterval);
     
-    try {
-        const res = await fetch('/api/dashboard/scrape-website', { 
-            method: 'POST', 
-            headers: { 
-                'Content-Type': 'application/json', 
-                'Authorization': `Bearer ${token}` 
-            }, 
-            body: JSON.stringify({ websiteUrl: url }) 
-        });
-        
-        const data = await res.json();
-        
-        if (data.success) { 
-            // Close loading modal
-            closeCustomModal();
-            
-            // Update textarea with scraped content
-            document.getElementById('businessContext').value = data.generatedContext; 
-            
-            // Show success modal with guidance
-            showConfirm('✅ Website Scraped Successfully!', 
-                `🎉 Successfully scraped ${data.pagesCrawled || 5} pages from your website!<br><br>` +
-                `📝 The scraped content has been loaded into the "Business Context" field.<br><br>` +
-                `💡 Click "Full-Screen Editor" to review and edit the content before saving.`,
-                () => {
-                    // On OK - open the editor
-                    openContextEditor();
-                },
-                () => {
-                    // On Cancel - just close
-                }
-            );
-        } else { 
-            // Close loading modal and show error
-            closeCustomModal();
-            showError('Scraping Failed', '❌ ' + (data.error || 'Failed to scrape website. Make sure the URL is correct and publicly accessible.')); 
+    const data = await res.json();
+    
+    if (data.success) {
+      // Close loading modal
+      closeCustomModal();
+      
+      // Update textarea with scraped content
+      document.getElementById('businessContext').value = data.generatedContext;
+      
+      // Show success modal with guidance
+      showConfirm('✅ Website Scraped Successfully!',
+        `🎉 Successfully scraped ${data.pagesCrawled || 5} pages from your website!<br><br>` +
+        ` The scraped content has been loaded into the "Business Context" field.<br><br>` +
+        `💡 Click "Full-Screen Editor" to review and edit the content before saving.`,
+        () => {
+          // On OK - open the editor
+          openContextEditor();
+        },
+        () => {
+          // On Cancel - just close (do nothing)
         }
-    } catch (err) { 
-        console.error('Scraping error:', err);
-        closeCustomModal();
-        showError('Network Error', '❌ Failed to connect to server. Please check your internet connection and try again.');
+      );
+    } else {
+      // Close loading modal and show error
+      closeCustomModal();
+      showError('Scraping Failed', '❌ ' + (data.error || 'Failed to scrape website. Make sure the URL is correct and publicly accessible.'));
     }
+  } catch (err) {
+    console.error('Scraping error:', err);
+    clearInterval(statusInterval);
+    closeCustomModal();
+    showError('Network Error', '❌ Failed to connect to server. Please check your internet connection and try again.');
+  }
 }
-
     async function loadAvailableModels() {
   const btn = document.getElementById('loadModelsBtn');
   const provider = document.getElementById('llmProviderSelect').value;
@@ -1546,7 +1665,26 @@ async function autoGenerateContext() {
               const alignClass = isOutbound ? 'justify-end' : 'justify-start';
               const bubbleClass = isOutbound ? 'bg-green-500 text-white' : 'bg-white text-gray-800 border border-gray-200';  
               const label = isOutbound ? (msg.isAiReply ? ' AI' : '👤 Admin (You)') : '👤 Customer';
-              return `<div class="flex ${alignClass}"><div class="max-w-[75%] px-4 py-3 rounded-lg ${bubbleClass} shadow-sm"><p class="text-xs font-semibold mb-1 opacity-75">${label}</p><p class="text-sm whitespace-pre-wrap">${msg.content}</p><p class="text-xs mt-2 opacity-75 text-right">${new Date(msg.createdAt).toLocaleString()}</p></div></div>`;
+           const voiceNoteMatch = msg.content.match(/\[Voice Note: (.*?)\]/);
+const isVoiceNote = voiceNoteMatch !== null;
+const fileMatch = msg.content.match(/\[Sent File: (.*?)\]/);
+const isFile = fileMatch !== null;
+
+let messageContent = '';
+if (isVoiceNote) {
+  const fileName = voiceNoteMatch[1];
+  messageContent = `<div onclick="openVoiceModal('${fileName}')" class="flex items-center gap-2 p-2 bg-indigo-50 hover:bg-indigo-100 rounded-lg cursor-pointer border border-indigo-200"><div class="bg-indigo-600 text-white rounded-full p-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg></div><div class="flex-1"><p class="text-xs font-medium text-indigo-900">Voice Message</p><p class="text-[10px] text-indigo-600">Click to play ▶️</p></div><span class="text-lg"></span></div>`;
+} else if (isFile) {
+  const fileName = fileMatch[1].trim();
+  const fileExt = fileName.split('.').pop().toLowerCase();
+  const fileTypes = { 'pdf': { icon: '', color: 'red' }, 'doc': { icon: '📝', color: 'blue' }, 'docx': { icon: '📝', color: 'blue' }, 'xls': { icon: '', color: 'green' }, 'xlsx': { icon: '', color: 'green' }, 'txt': { icon: '', color: 'gray' }, 'csv': { icon: '📊', color: 'green' }, 'zip': { icon: '📦', color: 'yellow' }, 'jpg': { icon: '🖼️', color: 'purple' }, 'jpeg': { icon: '🖼️', color: 'purple' }, 'png': { icon: '🖼️', color: 'purple' }, 'mp3': { icon: '', color: 'pink' }, 'webm': { icon: '🎥', color: 'pink' } };
+  const fileType = fileTypes[fileExt] || { icon: '📎', color: 'gray' };
+  const colorClasses = { 'red': 'bg-red-50 border-red-200 text-red-900', 'blue': 'bg-blue-50 border-blue-200 text-blue-900', 'green': 'bg-green-50 border-green-200 text-green-900', 'yellow': 'bg-yellow-50 border-yellow-200 text-yellow-900', 'purple': 'bg-purple-50 border-purple-200 text-purple-900', 'pink': 'bg-pink-50 border-pink-200 text-pink-900', 'gray': 'bg-gray-50 border-gray-200 text-gray-900' };
+  messageContent = `<div class="flex items-center gap-2 p-2 rounded-lg border cursor-pointer hover:shadow-sm transition ${colorClasses[fileType.color]}" onclick="handleFileAction('${fileName}')"><span class="text-xl">${fileType.icon}</span><div class="flex-1 min-w-0"><p class="text-xs font-semibold truncate">${fileName}</p><p class="text-[10px] opacity-75">Click to open</p></div></div>`;
+} else {
+  messageContent = `<p class="text-sm whitespace-pre-wrap">${msg.content}</p>`;
+}
+return `<div class="flex ${alignClass}"><div class="max-w-[75%] px-4 py-3 rounded-lg ${bubbleClass} shadow-sm"><p class="text-xs font-semibold mb-1 opacity-75">${label}</p>${messageContent}<p class="text-xs mt-2 opacity-75 text-right">${new Date(msg.createdAt).toLocaleString()}</p></div></div>`;
             }).join('');
           }
           container.classList.remove('hidden');
@@ -1602,23 +1740,81 @@ async function autoGenerateContext() {
     }
 
     async function sendManualReply() {
-      if (!currentReplyNumber) { showError('Error', '❌ No recipient selected.'); return; }
-      const content = document.getElementById('manualReplyText').value.trim();
-      if (!content) { showError('Empty Message', 'Please type a message first.'); return; }
-      try {
-        const res = await fetch('/api/dashboard/send-message', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ toNumber: currentReplyNumber, content: content }) });
-        const data = await res.json();
-        if (res.ok) {
-          showSuccess('Sent!', '✅ Message sent successfully!');
-          document.getElementById('manualReplyText').value = '';
-          closeReplyBox();
-          loadRecentChats();
-        } else { showError('Send Failed', '❌ Failed to send: ' + (data.error || 'Unknown error')); }
-      } catch (error) {
-        console.error('Send manual reply error:', error);
-        showError('Network Error', '❌ Network error. Please try again.');
+  if (!currentReplyNumber) { 
+    showError('Error', '❌ No recipient selected.'); 
+    return; 
+  }
+  
+  // If file is selected, send it
+  if (tenantSelectedFile) {
+    const formData = new FormData();
+    formData.append('file', tenantSelectedFile);
+    formData.append('toNumber', currentReplyNumber);
+    const text = document.getElementById('manualReplyText').value.trim();
+    if (text) formData.append('content', text);
+    
+    try {
+      const res = await fetch('/api/dashboard/send-file', { 
+        method: 'POST', 
+        headers: { 'Authorization': `Bearer ${token}` }, 
+        body: formData 
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showSuccess('Sent!', '✅ File sent successfully!');
+        clearTenantFile();
+        document.getElementById('manualReplyText').value = '';
+        // 🚨 DON'T CLOSE REPLY BOX - Keep it open!
+        // closeReplyBox();  <-- COMMENTED OUT
+        loadRecentChats();
+        // Reload chat history to show the sent file
+        if (currentReplyNumber) showChatHistory(currentReplyNumber);
+      } else {
+        showError('Send Failed', '❌ Failed to send file: ' + (data.error || 'Unknown error'));
       }
+    } catch (error) {
+      showError('Network Error', '❌ Network error. Please try again.');
     }
+    return;
+  }
+  
+  const content = document.getElementById('manualReplyText').value.trim();
+  if (!content) { 
+    showError('Empty Message', 'Please type a message or attach a file first.'); 
+    return; 
+  }
+  
+  try {
+    const res = await fetch('/api/dashboard/send-message', { 
+      method: 'POST', 
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Authorization': `Bearer ${token}` 
+      }, 
+      body: JSON.stringify({ 
+        toNumber: currentReplyNumber, 
+        content: content 
+      }) 
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showSuccess('Sent!', '✅ Message sent successfully!');
+      document.getElementById('manualReplyText').value = '';
+      // 🚨 DON'T CLOSE REPLY BOX - Keep it open!
+      // closeReplyBox();  <-- COMMENTED OUT
+      loadRecentChats();
+      // Reload chat history to show the sent message
+      if (currentReplyNumber) showChatHistory(currentReplyNumber);
+    } else { 
+      showError('Send Failed', '❌ Failed to send: ' + (data.error || 'Unknown error')); 
+    }
+  } catch (error) {
+    console.error('Send manual reply error:', error);
+    showError('Network Error', ' Network error. Please try again.');
+  }
+}
+
+
 
     async function loadAllConversations() {
       const container = document.getElementById('allConversationsContainer');
@@ -1839,6 +2035,228 @@ async function uploadKnowledge() {
       });
     }
 
+// ==========================================
+// 🚨 SMART FILE & VOICE HANDLING FOR TENANT DASHBOARD
+// ==========================================
+function handleFileAction(fileName) {
+  const fileExt = fileName.split('.').pop().toLowerCase().trim();
+  const fileUrl = `/uploads/knowledge/${fileName}`;
+  const audioTypes = ['mp3', 'wav', 'ogg', 'webm'];
+  const inlineTypes = ['pdf', 'txt', 'csv', 'jpg', 'jpeg', 'png', 'webp', 'gif'];
+  const officeTypes = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
+  
+  if (audioTypes.includes(fileExt)) {
+    openAudioModal(fileUrl, fileName);
+  } else if (officeTypes.includes(fileExt)) {
+    const fullUrl = encodeURIComponent(window.location.origin + fileUrl);
+    window.open(`https://view.officeapps.live.com/op/view.aspx?src=${fullUrl}`, '_blank');
+  } else if (inlineTypes.includes(fileExt)) {
+    window.open(fileUrl, '_blank');
+  } else {
+    const link = document.createElement('a');
+    link.href = fileUrl; link.download = fileName;
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  }
+}
+
+function openAudioModal(fileUrl, fileName) {
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[400]';
+  modal.innerHTML = `
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold"> Playing: ${fileName}</h3>
+        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+      </div>
+      <audio controls autoplay class="w-full"><source src="${fileUrl}" type="audio/${fileName.split('.').pop()}">Your browser does not support audio playback</audio>
+      <div class="mt-4 flex gap-2">
+        <a href="${fileUrl}" download class="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg text-center hover:bg-indigo-700">⬇️ Download</a>
+        <button onclick="this.closest('.fixed').remove()" class="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">Close</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+if (typeof currentVoiceFileName === 'undefined') { var currentVoiceFileName = null; }
+function openVoiceModal(fileName) {
+  currentVoiceFileName = fileName;
+  const modal = document.getElementById('tenantVoiceModal');
+  const player = document.getElementById('tenantVoicePlayer');
+  player.src = `/api/voice-notes/${fileName}?t=${Date.now()}`;
+  modal.classList.remove('hidden'); modal.classList.add('flex');
+  player.play().catch(err => console.log('Auto-play prevented:', err));
+}
+function closeTenantVoiceModal() {
+  const modal = document.getElementById('tenantVoiceModal');
+  const player = document.getElementById('tenantVoicePlayer');
+  player.pause(); player.src = '';
+  modal.classList.add('hidden'); modal.classList.remove('flex');
+}
+function downloadTenantVoiceNote() {
+  if (!currentVoiceFileName) return;
+  const link = document.createElement('a');
+  link.href = `/api/voice-notes/${currentVoiceFileName}`;
+  link.download = currentVoiceFileName;
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
+}
+
+// ==========================================
+// 🚨 TENANT FILE & VOICE HANDLING
+// ==========================================
+let tenantSelectedFile = null;
+let tenantMediaRecorder = null;
+let tenantAudioChunks = [];
+let tenantRecordedBlob = null;
+let tenantRecordingStartTime = null;
+let tenantRecordingTimer = null;
+
+function handleTenantFileSelect(input) {
+  if (input.files && input.files[0]) {
+    tenantSelectedFile = input.files[0];
+    document.getElementById('tenantFileNameDisplay').textContent = tenantSelectedFile.name;
+    document.getElementById('tenantClearFileBtn').classList.remove('hidden');
+  }
+}
+
+function clearTenantFile() {
+  tenantSelectedFile = null;
+  document.getElementById('tenantFileInput').value = '';
+  document.getElementById('tenantFileNameDisplay').textContent = '';
+  document.getElementById('tenantClearFileBtn').classList.add('hidden');
+}
+
+async function toggleTenantRecording() {
+  if (!tenantMediaRecorder || tenantMediaRecorder.state === 'inactive') {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      tenantMediaRecorder = new MediaRecorder(stream);
+      tenantAudioChunks = [];
+      tenantMediaRecorder.ondataavailable = (event) => { if (event.data.size > 0) tenantAudioChunks.push(event.data); };
+      tenantMediaRecorder.onstop = () => {
+        tenantRecordedBlob = new Blob(tenantAudioChunks, { type: 'audio/webm' });
+        document.getElementById('tenantVoicePreview').src = URL.createObjectURL(tenantRecordedBlob);
+        document.getElementById('tenantVoicePreview').classList.remove('hidden');
+        document.getElementById('tenantSendVoiceBtn').classList.remove('hidden');
+        document.getElementById('tenantRecordingStatus').classList.add('hidden');
+        clearInterval(tenantRecordingTimer);
+      };
+      tenantMediaRecorder.start();
+      tenantRecordingStartTime = Date.now();
+      document.getElementById('tenantRecordBtnText').textContent = 'Stop';
+      document.getElementById('tenantRecordBtn').classList.replace('bg-red-100', 'bg-red-600');
+      document.getElementById('tenantRecordBtn').classList.replace('text-red-600', 'text-white');
+      document.getElementById('tenantRecordingStatus').classList.remove('hidden');
+      tenantRecordingTimer = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - tenantRecordingStartTime) / 1000);
+        document.getElementById('tenantRecordingTime').textContent = `${Math.floor(elapsed/60)}:${(elapsed%60).toString().padStart(2,'0')}`;
+      }, 1000);
+    } catch (err) {
+      showConfirm('Microphone Access Required', 'Please allow microphone access to record voice messages.');
+    }
+  } else {
+    tenantMediaRecorder.stop();
+    tenantMediaRecorder.stream.getTracks().forEach(track => track.stop());
+    document.getElementById('tenantRecordBtnText').textContent = 'Record Voice';
+    document.getElementById('tenantRecordBtn').classList.replace('bg-red-600', 'bg-red-100');
+    document.getElementById('tenantRecordBtn').classList.replace('text-white', 'text-red-600');
+  }
+}
+
+async function sendTenantVoiceMessage() {
+  if (!tenantRecordedBlob || !currentReplyNumber) return;
+  
+  const formData = new FormData();
+  formData.append('file', tenantRecordedBlob, `voice_${Date.now()}.webm`);
+  formData.append('toNumber', currentReplyNumber);
+  formData.append('content', '🎤 Voice message');
+  
+  try {
+    // 🚨 CHANGED: Send to /api/dashboard/send-voice instead of send-message
+    const res = await fetch('/api/dashboard/send-voice', { 
+      method: 'POST', 
+      headers: { 'Authorization': `Bearer ${token}` }, 
+      body: formData 
+    });
+    
+    const data = await res.json();
+    
+    if (res.ok) {
+      tenantRecordedBlob = null;
+      document.getElementById('tenantVoicePreview').classList.add('hidden');
+      document.getElementById('tenantSendVoiceBtn').classList.add('hidden');
+      showSuccess('Sent!', '✅ Voice message sent successfully!');
+      loadRecentChats();
+      if (currentReplyNumber) showChatHistory(currentReplyNumber);
+    } else {
+      showError('Error', '❌ Failed to send voice: ' + (data.error || 'Unknown error'));
+    }
+  } catch (error) {
+    console.error('Voice send error:', error);
+    showError('Network Error', '❌ Network error. Please try again.');
+  }
+}
+
+function handleFileAction(fileName) {
+  const fileExt = fileName.split('.').pop().toLowerCase().trim();
+  const fileUrl = `/uploads/knowledge/${fileName}`;
+  const audioTypes = ['mp3', 'wav', 'ogg', 'webm'];
+  const inlineTypes = ['pdf', 'txt', 'csv', 'jpg', 'jpeg', 'png', 'webp', 'gif'];
+  const officeTypes = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
+  
+  if (audioTypes.includes(fileExt)) {
+    openAudioModal(fileUrl, fileName);
+  } else if (officeTypes.includes(fileExt)) {
+    const fullUrl = encodeURIComponent(window.location.origin + fileUrl);
+    window.open(`https://view.officeapps.live.com/op/view.aspx?src=${fullUrl}`, '_blank');
+  } else if (inlineTypes.includes(fileExt)) {
+    window.open(fileUrl, '_blank');
+  } else {
+    const link = document.createElement('a');
+    link.href = fileUrl; link.download = fileName;
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  }
+}
+
+function openAudioModal(fileUrl, fileName) {
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[400]';
+  modal.innerHTML = `
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold"> Playing: ${fileName}</h3>
+        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+      </div>
+      <audio controls autoplay class="w-full"><source src="${fileUrl}" type="audio/${fileName.split('.').pop()}">Your browser does not support audio playback</audio>
+      <div class="mt-4 flex gap-2">
+        <a href="${fileUrl}" download class="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg text-center hover:bg-indigo-700">⬇️ Download</a>
+        <button onclick="this.closest('.fixed').remove()" class="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">Close</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+if (typeof currentVoiceFileName === 'undefined') { var currentVoiceFileName = null; }
+function openVoiceModal(fileName) {
+  currentVoiceFileName = fileName;
+  const modal = document.getElementById('tenantVoiceModal');
+  const player = document.getElementById('tenantVoicePlayer');
+  player.src = `/api/voice-notes/${fileName}?t=${Date.now()}`;
+  modal.classList.remove('hidden'); modal.classList.add('flex');
+  player.play().catch(err => console.log('Auto-play prevented:', err));
+}
+function closeTenantVoiceModal() {
+  const modal = document.getElementById('tenantVoiceModal');
+  const player = document.getElementById('tenantVoicePlayer');
+  player.pause(); player.src = '';
+  modal.classList.add('hidden'); modal.classList.remove('flex');
+}
+function downloadTenantVoiceNote() {
+  if (!currentVoiceFileName) return;
+  const link = document.createElement('a');
+  link.href = `/api/voice-notes/${currentVoiceFileName}`;
+  link.download = currentVoiceFileName;
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
+}
     // LOGOUT
     function logout() { 
       localStorage.clear(); 
@@ -1853,35 +2271,76 @@ async function uploadKnowledge() {
 
     function closeDeleteModal() { document.getElementById('deleteAccountModal').classList.add('hidden'); }
 
-    async function confirmDeleteAccount() {
-      const btn = document.getElementById('confirmDeleteBtn');
-      const originalBtnText = btn.innerHTML;
-      try {
+// 🚨 FIXED DELETE FUNCTION
+async function confirmDeleteAccount() {
+    const btn = document.getElementById('confirmDeleteBtn');
+    const originalBtnText = btn.innerHTML;
+    
+    try {
+        // 1. Fetch current status safely
         const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
-        const data = await res.json();
-        if (data.success && data.tenant && data.tenant.isActive) {
-          document.getElementById('deleteModalError').classList.remove('hidden');
-          return; 
+        
+        // Safe JSON parsing
+        let data;
+        try {
+            data = await res.json();
+        } catch (jsonError) {
+            console.error("JSON Parse Error:", jsonError);
+            showError('Server Error', '❌ Failed to read server response.');
+            return;
         }
+
+        // 2. Check if WhatsApp is connected
+        if (data && data.success && data.tenant && data.tenant.isActive) {
+            // Show the warning message with the "Go to Settings" button
+            document.getElementById('deleteModalError').classList.remove('hidden');
+            return; // Stop here, don't delete
+        }
+
+        // 3. Proceed with deletion if WhatsApp is disconnected
         btn.disabled = true;
         btn.innerHTML = '<span class="animate-spin mr-2">⏳</span> Deleting...';
+        
         const deleteRes = await fetch('/api/dashboard/account', { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
         const deleteData = await deleteRes.json();
-        if (deleteData.success) {
-          localStorage.clear();
-          window.location.href = '/login';
-        } else {
-          showError('Delete Failed', '❌ ' + (deleteData.error || 'Failed to delete account.'));
-          btn.disabled = false;
-          btn.innerHTML = originalBtnText;
+        
+if (deleteData.success) {
+    localStorage.clear();
+    sessionStorage.clear(); // Clear session storage too
+    // Force redirect to login with cache bust
+    window.location.replace('/login?deleted=true&t=' + Date.now());
+} else {
+            showError('Delete Failed', '❌ ' + (deleteData.error || 'Failed to delete account.'));
+            btn.disabled = false;
+            btn.innerHTML = originalBtnText;
         }
-      } catch (err) {
+    } catch (err) {
         console.error('Delete error:', err);
         showError('Server Error', '❌ Server error while deleting account.');
         btn.disabled = false;
         btn.innerHTML = originalBtnText;
-      }
     }
+}
+
+// 🚨 NEW FUNCTION: Takes user to Settings page
+function navigateToSettingsForDeletion() {
+    // 1. Close the delete modal
+    closeDeleteModal();
+    
+    // 2. Switch to Settings tab
+    showSection('settings');
+    
+    // 3. Scroll to the bottom (Danger Zone) automatically
+    setTimeout(() => {
+        const dangerZone = document.querySelector('.border-red-200'); // The Danger Zone container
+        if (dangerZone) {
+            dangerZone.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Flash effect to highlight it
+            dangerZone.classList.add('ring-4', 'ring-red-300');
+            setTimeout(() => dangerZone.classList.remove('ring-4', 'ring-red-300'), 2000);
+        }
+    }, 300);
+}
 
     async function loadConversations() {
       const list = document.getElementById('conversationsList');
@@ -2183,7 +2642,26 @@ async function saveSettings() {
               const alignClass = isOutbound ? 'justify-end' : 'justify-start';
               const bubbleClass = isOutbound ? 'bg-green-500 text-white' : 'bg-white text-gray-800 border border-gray-200';  
               const label = isOutbound ? (msg.isAiReply ? '🤖 AI' : '👤 Admin') : '👤 Customer';
-              return `<div class="flex ${alignClass}"><div class="max-w-[75%] px-4 py-3 rounded-lg ${bubbleClass} shadow-sm"><p class="text-xs font-semibold mb-1 opacity-75">${label}</p><p class="text-sm whitespace-pre-wrap">${msg.content}</p><p class="text-xs mt-2 opacity-75 text-right">${new Date(msg.createdAt).toLocaleString()}</p></div></div>`;
+           const voiceNoteMatch = msg.content.match(/\[Voice Note: (.*?)\]/);
+const isVoiceNote = voiceNoteMatch !== null;
+const fileMatch = msg.content.match(/\[Sent File: (.*?)\]/);
+const isFile = fileMatch !== null;
+
+let messageContent = '';
+if (isVoiceNote) {
+  const fileName = voiceNoteMatch[1];
+  messageContent = `<div onclick="openVoiceModal('${fileName}')" class="flex items-center gap-2 p-2 bg-indigo-50 hover:bg-indigo-100 rounded-lg cursor-pointer border border-indigo-200"><div class="bg-indigo-600 text-white rounded-full p-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg></div><div class="flex-1"><p class="text-xs font-medium text-indigo-900">Voice Message</p><p class="text-[10px] text-indigo-600">Click to play ▶️</p></div><span class="text-lg">🎧</span></div>`;
+} else if (isFile) {
+  const fileName = fileMatch[1].trim();
+  const fileExt = fileName.split('.').pop().toLowerCase();
+  const fileTypes = { 'pdf': { icon: '', color: 'red' }, 'doc': { icon: '📝', color: 'blue' }, 'docx': { icon: '', color: 'blue' }, 'xls': { icon: '', color: 'green' }, 'xlsx': { icon: '', color: 'green' }, 'txt': { icon: '📃', color: 'gray' }, 'csv': { icon: '', color: 'green' }, 'zip': { icon: '📦', color: 'yellow' }, 'jpg': { icon: '🖼️', color: 'purple' }, 'jpeg': { icon: '🖼️', color: 'purple' }, 'png': { icon: '🖼️', color: 'purple' }, 'mp3': { icon: '🎵', color: 'pink' }, 'webm': { icon: '🎥', color: 'pink' } };
+  const fileType = fileTypes[fileExt] || { icon: '', color: 'gray' };
+  const colorClasses = { 'red': 'bg-red-50 border-red-200 text-red-900', 'blue': 'bg-blue-50 border-blue-200 text-blue-900', 'green': 'bg-green-50 border-green-200 text-green-900', 'yellow': 'bg-yellow-50 border-yellow-200 text-yellow-900', 'purple': 'bg-purple-50 border-purple-200 text-purple-900', 'pink': 'bg-pink-50 border-pink-200 text-pink-900', 'gray': 'bg-gray-50 border-gray-200 text-gray-900' };
+  messageContent = `<div class="flex items-center gap-2 p-2 rounded-lg border cursor-pointer hover:shadow-sm transition ${colorClasses[fileType.color]}" onclick="handleFileAction('${fileName}')"><span class="text-xl">${fileType.icon}</span><div class="flex-1 min-w-0"><p class="text-xs font-semibold truncate">${fileName}</p><p class="text-[10px] opacity-75">Click to open</p></div></div>`;
+} else {
+  messageContent = `<p class="text-sm whitespace-pre-wrap">${msg.content}</p>`;
+}
+return `<div class="flex ${alignClass}"><div class="max-w-[75%] px-4 py-3 rounded-lg ${bubbleClass} shadow-sm"><p class="text-xs font-semibold mb-1 opacity-75">${label}</p>${messageContent}<p class="text-xs mt-2 opacity-75 text-right">${new Date(msg.createdAt).toLocaleString()}</p></div></div>`;
             }).join('');
           }
           messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -2245,83 +2723,94 @@ async function saveSettings() {
       editor.removeEventListener('input', updateCharCount);
     }
     
-    async function saveContextEditor() {
-      const modal = document.getElementById('contextEditorModal');
-      const editor = document.getElementById('fullContextEditor');
-      const smallTextarea = document.getElementById('businessContext');
-      
-      if (!editor || !smallTextarea) {
-        console.error(' Editor or textarea not found!');
-        showError('Error', '❌ Editor not found. Please refresh the page.');
-        return;
-      }
-      
-      // 1. Copy content from full editor back to small textarea
-      smallTextarea.value = editor.value;
-      
-      console.log('✅ Content copied back to businessContext textarea');
-      console.log(' New length:', smallTextarea.value.length);
-      
-      // 2. 🚨 AUTO-SAVE TO DATABASE IMMEDIATELY
-      showInfo('Saving...', '💾 Saving your business context...');
-      
-      try {
-        // Get ALL current settings to save together
-        const getVal = (id) => { 
-          const el = document.getElementById(id); 
-          return el ? el.value : ''; 
-        };
-        
-        const getCheck = (id) => { 
-          const el = document.getElementById(id); 
-          return el ? el.checked : false; 
-        };
-
-        // Build complete settings object
-        const settingsData = {
-          businessName: getVal('settingsBusinessName'),
-          whatsappNumber: (getVal('settingsWhatsappNumber') || '').replace(/\D/g, ''),
-          contactInfo: `Contact Person: ${getVal('contactPerson') || 'Not provided'}\nEmail: ${getVal('contactEmail') || 'Not provided'}\nPhone/WhatsApp: ${getVal('contactPhone') || 'Not provided'}\nWebsite: ${getVal('contactWebsite') || 'Not provided'}\nNotes: ${getVal('contactNotes') || 'None'}`,
-          systemPrompt: getVal('systemPrompt'),
-          businessContext: smallTextarea.value, // 🚨 THE UPDATED CONTEXT
-          llmApiKey: getVal('llmApiKey'),
-          llmModel: getVal('llmModel'),
-          llmProvider: getVal('llmProvider'),
-          llmBaseUrl: getVal('llmBaseUrl'),
-          aiAgentName: getVal('aiAgentName'),
-          isHumanMode: getCheck('humanModeToggle')
-        };
-
-        // Send to backend
-        const saveRes = await fetch('/api/dashboard/settings', { 
-          method: 'PUT', 
-          headers: { 
-            'Content-Type': 'application/json', 
-            'Authorization': `Bearer ${token}` 
-          }, 
-          body: JSON.stringify(settingsData) 
-        });
-        
-        const saveData = await saveRes.json();
-        
-        if (saveRes.ok) {
-          // 3. Close the modal
-          closeContextEditor();
-          
-          // 4. Show success message
-          showSuccess('Saved!', '✅ Business context has been saved successfully!\n\nYour AI agent will now use this updated information.');
-          
-          // 5. Reload dashboard to reflect changes
-          await loadDashboardData();
-          
-        } else {
-          showError('Save Failed', '❌ Failed to save to database.\n\n' + (saveData.error || 'Please try again.'));
-        }
-      } catch (err) {
-        console.error('Auto-save error:', err);
-        showError('Network Error', '❌ Network error while saving. Please try again.');
-      }
+async function saveContextEditor() {
+  const modal = document.getElementById('contextEditorModal');
+  const editor = document.getElementById('fullContextEditor');
+  const smallTextarea = document.getElementById('businessContext');
+  
+  if (!editor || !smallTextarea) {
+    console.error('❌ Editor or textarea not found!');
+    showError('Error', '❌ Editor not found. Please refresh the page.');
+    return;
+  }
+  
+  // 1. Copy content from full editor back to small textarea
+  smallTextarea.value = editor.value;
+  console.log('✅ Content copied back to businessContext textarea');
+  console.log('📊 New length:', smallTextarea.value.length);
+  
+  // 2. 🚨 AUTO-SAVE TO DATABASE IMMEDIATELY
+  showInfo('Saving...', '💾 Saving your business context...');
+  
+  try {
+    // 🚨 CRITICAL: Fetch current settings first to use as safe fallbacks
+    const res = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+    const data = await res.json();
+    if (!data.success) { 
+      showError('Error', '❌ Failed to load current settings.'); 
+      return; 
     }
+
+    // Helper functions to safely get values
+    const getVal = (id) => { 
+      const el = document.getElementById(id); 
+      return el ? el.value : ''; 
+    };
+    
+    const getCheck = (id) => { 
+      const el = document.getElementById(id); 
+      return el ? el.checked : false; 
+    };
+
+    // 3. Build complete settings object (MATCHING saveSettings logic)
+    const settingsData = {
+      businessName: getVal('settingsBusinessName') || data.tenant.businessName,
+      websiteUrl: getVal('websiteUrl') || data.tenant.websiteUrl || '', // 🚨 ADDED: Prevents wiping the URL!
+      whatsappNumber: (getVal('settingsWhatsappNumber') || data.tenant.whatsappNumber || '').replace(/\D/g, ''),
+      contactInfo: `Contact Person: ${getVal('contactPerson') || 'Not provided'}\nEmail: ${getVal('contactEmail') || 'Not provided'}\nPhone/WhatsApp: ${getVal('contactPhone') || 'Not provided'}\nWebsite: ${getVal('contactWebsite') || 'Not provided'}\nNotes: ${getVal('contactNotes') || 'None'}`,
+      systemPrompt: getVal('systemPrompt') || data.tenant.systemPrompt,
+      businessContext: smallTextarea.value, // 🚨 THE UPDATED CONTEXT
+      
+      // 🚨 ALWAYS USE QWEN (Secure & Pre-configured)
+      llmApiKey: data.tenant.llmApiKey, 
+      llmProvider: 'QWEN', 
+      llmModel: getVal('llmModelSelect') || data.tenant.llmModel || 'qwen-plus', 
+      llmBaseUrl: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1', 
+      
+      aiAgentName: getVal('aiAgentName') || data.tenant.aiAgentName,
+      isHumanMode: getCheck('humanModeToggle')
+    };
+
+    // 4. Send to backend
+    const saveRes = await fetch('/api/dashboard/settings', { 
+      method: 'PUT', 
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Authorization': `Bearer ${token}` 
+      }, 
+      body: JSON.stringify(settingsData) 
+    });
+    
+    const saveData = await saveRes.json();
+    
+    if (saveRes.ok) {
+      // 5. Close the modal
+      closeContextEditor();
+      
+      // 6. Show success message
+      showSuccess('Saved!', '✅ Business context has been saved successfully!\n\nYour AI agent will now use this updated information.');
+      
+      // 7. Reload dashboard to reflect changes
+      await loadDashboardData();
+      
+    } else {
+      showError('Save Failed', '❌ Failed to save to database.\n\n' + (saveData.error || 'Please try again.'));
+    }
+  } catch (err) {
+    console.error('Auto-save error:', err);
+    showError('Network Error', '❌ Network error while saving. Please try again.');
+  }
+}
     
     function updateCharCount() {
       const editor = document.getElementById('fullContextEditor');
@@ -2480,16 +2969,173 @@ function applyPersonaTemplate() {
   }
 }
 
+
+// ==========================================
+// 💳 STRIPE BILLING LOGIC
+// ==========================================
+const dashBasePrices = {
+  monthly: { starter: 49.99, growth: 66.99, business: 72.99 },
+  quarterly: { starter: 47.49, growth: 63.64, business: 69.34 },
+  yearly: { starter: 44.99, growth: 60.29, business: 65.69 }
+};
+let currentBilling = 'monthly';
+
+function formatDashPrice(price) { return `£${price.toFixed(2)}`; }
+
+function setBilling(type) {
+  currentBilling = type;
+  ['monthly', 'quarterly', 'yearly'].forEach(t => {
+    const btn = document.getElementById(`btn-${t}`);
+    if (btn) {
+      btn.className = t === type ? 'px-6 py-2 rounded-full font-semibold text-sm transition bg-green-600 text-white' : 'px-6 py-2 rounded-full font-semibold text-sm transition text-gray-600 hover:text-gray-900 relative';
+    }
+  });
+  const tokenMultipliers = { monthly: 1, quarterly: 3, yearly: 12 };
+  const baseTokens = { starter: 150000, growth: 300000, business: 500000 };
+  
+  ['starter', 'growth', 'business'].forEach(plan => {
+    const price = dashBasePrices[type][plan];
+    const formattedPrice = formatDashPrice(price);
+    let billedText = 'Billed monthly';
+    if (type === 'quarterly') billedText = `Billed ${formatDashPrice(price * 3)} every 3 months`;
+    else if (type === 'yearly') billedText = `Billed ${formatDashPrice(price * 12)} per year`;
+    
+    const planEl = document.querySelector(`[data-dash-plan="${plan}"]`);
+    const billedEl = document.querySelector(`[data-dash-billed="${plan}"]`);
+    const tokensEl = document.querySelector(`[data-dash-tokens="${plan}"]`);
+    if (planEl) planEl.textContent = formattedPrice;
+    if (billedEl) billedEl.textContent = billedText;
+    if (tokensEl) {
+      const totalTokens = baseTokens[plan] * tokenMultipliers[type];
+      tokensEl.textContent = `${totalTokens.toLocaleString()} tokens`;
+    }
+  });
+  
+  const banner = document.getElementById('dash-savingsBanner');
+  if (banner) {
+    if (type !== 'monthly') {
+      const savingsGBP = type === 'quarterly' ? 43.92 : 87.84;
+      document.getElementById('dash-savingsText').textContent = `Switch to ${type} and save up to £${savingsGBP.toFixed(2)} per year!`;
+      banner.classList.remove('hidden');
+    } else { banner.classList.add('hidden'); }
+  }
+}
+
+async function dashSelectPlan(plan) {
+  try {
+    const price = formatDashPrice(dashBasePrices[currentBilling][plan]);
+    
+    // Make authenticated request to create checkout session
+    const res = await fetch(`/api/create-checkout?plan=${plan}&billing=${currentBilling}&currency=GBP&price=${encodeURIComponent(price)}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    const data = await res.json();
+    
+    if (res.ok && data.url) {
+      // Redirect to Stripe Checkout
+      window.location.href = data.url;
+    } else {
+      showError('Error', '❌ ' + (data.error || 'Failed to create checkout session'));
+    }
+  } catch (err) {
+    console.error('Checkout error:', err);
+    showError('Network Error', '❌ Failed to connect to server. Please try again.');
+  }
+}
+
+
+function buyTokenPack(packSize) {
+  const packPrices = { '50k': '£10.00', '100k': '£18.00', '250k': '£40.00' };
+  const price = packPrices[packSize];
+  showConfirm('Confirm Token Purchase', `You are about to purchase <strong>${packSize.toUpperCase()}</strong> for <strong>${price}</strong>.<br><br>Tokens will be added to your account immediately after payment.`, async () => {
+    try {
+      const res = await fetch(`/api/buy-token-pack?pack=${packSize}`, { method: 'GET', headers: { 'Authorization': `Bearer ${token}` } });
+      const data = await res.json();
+      if (res.ok && data.url) { window.location.href = data.url; }
+      else { showError('Error', ' ' + (data.error || 'Failed to create checkout session')); }
+    } catch (err) { console.error('Token pack purchase error:', err); showError('Network Error', '❌ Network error. Please try again.'); }
+  });
+}
+
+
+// Initialize billing on load
+if (typeof setBilling === 'function') setBilling('monthly');
+
 // ==========================================
 // 🚀 INITIALIZE DASHBOARD
 // ==========================================
-document.addEventListener('DOMContentLoaded', async () => {
-  await loadDashboard();
-  showSection('dashboard');
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', async function() {
+  
+  // 🚨 0. HANDLE STRIPE SUCCESS/CANCEL HERE (Now the modal HTML is guaranteed to exist!)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('canceled')) {
+    showError('Payment Cancelled', '❌ You cancelled the payment. No charges were made.');
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+  if (urlParams.has('success')) {
+    const pack = urlParams.get('pack');
+    if (pack) {
+      showSuccess('Tokens Added!', `✅ Your ${pack.toUpperCase()} token pack has been added to your account!`);
+      setTimeout(() => loadDashboardData(), 1000);
+    } else {
+      showSuccess('Subscription Active!', '✅ Your subscription has been activated successfully!');
+      setTimeout(() => loadDashboardData(), 1000);
+    }
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  // 1. Load dashboard data immediately (tokens, stats, etc.)
+  await loadDashboardData();
+  
+  // 2. Initialize billing toggle
+  setBilling('monthly');
+  
+  // 3. Load real stats
+  if (typeof loadRealStats === 'function') {
+    await loadRealStats();
+  }
+  
+  // 4. SHOW WELCOME TOUR IMMEDIATELY ON FIRST LOGIN
+  setTimeout(() => {
+    const hasSeenTour = localStorage.getItem('hasSeenTour');
+    const tourModal = document.getElementById('tourModal');
+    if (!hasSeenTour && tourModal) {
+      tourModal.classList.remove('hidden');
+      localStorage.setItem('hasSeenTour', 'true');
+    }
+  }, 800);
 });
 
 
+
   </script>
+
+<!--  TENANT VOICE NOTE MODAL PLAYER -->
+<div id="tenantVoiceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-[400]">
+  <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-gray-800">🎤 Voice Note</h3>
+      <button onclick="closeTenantVoiceModal()" class="text-gray-400 hover:text-gray-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+      <audio id="tenantVoicePlayer" controls class="w-full">
+        <source src="" type="audio/ogg">
+        Your browser does not support audio playback
+      </audio>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="downloadTenantVoiceNote()" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-medium">⬇️ Download</button>
+      <button onclick="closeTenantVoiceModal()" class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm font-medium">Close</button>
+    </div>
+  </div>
+</div>
 
   <!-- 🚨 DELETE ACCOUNT CUSTOM MODAL -->
   <div id="deleteAccountModal" class="fixed inset-0 z-[100] hidden">
@@ -2512,9 +3158,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             <li>All Agent accounts and team invitations</li>
           </ul>
         </div>
-        <div id="deleteModalError" class="hidden bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded-lg p-3 mb-4 flex items-start gap-2">
-          <span>⚠️</span>
-          <span>Please <strong>disconnect WhatsApp</strong> in Settings before you can delete your account.</span>
+        <!-- Inside the deleteAccountModal div -->
+<div id="deleteModalError" class="hidden bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded-lg p-4 mb-4 flex flex-col items-center gap-3 text-center">
+    <div class="flex items-start gap-2 text-left w-full">
+        <span class="text-xl">⚠️</span>
+        <span>Please <strong>disconnect WhatsApp</strong> in Settings before you can delete your account.</span>
+    </div>
+    <!-- 🚨 NEW BUTTON TO GO TO SETTINGS -->
+    <button onclick="navigateToSettingsForDeletion()" class="bg-yellow-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-yellow-700 transition shadow-sm">
+        Go to Settings & Disconnect →
+    </button>
+</div>
         </div>
         <div class="flex gap-3">
           <button onclick="closeDeleteModal()" class="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition">Cancel</button>
@@ -2596,5 +3250,39 @@ window.addEventListener('load', () => {
 });
 </script>
 
+<!--  TENANT VOICE NOTE MODAL PLAYER -->
+<div id="tenantVoiceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-[400]">
+  <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-gray-800">🎤 Voice Note</h3>
+      <button onclick="closeTenantVoiceModal()" class="text-gray-400 hover:text-gray-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+      <audio id="tenantVoicePlayer" controls class="w-full">
+        <source src="" type="audio/ogg">
+        Your browser does not support audio playback
+      </audio>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="downloadTenantVoiceNote()" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-medium">⬇️ Download</button>
+      <button onclick="closeTenantVoiceModal()" class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm font-medium">Close</button>
+    </div>
+  </div>
+</div>
+<!-- Footer with Policy Links -->
+<footer class="bg-gray-900 text-gray-400 py-8 mt-16">
+  <div class="max-w-7xl mx-auto px-4 text-center">
+    <div class="flex flex-wrap justify-center gap-6 mb-4 text-sm">
+      <a href="/privacy-policy" class="hover:text-white transition">Privacy Policy</a>
+      <a href="/terms-of-service" class="hover:text-white transition">Terms of Service</a>
+      <a href="/refund-policy" class="hover:text-white transition">Refund Policy</a>
+      <a href="/cancellation-policy" class="hover:text-white transition">Cancellation Policy</a>
+      <a href="/delivery-policy" class="hover:text-white transition">Service Delivery</a>
+    </div>
+    <p class="text-xs">© 2026 AAMIRSABA LLC. All rights reserved.</p>
+  </div>
+</footer>
 </body>
 </html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cancellation Policy - Universal AI SaaS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+<nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+<div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+<a href="/" class="text-xl font-bold text-green-600">Universal AI SaaS</a>
+<a id="backToHomeLink" href="/" class="text-sm text-gray-600 hover:text-gray-900">← Back to Home</a>
+</div>
+</nav>
+
+<main class="max-w-4xl mx-auto px-4 py-12">
+<div class="bg-white rounded-2xl shadow-lg p-8 md:p-12">
+<div class="mb-8">
+<h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Cancellation Policy</h1>
+<p class="text-gray-500">Last Updated: August 30, 2026</p>
+<div class="mt-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+<p class="text-sm text-blue-900"><strong>📌 Quick Summary:</strong> You can cancel your subscription at any time. Your service continues until the end of your current billing period. No cancellation fees apply.</p>
+</div>
+</div>
+
+<section class="mb-8">
+<h2 class="text-2xl font-bold text-gray-800 mb-4">1. Your Right to Cancel</h2>
+<div class="prose text-gray-700 space-y-3">
+<p>You may cancel your Universal AI SaaS subscription at any time, for any reason. There are no cancellation fees, penalties, or long-term contracts.</p>
+<p>Our subscription tiers are billed in British Pounds (GBP):</p>
+<ul class="list-disc list-inside ml-4 space-y-1">
+<li><strong>Starter:</strong> £25/month</li>
+<li><strong>Growth:</strong> £35/month (Most Popular)</li>
+<li><strong>Business:</strong> £50/month</li>
+</ul>
+</div>
+</section>
+
+<section class="mb-8">
+<h2 class="text-2xl font-bold text-gray-800 mb-4">2. How to Cancel</h2>
+<div class="prose text-gray-700 space-y-3">
+<ol class="list-decimal list-inside ml-4 space-y-3">
+<li>Log in to your dashboard at <a href="https://bot.aamirsaba.com/dashboard" class="text-green-600 underline">bot.aamirsaba.com/dashboard</a></li>
+<li>Navigate to the <strong>"Billing & Plans"</strong> section.</li>
+<li>Click the <strong>"Cancel Subscription"</strong> button and confirm.</li>
+<li>Alternatively, email us at <a href="mailto:info@aamirsaba.com" class="text-green-600 underline">info@aamirsaba.com</a> with your registered email address.</li>
+</ol>
+</div>
+</section>
+
+<section class="mb-8">
+<h2 class="text-2xl font-bold text-gray-800 mb-4">3. What Happens After Cancellation</h2>
+<div class="prose text-gray-700 space-y-3">
+<ul class="list-disc list-inside ml-4 space-y-2">
+<li>Your service continues until the end of your current paid billing period.</li>
+<li>No further charges will be applied to your payment method.</li>
+<li>Unused tokens expire at the end of the billing period and are not refunded.</li>
+<li>Account data is retained for 30 days after cancellation, then permanently deleted.</li>
+</ul>
+</div>
+</section>
+
+<section class="mb-8">
+<h2 class="text-2xl font-bold text-gray-800 mb-4">4. Free Trial Cancellation</h2>
+<div class="prose text-gray-700 space-y-3">
+<p>Our free trial lasts 7 days or until 10,000 tokens are consumed (whichever comes first). If you do not upgrade to a paid plan before the trial ends, your account will be automatically suspended. No payment information is required to start a trial.</p>
+</div>
+</section>
+
+<section class="mb-8">
+<h2 class="text-2xl font-bold text-gray-800 mb-4">5. Contact Us</h2>
+<div class="bg-gray-50 rounded-lg p-6">
+<ul class="space-y-2 text-sm">
+<li><strong>🏢 Company:</strong> AAMIRSABA LTD (Company No. 13117115)</li>
+<li><strong>📧 Email:</strong> <a href="mailto:info@aamirsaba.com" class="text-green-600 underline">info@aamirsaba.com</a></li>
+<li><strong>📱 WhatsApp:</strong> <a href="https://wa.me/447362046611" class="text-green-600 underline">+44 7362046611</a></li>
+</ul>
+</div>
+</section>
+
+<div class="mt-12 pt-8 border-t border-gray-200 text-center text-sm text-gray-500">
+<p>© 2026 AAMIRSABA LTD. All rights reserved. Registered in England and Wales. Company Number: 13117115.</p>
+</div>
+</div>
+</main>
+<script>
+  // Smart "Back to Home" link based on login status
+  document.addEventListener('DOMContentLoaded', () => {
+    const backLink = document.getElementById('backToHomeLink');
+    if (backLink) {
+      const token = localStorage.getItem('token');
+      if (token) {
+        // User is logged in, send them to the dashboard
+        backLink.href = '/dashboard';
+        backLink.textContent = '← Back to Dashboard';
+      } else {
+        // User is not logged in, send them to the public home page
+        backLink.href = '/';
+        backLink.textContent = '← Back to Home';
+      }
+    }
+  });
+</script>
+</body>
+</html>

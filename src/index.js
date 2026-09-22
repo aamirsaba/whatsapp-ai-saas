@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
@@ -15,6 +14,8 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 
 const cron = require('node-cron');
+const Stripe = require('stripe');
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const multer = require('multer');
 const Tesseract = require('tesseract.js');
@@ -55,6 +56,78 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
 const prisma = new PrismaClient();
+
+// =================================================================
+// 🚨 CRITICAL: STRIPE WEBHOOK MUST BE *BEFORE* express.json()
+// =================================================================
+app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  
+  try {
+    const event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object;
+      const tenantId = session.metadata.tenantId;
+
+      if (!tenantId) {
+        console.log('⚠️ Webhook session missing tenantId metadata');
+        return res.json({ received: true });
+      }
+
+      // 1. Handle Token Top-Up
+      if (session.metadata.type === 'token_topup') {
+        const pack = session.metadata.pack;
+        const tokenAmounts = { '50k': 50000, '100k': 100000, '250k': 250000 };
+        const tokensToAdd = tokenAmounts[pack] || 0;
+
+        await prisma.tenant.update({
+          where: { id: tenantId },
+          data: {
+            tokenBalance: { increment: tokensToAdd },
+            plan: 'topup',
+            subscriptionStatus: 'active',
+            isSuspended: false,
+            lowTokenWarningSent: false
+          }
+        });
+        console.log(`✅ Added ${tokensToAdd} tokens to tenant ${tenantId}. Plan changed to 'topup'.`);
+      } 
+      // 2. Handle Subscription Upgrade
+      else if (session.metadata.plan) {
+        const plan = session.metadata.plan;
+        const planLimits = { 'starter': 150000, 'growth': 300000, 'business': 500000 };
+        const tokensToAdd = planLimits[plan] || 0;
+
+        await prisma.tenant.update({
+          where: { id: tenantId },
+          data: {
+            plan: plan,
+            subscriptionStatus: 'active',
+            tokenBalance: { increment: tokensToAdd },
+            tokenLimit: tokensToAdd,
+            stripeCustomerId: session.customer,
+            paymentMethod: 'stripe'
+          }
+        });
+        console.log(`✅ Subscription activated for Tenant ${tenantId}, Plan: ${plan}`);
+      }
+    }
+
+    res.json({ received: true });
+  } catch (err) {
+    console.error('❌ Webhook Error:', err.message);
+    res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+});
+
+// =================================================================
+// ✅ NOW ADD GLOBAL JSON PARSER FOR ALL OTHER ROUTES
+// =================================================================
 app.use(express.json());
 
 // ==========================================
@@ -62,15 +135,21 @@ app.use(express.json());
 // ==========================================
 const authenticateSuperAdmin = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'No token provided' });
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
     
-    // Verify token (make sure your JWT_SECRET matches your .env)
+    const token = authHeader.split(' ')[1];
+    
+    // 🚨 Prevent "jwt malformed" errors from "undefined" or "null" strings
+    if (token === 'undefined' || token === 'null' || token.length < 20) {
+      return res.status(401).json({ error: 'Invalid token format' });
+    }
+
     const decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET || 'your-secret-key-change-this');
-    
     const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
     
-    // Check if user exists and is an ADMIN
     if (!user || user.role !== 'ADMIN') {
       return res.status(403).json({ error: 'Access denied. Admin only.' });
     }
@@ -78,10 +157,14 @@ const authenticateSuperAdmin = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    console.error('Auth error:', error);
+    // Only log real server errors, ignore standard JWT validation failures
+    if (error.name !== 'JsonWebTokenError' && error.name !== 'TokenExpiredError') {
+      console.error('Auth error:', error);
+    }
     res.status(401).json({ error: 'Invalid or expired token' });
   }
 };
+
 
 // 🚨 CRITICAL: Serve static files (HTML, CSS, JS) from the 'public' folder
 // This fixes the "Cannot GET /accept-invitation.html" error
@@ -542,7 +625,7 @@ const newUser = await prisma.user.create({
 
     // 5. Create Tenant with DEFAULT QWEN API KEY for trials
     const trialEndsAt = new Date();
-    trialEndsAt.setDate(trialEndsAt.getDate() + 2); // 2 days from now
+    trialEndsAt.setDate(trialEndsAt.getDate() + 7); // 🚨 CHANGED: 7 days from now (was 2)
 
     const newTenant = await prisma.tenant.create({
       data: {
@@ -563,8 +646,8 @@ const newUser = await prisma.user.create({
         isHumanMode: false,  // AI ACTIVE by default
         isActive: false,     
         plan: 'trial',
-        tokenBalance: 2000,  
-        tokenLimit: 2000,
+        tokenBalance: 10000, // 🚨 CHANGED: 10,000 tokens (was 2,000)
+        tokenLimit: 10000,   // 🚨 CHANGED: 10,000 tokens (was 2,000)
         trialEndsAt: trialEndsAt, 
         subscriptionStatus: 'trialing'
       }
@@ -611,24 +694,33 @@ app.post('/api/auth/login', async (req, res) => {
     
     // 🚨 CHECK IF PASSWORD CHANGE IS REQUIRED
     if (result.user && result.user.requiresPasswordChange) {
-      return res.json({ 
-        success: true, 
-        message: 'Please update your password.', 
+      return res.json({
+        success: true,
+        message: 'Please update your password.',
         ...result,
         requiresPasswordChange: true,
         redirectUrl: '/update-password.html'
       });
     }
-    
+
+    // 🚨 FIX: Route users based on their role!
+    let redirectUrl = '/dashboard';
+    if (result.user.role === 'ADMIN') {
+      redirectUrl = '/admin-dashboard.html'; // Redirect Super Admins to the Admin Dashboard
+    } else if (result.user.role === 'AGENT') {
+      redirectUrl = '/agent-dashboard.html'; // Redirect Agents to their specific dashboard
+    }
+
     // Normal login
-    res.json({ 
-      success: true, 
-      message: 'Logged in successfully!', 
+    res.json({
+      success: true,
+      message: 'Logged in successfully!',
       ...result,
       requiresPasswordChange: false,
-      redirectUrl: '/dashboard'
+      redirectUrl: redirectUrl
     });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(401).json({ success: false, error: error.message });
   }
 });
@@ -702,6 +794,12 @@ app.post('/api/auth/update-password', authenticateToken, async (req, res) => {
 // ==========================================
 // 🚀 DASHBOARD ROUTES (Protected)
 // ==========================================
+
+// Serve admin dashboard
+app.get('/admin-dashboard', authenticateSuperAdmin, (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'admin-dashboard.html'));
+});
+
 app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'dashboard.html'));
 });
@@ -870,30 +968,34 @@ app.put('/api/dashboard/settings', authenticateToken, async (req, res) => {
   }
 });
 
+// 🚀 DISCONNECT WHATSAPP
 app.post('/api/dashboard/disconnect', authenticateToken, async (req, res) => {
   try {
     console.log("🔍 Disconnect attempt for userId:", req.user.userId);
-    
     const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId } });
-    
     if (!tenant) {
-      console.log("❌ No tenant found for userId:", req.user.userId);
-      
-      // Let's see what's actually in the database to spot the mismatch
-      const allTenants = await prisma.tenant.findMany({ select: { id: true, businessName: true, userId: true } });
-      console.log("📊 Total tenants in DB:", allTenants.length, allTenants);
-      
-      return res.status(404).json({ error: 'Business not found. Please check if you are logged into the correct account, or try logging out and back in.' });
+      return res.status(404).json({ error: 'Business not found.' });
     }
 
     const sock = activeSockets.get(tenant.whatsappNumber);
     if (sock) {
-      await sock.logout();
+      // 🚨 CRITICAL: Remove from activeSockets FIRST to prevent the race condition
       activeSockets.delete(tenant.whatsappNumber);
+      
+      try {
+        await sock.logout();
+        console.log(`✅ Logged out WhatsApp session for ${tenant.whatsappNumber}`);
+      } catch (e) {
+        console.log(`⚠️ Socket logout skipped: ${e.message}`);
+      }
     }
 
-    const authDir = path.join(process.cwd(), `auth_info_${tenant.whatsappNumber}`);
-    if (fs.existsSync(authDir)) fs.rmSync(authDir, { recursive: true, force: true });
+    const cleanNumber = tenant.whatsappNumber.replace(/\D/g, '');
+    const authDir = path.join(process.cwd(), `auth_info_${cleanNumber}`);
+    if (fs.existsSync(authDir)) {
+      fs.rmSync(authDir, { recursive: true, force: true });
+      console.log(`✅ Deleted auth folder: ${authDir}`);
+    }
 
     await prisma.tenant.update({ where: { id: tenant.id }, data: { isActive: false } });
     res.json({ success: true, message: 'WhatsApp disconnected successfully.' });
@@ -912,68 +1014,45 @@ app.delete('/api/dashboard/account', authenticateToken, async (req, res) => {
     if (tenant) {
       console.log(`🗑️ Starting full account deletion for: ${tenant.businessName} (${tenant.whatsappNumber})`);
 
-      // 🚨 1. GUARD: Prevent deletion if WhatsApp is still connected
       if (tenant.isActive) {
-        return res.status(400).json({ 
-          error: 'Please disconnect your WhatsApp number in Settings before deleting your account.' 
-        });
+        return res.status(400).json({ error: 'Please disconnect your WhatsApp number in Settings before deleting your account.' });
       }
 
-      // 2. Disconnect WhatsApp gracefully
+      // 1. Disconnect WhatsApp gracefully
       const sock = activeSockets.get(tenant.whatsappNumber);
-      if (sock) { 
-        try { 
-          await sock.logout(); 
-          console.log(`✅ Logged out WhatsApp session for ${tenant.whatsappNumber}`);
-        } catch (e) { 
-          console.log(`⚠️ Socket logout skipped (already closed): ${e.message}`); 
-        }
-        activeSockets.delete(tenant.whatsappNumber); 
-      }
-      
-      // 3. 🚨 CRITICAL: Delete ALL possible auth folders
-      const cleanNumber = tenant.whatsappNumber ? tenant.whatsappNumber.replace(/\D/g, '') : '';
-      
-      if (cleanNumber) {
-        // Try multiple possible folder name formats
-        const possibleFolders = [
-          path.join(process.cwd(), `auth_info_${cleanNumber}`),
-          path.join(process.cwd(), `auth_info_${tenant.whatsappNumber}`), // with + or spaces
-          path.join(process.cwd(), `auth_info_${cleanNumber.slice(1)}`), // without first digit
-        ];
+      if (sock) {
+        // 🚨 CRITICAL: Remove from activeSockets FIRST to prevent auto-reconnect
+        activeSockets.delete(tenant.whatsappNumber);
         
-        for (const folder of possibleFolders) {
-          if (fs.existsSync(folder)) {
-            try {
-              fs.rmSync(folder, { recursive: true, force: true });
-              console.log(`️ Deleted: ${folder}`);
-            } catch (err) {
-              console.error(`❌ Failed to delete ${folder}:`, err.message);
-            }
-          }
+        try {
+          await sock.logout();
+          console.log(`✅ Logged out WhatsApp session for ${tenant.whatsappNumber}`);
+        } catch (e) {
+          console.log(`⚠️ Socket logout skipped: ${e.message}`);
         }
       }
 
-      // 4. 🚨 NEW: Delete uploaded Knowledge Base files for this tenant
-      const knowledgeDocs = await prisma.knowledgeDocument.findMany({ 
-        where: { tenantId: tenant.id },
-        select: { fileName: true }
-      });
-      const knowledgeDir = path.join(process.cwd(), 'uploads', 'knowledge');
+      // 2. Delete Auth Folder
+      const cleanNumber = tenant.whatsappNumber ? tenant.whatsappNumber.replace(/\D/g, '') : '';
+      const rootDir = process.cwd();
       
+      await new Promise(resolve => setTimeout(resolve, 500)); // Wait for OS to release file locks
+
+      const targetFolder = path.join(rootDir, `auth_info_${cleanNumber}`);
+      if (fs.existsSync(targetFolder)) {
+        fs.rmSync(targetFolder, { recursive: true, force: true });
+        console.log(`✅ Successfully deleted: ${targetFolder}`);
+      }
+
+      // 3. Delete Knowledge Base files
+      const knowledgeDocs = await prisma.knowledgeDocument.findMany({ where: { tenantId: tenant.id }, select: { fileName: true } });
+      const knowledgeDir = path.join(process.cwd(), 'uploads', 'knowledge');
       for (const doc of knowledgeDocs) {
         const filePath = path.join(knowledgeDir, doc.fileName);
-        if (fs.existsSync(filePath)) {
-          try {
-            fs.unlinkSync(filePath);
-            console.log(`🗑️ Deleted knowledge file: ${doc.fileName}`);
-          } catch (err) {
-            console.error(`❌ Failed to delete knowledge file ${doc.fileName}:`, err.message);
-          }
-        }
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
       }
 
-      // 5. Delete ALL related database records explicitly
+      // 4. Delete DB records
       await prisma.knowledgeDocument.deleteMany({ where: { tenantId: tenant.id } });
       await prisma.message.deleteMany({ where: { tenantId: tenant.id } });
       await prisma.lead.deleteMany({ where: { tenantId: tenant.id } });
@@ -981,13 +1060,9 @@ app.delete('/api/dashboard/account', authenticateToken, async (req, res) => {
       await prisma.agent.deleteMany({ where: { tenantId: tenant.id } });
       await prisma.teamMember.deleteMany({ where: { tenantId: tenant.id } });
       await prisma.teamInvitation.deleteMany({ where: { tenantId: tenant.id } });
-      
-      // 6. Finally, delete the tenant
       await prisma.tenant.delete({ where: { id: tenant.id } });
-      console.log(`✅ Tenant and all DB records deleted.`);
     }
     
-    // 7. Delete the user
     await prisma.user.delete({ where: { id: userId } });
     console.log(`✅ User account ${userId} permanently deleted.`);
     
@@ -1122,6 +1197,31 @@ app.get('/forgot-password', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'forgot-password.html'));
 });
 
+
+// ==========================================
+// 🚀 STRIPE REQUIRED POLICY PAGES
+// ==========================================
+app.get('/privacy-policy', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'privacy-policy.html'));
+});
+
+app.get('/terms-of-service', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'terms-of-service.html'));
+});
+
+app.get('/refund-policy', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'refund-policy.html'));
+});
+
+app.get('/cancellation-policy', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'cancellation-policy.html'));
+});
+
+app.get('/delivery-policy', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'delivery-policy.html'));
+});
+
+
 // 🚀 FORGOT PASSWORD - Generate & Email Temporary Password (Simple & Safe)
 app.post('/api/auth/forgot-password', async (req, res) => {
   try {
@@ -1177,6 +1277,8 @@ const handleSuccess = (num) => {
     if (client.readyState === 1) client.send(JSON.stringify({ type: 'success', phoneNumber: num })); 
   });
 };
+
+
 
 app.post('/api/connect', async (req, res) => {
   try {
@@ -3284,6 +3386,75 @@ app.use((err, req, res, next) => {
 });
 
 
+
+//  STRIPE: Create Subscription Checkout Session
+app.get('/api/create-checkout', authenticateToken, async (req, res) => {
+  try {
+    const { plan, billing } = req.query;
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId }, include: { user: true } });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    const priceIdMap = {
+      'starter-monthly': process.env.STRIPE_PRICE_STARTER,
+      'growth-monthly': process.env.STRIPE_PRICE_GROWTH,
+      'business-monthly': process.env.STRIPE_PRICE_BUSINESS,
+      'starter-quarterly': process.env.STRIPE_PRICE_STARTER_Q,
+      'growth-quarterly': process.env.STRIPE_PRICE_GROWTH_Q,
+      'business-quarterly': process.env.STRIPE_PRICE_BUSINESS_Q,
+      'starter-yearly': process.env.STRIPE_PRICE_STARTER_Y,
+      'growth-yearly': process.env.STRIPE_PRICE_GROWTH_Y,
+      'business-yearly': process.env.STRIPE_PRICE_BUSINESS_Y,
+    };
+    const priceId = priceIdMap[`${plan}-${billing}`];
+    if (!priceId) return res.status(400).json({ error: 'Invalid plan or billing cycle.' });
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${process.env.FRONTEND_URL}/dashboard?success=true`,
+      cancel_url: `${process.env.FRONTEND_URL}/dashboard?canceled=true`,
+      metadata: { tenantId: tenant.id, plan: plan, billing: billing },
+      customer_email: tenant.user.email
+    });
+    
+    res.json({ url: session.url });  // ✅ Return JSON
+  } catch (error) {
+    console.error('Stripe checkout error:', error);
+    res.status(500).json({ error: 'Error creating checkout session.' });
+  }
+});
+
+// 🚀 STRIPE: Create Token Top-Up Checkout Session
+app.get('/api/buy-token-pack', authenticateToken, async (req, res) => {
+  try {
+    const { pack } = req.query;
+    const tenant = await prisma.tenant.findFirst({ where: { userId: req.user.userId }, include: { user: true } });
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found.' });
+
+    const priceIdMap = {
+      '50k': process.env.STRIPE_PRICE_TOPUP_50K,
+      '100k': process.env.STRIPE_PRICE_TOPUP_100K,
+      '250k': process.env.STRIPE_PRICE_TOPUP_250K
+    };
+    const priceId = priceIdMap[pack];
+    if (!priceId) return res.status(400).json({ error: 'Invalid pack size' });
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${process.env.FRONTEND_URL}/dashboard?success=true&pack=${pack}`,
+      cancel_url: `${process.env.FRONTEND_URL}/dashboard?canceled=true`,
+      metadata: { tenantId: tenant.id, pack: pack, type: 'token_topup' },
+      customer_email: tenant.user.email
+    });
+    res.json({ url: session.url });
+  } catch (error) {
+    console.error('Token pack purchase error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
 // ==========================================
 // 💳 BILLING & SUBSCRIPTION ROUTES
 // ==========================================
@@ -3599,4 +3770,3 @@ server.listen(PORT, () => {
   });
  
 });
-
